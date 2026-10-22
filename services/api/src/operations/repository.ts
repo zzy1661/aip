@@ -1,0 +1,173 @@
+import type { QueryClient } from '../db/pool.js';
+import type { OperationView } from '@aip/contracts';
+
+export interface OperationRow {
+  id: string;
+  subject: string;
+  kind: string;
+  idempotency_key: string;
+  request_hash: string;
+  state: string;
+  resource_id: string | null;
+  remote_id: string | null;
+  attempt: number;
+  epoch: number;
+  lease_until: Date | null;
+  next_attempt_at: Date | null;
+  last_error: string | null;
+  result: unknown;
+  created_at: Date;
+  updated_at: Date;
+}
+
+export async function insertOperation(
+  client: QueryClient,
+  input: {
+    scopeId: string;
+    id: string;
+    subject: string;
+    kind: string;
+    idempotencyKey: string;
+    requestHash: string;
+    state: string;
+    resourceId?: string | null;
+  },
+): Promise<void> {
+  await client.query(
+    `INSERT INTO operation
+       (scope_id, id, subject, kind, idempotency_key, request_hash, state, resource_id)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+    [
+      input.scopeId,
+      input.id,
+      input.subject,
+      input.kind,
+      input.idempotencyKey,
+      input.requestHash,
+      input.state,
+      input.resourceId ?? null,
+    ],
+  );
+}
+
+export async function findOperation(
+  client: QueryClient,
+  scopeId: string,
+  id: string,
+): Promise<OperationRow | null> {
+  const { rows } = await client.query<OperationRow>(
+    `SELECT * FROM operation WHERE scope_id = $1 AND id = $2`,
+    [scopeId, id],
+  );
+  return rows[0] ?? null;
+}
+
+export async function findOperationByIdempotencyKey(
+  client: QueryClient,
+  scopeId: string,
+  subject: string,
+  kind: string,
+  idempotencyKey: string,
+): Promise<OperationRow | null> {
+  const { rows } = await client.query<OperationRow>(
+    `SELECT * FROM operation
+      WHERE scope_id = $1 AND subject = $2 AND kind = $3 AND idempotency_key = $4`,
+    [scopeId, subject, kind, idempotencyKey],
+  );
+  return rows[0] ?? null;
+}
+
+export async function setOperationRemoteId(
+  client: QueryClient,
+  scopeId: string,
+  id: string,
+  remoteId: string,
+  state: string,
+): Promise<void> {
+  await client.query(
+    `UPDATE operation
+        SET remote_id = $3, state = $4, updated_at = now()
+      WHERE scope_id = $1 AND id = $2`,
+    [scopeId, id, remoteId, state],
+  );
+}
+
+export async function setOperationState(
+  client: QueryClient,
+  scopeId: string,
+  id: string,
+  state: string,
+  lastError: string | null,
+  expectedEpoch?: number,
+): Promise<boolean> {
+  const { rowCount } = await client.query(
+    `UPDATE operation
+        SET state = $3, last_error = $4, updated_at = now()
+      WHERE scope_id = $1 AND id = $2 AND ($5::bigint IS NULL OR epoch = $5::bigint)`,
+    [scopeId, id, state, lastError, expectedEpoch ?? null],
+  );
+  return (rowCount ?? 0) > 0;
+}
+
+export async function claimOperationLease(
+  client: QueryClient,
+  scopeId: string,
+  id: string,
+  leaseMs: number,
+): Promise<OperationRow | null> {
+  const { rows } = await client.query<OperationRow>(
+    `UPDATE operation
+        SET lease_until = now() + ($3 || ' milliseconds')::interval,
+            attempt = attempt + 1,
+            updated_at = now()
+      WHERE scope_id = $1 AND id = $2
+        AND (lease_until IS NULL OR lease_until < now())
+        AND state IN ('pending', 'in_progress', 'unknown_outcome')
+      RETURNING *`,
+    [scopeId, id, String(leaseMs)],
+  );
+  return rows[0] ?? null;
+}
+
+export async function listClaimableOperations(
+  client: QueryClient,
+  scopeId: string,
+  limit: number,
+): Promise<OperationRow[]> {
+  const { rows } = await client.query<OperationRow>(
+    `SELECT * FROM operation
+      WHERE scope_id = $1
+        AND state IN ('pending', 'in_progress', 'unknown_outcome')
+        AND (next_attempt_at IS NULL OR next_attempt_at <= now())
+        AND (lease_until IS NULL OR lease_until < now())
+      ORDER BY created_at
+      LIMIT $2`,
+    [scopeId, limit],
+  );
+  return rows;
+}
+
+export async function bumpEpoch(
+  client: QueryClient,
+  scopeId: string,
+  id: string,
+): Promise<void> {
+  await client.query(
+    `UPDATE operation SET epoch = epoch + 1, updated_at = now() WHERE scope_id = $1 AND id = $2`,
+    [scopeId, id],
+  );
+}
+
+export function toOperationView(row: OperationRow): OperationView {
+  return {
+    operation_id: row.id,
+    kind: row.kind,
+    state: row.state,
+    resource_id: row.resource_id,
+    remote_id: row.remote_id,
+    attempt: row.attempt,
+    last_error: row.last_error,
+    created_at: row.created_at.toISOString(),
+    updated_at: row.updated_at.toISOString(),
+  };
+}
