@@ -175,6 +175,14 @@ export async function startFakeRagFlow(): Promise<FakeRagFlow> {
       const data = [...datasets.values()]
         .filter((dataset) => (name === undefined ? true : dataset.name === name))
         .map((dataset) => ({ id: dataset.id, name: dataset.name }));
+      if (name !== undefined && data.length === 0) {
+        // 与上游一致：按名称过滤零命中时返回 PERMISSION_ERROR，不是空数组。
+        sendFake(res, {
+          status: 200,
+          body: { code: 108, data: null, message: `lacks permission for dataset '${name}'` },
+        });
+        return;
+      }
       sendFake(res, { status: 200, body: envelope(data) });
       return;
     }

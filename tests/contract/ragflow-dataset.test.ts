@@ -129,6 +129,36 @@ describe('M10 RAGFlow dataset 契约', () => {
     expect(detail.body.data.status).not.toBe('ready');
   });
 
+  it('按名称核对零命中时上游返回 108，按未命中处理并继续创建', async () => {
+    harness.ragflow.reset();
+
+    const created = await harness.request({
+      method: 'POST',
+      path: '/knowledge-bases',
+      token,
+      idempotencyKey: 'm10-create-name-lookup-108',
+      json: { name: 'M10 名称核对', description: '' },
+    });
+    expect(created.status).toBe(202);
+
+    await harness.advanceAll();
+
+    // 上游在按名称过滤且零命中时返回 code=108（PERMISSION_ERROR），
+    // 适配器必须把它当成「未命中」而不是业务失败。
+    const nameLookups = harness.ragflow.calls.filter(
+      (call) => call.method === 'GET' && call.path === '/api/v1/datasets',
+    );
+    expect(nameLookups.length).toBeGreaterThan(0);
+    expect(nameLookups[0]!.query.name).toMatch(/^aip-/);
+
+    const detail = await harness.request({
+      method: 'GET',
+      path: `/knowledge-bases/${created.body.data.kb_id}`,
+      token,
+    });
+    expect(detail.body.data.status).toBe('ready');
+  });
+
   it('创建响应丢失时登记 unknown_outcome，且不再发第二次 POST', async () => {
     harness.ragflow.reset();
     harness.ragflow.dropNext(

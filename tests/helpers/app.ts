@@ -57,6 +57,14 @@ export interface HarnessOptions {
   connectTimeoutMs?: number;
   /** 解析截止时间；用于验证超时终态。 */
   parseDeadlineMs?: number;
+  /** 真实集成层用真实嵌入模型名；默认用替身值。 */
+  embeddingModel?: string;
+  /** 真实集成层用真实解析器配置；默认用替身值。 */
+  parserConfig?: Record<string, unknown>;
+  /** 记录在知识版本上的解析器来源摘要。 */
+  parserHash?: string;
+  /** 记录在知识版本上的嵌入模型修订号。 */
+  embeddingRevision?: string;
 }
 
 export interface RequestOptions {
@@ -156,8 +164,8 @@ export async function createHarness(options: HarnessOptions = {}): Promise<Harne
 
   const adapter = createRagFlowAdapter({
     http: ragflowHttp,
-    embeddingModel: 'test-embedding-model',
-    parserConfig: { layout_parser: { model: 'test' } },
+    embeddingModel: options.embeddingModel ?? 'test-embedding-model',
+    parserConfig: options.parserConfig ?? { layout_parser: { model: 'test' } },
     chunkMethod: 'naive',
     similarityThreshold: 0.2,
     vectorSimilarityWeight: 0.3,
@@ -169,8 +177,8 @@ export async function createHarness(options: HarnessOptions = {}): Promise<Harne
     ragflow: adapter,
     files,
     parseDeadlineMs: options.parseDeadlineMs ?? 60_000,
-    parserHash: 'test-parser-sha',
-    embeddingRevision: 'test-embedding-revision',
+    parserHash: options.parserHash ?? 'test-parser-sha',
+    embeddingRevision: options.embeddingRevision ?? 'test-embedding-revision',
   });
 
   const registry = createRegistryService({
@@ -191,8 +199,8 @@ export async function createHarness(options: HarnessOptions = {}): Promise<Harne
       retrievalMaxDocuments: options.retrievalMaxDocuments ?? 200,
       parseDeadlineMs: options.parseDeadlineMs ?? 60_000,
     },
-    parserHash: 'test-parser-sha',
-    embeddingRevision: 'test-embedding-revision',
+    parserHash: options.parserHash ?? 'test-parser-sha',
+    embeddingRevision: options.embeddingRevision ?? 'test-embedding-revision',
   });
 
   const app = createApp({
