@@ -1,0 +1,104 @@
+# aip 部署示例（docker compose）
+#
+# 这是示例文件，不是可直接投产的配置：
+# - 镜像名与标签是占位符，需要替换成实际构建产物；
+# - 所有凭据都通过 ${VAR} 从环境变量注入，文件里不出现任何真实口令；
+# - 首次上线前请先跑 `pnpm migrate` 完成迁移，再启动 api 与 worker。
+#
+# 变量来源见 .env.example。
+
+name: aip
+
+services:
+  postgres:
+    image: postgres:16.15
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-aip}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-aip}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-aip} -d ${POSTGRES_DB:-aip}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    # 演示环境不对外暴露端口；生产由网络策略与数据库白名单控制
+    expose:
+      - "5432"
+
+  api:
+    image: ${AIP_API_IMAGE:-<aip-api-image:tag>}
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: "8080"
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      AIP_PROJECT_ID: ${AIP_PROJECT_ID}
+      DATABASE_URL: postgres://${POSTGRES_USER:-aip}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-aip}
+      AIP_FILE_STORE_ROOT: /var/lib/aip/files
+      AUTH_MODE: ${AUTH_MODE:-jwks}
+      OIDC_ISSUER: ${OIDC_ISSUER}
+      OIDC_AUDIENCE: ${OIDC_AUDIENCE}
+      OIDC_JWKS_URI: ${OIDC_JWKS_URI}
+      RAGFLOW_API_VERSION: ${RAGFLOW_API_VERSION:-v0.20.5}
+      RAGFLOW_BASE_URL: ${RAGFLOW_BASE_URL}
+      RAGFLOW_API_KEY: ${RAGFLOW_API_KEY}
+      RAGFLOW_EMBEDDING_MODEL: ${RAGFLOW_EMBEDDING_MODEL}
+      RAGFLOW_EMBEDDING_REVISION: ${RAGFLOW_EMBEDDING_REVISION}
+      RAGFLOW_CHUNK_METHOD: ${RAGFLOW_CHUNK_METHOD:-naive}
+      RAGFLOW_IMAGE_DIGEST: ${RAGFLOW_IMAGE_DIGEST}
+      RAGFLOW_SOURCE_SHA: ${RAGFLOW_SOURCE_SHA}
+      ONTO_BASE_URL: ${ONTO_BASE_URL}
+      ONTO_API_AUDIENCE: ${ONTO_API_AUDIENCE}
+      AIP_UPLOAD_MAX_BYTES: ${AIP_UPLOAD_MAX_BYTES:-20971520}
+      AIP_PARSE_DEADLINE_MS: ${AIP_PARSE_DEADLINE_MS:-1200000}
+      AIP_RETRIEVAL_MAX_DOCUMENTS: ${AIP_RETRIEVAL_MAX_DOCUMENTS:-200}
+    volumes:
+      - aip-files:/var/lib/aip/files
+    expose:
+      - "8080"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/healthz || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  worker:
+    image: ${AIP_WORKER_IMAGE:-<aip-worker-image:tag>}
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      api:
+        condition: service_healthy
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      AIP_PROJECT_ID: ${AIP_PROJECT_ID}
+      DATABASE_URL: postgres://${POSTGRES_USER:-aip}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-aip}
+      AIP_FILE_STORE_ROOT: /var/lib/aip/files
+      RAGFLOW_API_VERSION: ${RAGFLOW_API_VERSION:-v0.20.5}
+      RAGFLOW_BASE_URL: ${RAGFLOW_BASE_URL}
+      RAGFLOW_API_KEY: ${RAGFLOW_API_KEY}
+      RAGFLOW_EMBEDDING_MODEL: ${RAGFLOW_EMBEDDING_MODEL}
+      RAGFLOW_EMBEDDING_REVISION: ${RAGFLOW_EMBEDDING_REVISION}
+      RAGFLOW_CHUNK_METHOD: ${RAGFLOW_CHUNK_METHOD:-naive}
+      RAGFLOW_IMAGE_DIGEST: ${RAGFLOW_IMAGE_DIGEST}
+      RAGFLOW_SOURCE_SHA: ${RAGFLOW_SOURCE_SHA}
+      WORKER_POLL_INTERVAL_MS: ${WORKER_POLL_INTERVAL_MS:-2000}
+      WORKER_BATCH_SIZE: ${WORKER_BATCH_SIZE:-10}
+    volumes:
+      # 与 api 共享文件存储：来源文件正文由 api 落盘、worker 读取后上传上游
+      - aip-files:/var/lib/aip/files
+    # Worker 不对外提供服务，不需要 expose 与健康检查
+
+volumes:
+  postgres-data:
+  aip-files:

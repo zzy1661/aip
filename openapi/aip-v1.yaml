@@ -1,0 +1,1859 @@
+openapi: 3.1.0
+
+info:
+  title: aip v1
+  version: 0.1.0
+  summary: 智能研发平台首批 API：Skill/Agent 注册与 RAGFlow 知识库闭环
+  description: |
+    本批覆盖两件事：
+
+    1. **Skill / Agent 注册**：注册、查询、详情、按版本追加，并支持 Agent 绑定到具体的
+       Skill 版本。注册事实由 aip 自己的 PostgreSQL 库负责，是唯一权威。
+    2. **RAGFlow 知识库闭环**：知识库创建、文档上传与解析状态、文档级授权检索与来源引用。
+
+    本批 **不包含执行**：`execution_enabled` 只能为 `false`，注册 Agent 不会触发任何执行。
+    `registration_status`（registered / deprecated / revoked）是「是否已注册」的状态，
+    **不是**发布批准，**不是**执行许可；本批没有 published / executable 这类状态。
+
+    鉴权为 Bearer JWT。令牌中的 scope 必须与路径中的 `{projectId}` 一致，否则返回 403。
+    业务错误统一返回 `{ code, message, trace_id, details }`，`details` 为字段级原因列表。
+  license:
+    name: UNLICENSED
+
+servers:
+  - url: /api/v1/projects/{projectId}
+    description: 项目作用域。所有业务接口都挂在项目下，路径作用域必须与令牌 scope 一致。
+    variables:
+      projectId:
+        default: default
+        description: 项目作用域标识，需与令牌中的 scope（claims.scope / claims.scp）一致。
+
+tags:
+  - name: registry
+    description: Skill / Agent 注册与版本管理
+  - name: knowledge
+    description: 知识库、文档、审核、撤回与检索
+  - name: operations
+    description: 异步操作登记查询
+  - name: platform
+    description: 平台自身
+
+security:
+  - bearerAuth: []
+
+paths:
+  /healthz:
+    servers:
+      - url: /
+        description: 平台根路径（不挂在项目作用域下，也不需要鉴权）
+    get:
+      tags: [platform]
+      summary: 健康检查
+      description: 不需要鉴权，返回固定内容，不泄露内部信息。
+      security: []
+      x-permission: none
+      responses:
+        '200':
+          description: 存活
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: object
+                    required: [status]
+                    properties:
+                      status:
+                        type: string
+                        const: ok
+
+  /assets:
+    post:
+      tags: [registry]
+      summary: 注册 Skill 或 Agent
+      description: |
+        注册一个新的资产及其首个版本。同一作用域下 slug 唯一，重复注册返回 409。
+
+        Agent 注册会同时校验绑定的 Skill 引用：引用必须存在、类型必须是 Skill、
+        注册状态必须是 `registered`；并且注册者必须同时持有 `asset:bind` 与
+        `asset:read` 两个权限。注册 Agent **不会**启动任何执行。
+      operationId: registerAsset
+      x-permission: asset:write
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterAssetRequest'
+      responses:
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+        '201':
+          description: 注册成功（首次创建）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssetRegisterEnvelope'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    get:
+      tags: [registry]
+      summary: 查询资产列表
+      description: 游标分页。`next_cursor` 为 `null` 表示没有下一页。
+      operationId: listAssets
+      x-permission: asset:read
+      parameters:
+        - name: type
+          in: query
+          required: false
+          description: 资产类型过滤，非法值按不过滤处理。
+          schema:
+            type: string
+            enum: [Skill, Agent]
+        - name: status
+          in: query
+          required: false
+          description: 注册状态过滤，非法值按不过滤处理。
+          schema:
+            type: string
+            enum: [registered, deprecated, revoked]
+        - name: cursor
+          in: query
+          required: false
+          description: 上一页返回的 `next_cursor`。
+          schema:
+            type: string
+        - name: limit
+          in: query
+          required: false
+          description: 每页条数，默认 20，上限 100。
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: 资产列表
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssetListEnvelope'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /assets/validate:
+    post:
+      tags: [registry]
+      summary: 只做契约校验，不注册
+      description: |
+        对一份注册请求做完整校验并返回问题列表，**不写入任何注册记录**。
+        校验结果不代表发布批准，也不代表执行许可。
+
+        这个端点的语义是「把所有问题一次性列出来」，因此**内容层的问题也返回 200**，
+        由 `passed` 与 `issues` 表达结论；只有鉴权失败才是 4xx。
+        任何无法完成的校验（例如本体服务不可达）都会变成一条 `issues`，
+        绝不会以 `passed: true` 的形式掩盖失败。
+      operationId: validateAsset
+      x-permission: asset:write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterAssetRequest'
+      responses:
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '200':
+          description: 校验完成；`passed` 为 false 时 `issues` 非空
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidateAssetEnvelope'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /assets/{assetId}/versions/{version}:
+    parameters:
+      - $ref: '#/components/parameters/AssetId'
+      - $ref: '#/components/parameters/Version'
+    get:
+      tags: [registry]
+      summary: 查询资产某个版本的详情
+      operationId: getAssetVersion
+      x-permission: asset:read
+      responses:
+        '200':
+          description: 资产版本详情
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssetDetailEnvelope'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /assets/{assetId}/versions:
+    parameters:
+      - $ref: '#/components/parameters/AssetId'
+    post:
+      tags: [registry]
+      summary: 为资产追加一个新版本
+      description: 版本号必须严格等于语义化版本。追加版本不改变已存在版本的绑定关系。
+      operationId: createAssetVersion
+      x-permission: asset:write
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewAssetVersionRequest'
+      responses:
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+        '201':
+          description: 版本创建成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssetRegisterEnvelope'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /assets/{assetId}/versions/{version}/status:
+    parameters:
+      - $ref: '#/components/parameters/AssetId'
+      - $ref: '#/components/parameters/Version'
+    post:
+      tags: [registry]
+      summary: 变更注册状态
+      description: |
+        注册状态只能单向推进：registered → deprecated → revoked，`revoked` 是终态，
+        逆向迁移返回 409 `STATE_CONFLICT`。状态变更使用 `expected_state_revision`
+        做 CAS，并发变更只有一个成功。
+      operationId: changeAssetStatus
+      x-permission: asset:manage
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssetStatusChangeRequest'
+      responses:
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '200':
+          description: 状态变更成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssetStatusChangeEnvelope'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /knowledge-bases:
+    post:
+      tags: [knowledge]
+      summary: 创建知识库
+      description: |
+        立即登记一个知识库并返回操作号；上游 RAGFlow 数据集由 worker 异步创建，
+        因此接口返回 202 而不是 201。用 `GET /operations/{operationId}` 跟踪进度，
+        用 `GET /knowledge-bases/{kbId}` 查看知识库状态。
+      operationId: createKnowledgeBase
+      x-permission: knowledge:write
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateKnowledgeBaseRequest'
+      responses:
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '202':
+          description: 已受理，等待上游数据集创建
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KnowledgeBaseCreateEnvelope'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    get:
+      tags: [knowledge]
+      summary: 查询知识库列表
+      operationId: listKnowledgeBases
+      x-permission: knowledge:read
+      responses:
+        '200':
+          description: 知识库列表
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KnowledgeBaseListEnvelope'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /knowledge-bases/{kbId}:
+    parameters:
+      - $ref: '#/components/parameters/KbId'
+    get:
+      tags: [knowledge]
+      summary: 查询知识库详情
+      operationId: getKnowledgeBase
+      x-permission: knowledge:read
+      responses:
+        '200':
+          description: 知识库详情
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KnowledgeBaseDetailEnvelope'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /knowledge-bases/{kbId}/documents:
+    parameters:
+      - $ref: '#/components/parameters/KbId'
+    post:
+      tags: [knowledge]
+      summary: 上传文档
+      description: |
+        单文件上传，首批只支持 `.txt` / `.md` / `.pdf`，单个文件不超过 20MiB。
+        扩展名、MIME、文件头、文本编码与大小都在调用上游之前校验，非法请求不会产生
+        任何 RAGFlow 请求。知识库尚未 ready 时返回 409。
+
+        `applies_to` 必须显式声明 `mode`：`unconditional` 表示通用知识；
+        `conditional` 必须带非空 `conditions`，键值全部在检索上下文中命中才算适用。
+        缺少 `conditions` 的 `conditional` 会被拒绝。
+      operationId: uploadKnowledgeDocument
+      x-permission: knowledge:write
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: 文档内容，单个文件。
+                version:
+                  type: string
+                  pattern: '^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$'
+                  default: 1.0.0
+                  description: 知识版本号（语义化版本）。
+                applies_to:
+                  type: string
+                  description: 适用条件的 JSON 文本，结构见 `AppliesTo`。
+      responses:
+        '202':
+          description: 已受理，等待上传与解析
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentUploadEnvelope'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    get:
+      tags: [knowledge]
+      summary: 查询知识库下的文档
+      description: 只返回调用者有读取授权的文档版本。
+      operationId: listKnowledgeDocuments
+      x-permission: knowledge:read
+      responses:
+        '200':
+          description: 文档列表
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentListEnvelope'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /knowledge/{knowledgeId}/versions/{version}:
+    parameters:
+      - $ref: '#/components/parameters/KnowledgeId'
+      - $ref: '#/components/parameters/Version'
+    get:
+      tags: [knowledge]
+      summary: 查询知识版本详情
+      description: |
+        返回内容摘要 `content_hash`。审核接口的 `expected_hash` 就是这个值，
+        客户端必须先读到这里再提交审核。
+      operationId: getKnowledgeVersion
+      x-permission: knowledge:read
+      responses:
+        '200':
+          description: 知识版本详情
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentEnvelope'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /knowledge/{knowledgeId}/versions/{version}/review:
+    parameters:
+      - $ref: '#/components/parameters/KnowledgeId'
+      - $ref: '#/components/parameters/Version'
+    post:
+      tags: [knowledge]
+      summary: 审核知识版本
+      description: |
+        审核结论会落库（审核人、expected_hash、理由、时间），并与
+        `review_status` 在同一事务内写入。`expected_hash` 必须等于当前版本的
+        `content_hash`，否则返回 409。
+
+        `valid_from` / `valid_until` 是结论的有效区间与适用条件：缺省表示立即生效
+        且长期有效；`valid_until` 必须晚于 `valid_from`。有效期只对 `approved` 生效，
+        `rejected` 不写入有效期区间。
+      operationId: reviewKnowledgeVersion
+      x-permission: knowledge:review
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/KnowledgeReviewRequest'
+      responses:
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '200':
+          description: 审核已记录
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KnowledgeReviewEnvelope'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /knowledge/{knowledgeId}/versions/{version}/withdraw:
+    parameters:
+      - $ref: '#/components/parameters/KnowledgeId'
+      - $ref: '#/components/parameters/Version'
+    post:
+      tags: [knowledge]
+      summary: 撤回知识版本
+      description: |
+        撤回会把知识版本置为 `withdrawn` 并递增授权版本，使撤回提交之后开始的
+        响应读不到旧授权。`expected_state_revision` 做 CAS，陈旧值返回 409。
+        远端文档清理由 worker 异步执行。
+      operationId: withdrawKnowledgeVersion
+      x-permission: knowledge:manage
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/KnowledgeWithdrawRequest'
+      responses:
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '200':
+          description: 已撤回
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KnowledgeWithdrawEnvelope'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /retrieval:
+    post:
+      tags: [knowledge]
+      summary: 文档级授权检索
+      description: |
+        只在调用者的授权范围内检索：先算出调用者可读且已就绪的知识版本，
+        再用「适用条件」过滤，最后才向 RAGFlow 发起请求。
+
+        - 授权集合为空时返回 `no_match`，**不产生任何上游 HTTP 请求**。
+        - 只有条件知识而上下文不足时返回 `needs_context`，同样不产生上游请求。
+        - 授权文档数超过单次上限（200）时返回 422 `AUTHORIZED_SCOPE_TOO_LARGE`。
+        - 授权范围跨多个上游数据集时同样返回 422，需要收窄请求。
+        - 上游回包中出现白名单之外的文档或数据集时整体失败（502），不返回越权内容。
+      operationId: retrieval
+      x-permission: knowledge:read
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RetrievalRequest'
+      responses:
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '200':
+          description: 检索结果
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RetrievalEnvelope'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '502':
+          $ref: '#/components/responses/BadGateway'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+        '504':
+          $ref: '#/components/responses/GatewayTimeout'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /evidence/{evidenceId}:
+    parameters:
+      - name: evidenceId
+        in: path
+        required: true
+        description: 检索响应中返回的证据标识。
+        schema:
+          type: string
+    get:
+      tags: [knowledge]
+      summary: 查询单条证据
+      description: 授权已被撤销时返回 404，不泄露证据是否曾经存在。
+      operationId: getEvidence
+      x-permission: source:read
+      responses:
+        '200':
+          description: 证据详情
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvidenceDetailEnvelope'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /sources/{fileId}/versions/{version}/download:
+    parameters:
+      - name: fileId
+        in: path
+        required: true
+        description: 源文件标识（上传时生成）。
+        schema:
+          type: string
+      - $ref: '#/components/parameters/Version'
+    get:
+      tags: [knowledge]
+      summary: 下载源文件
+      description: |
+        需要同时具备知识版本的读取授权与下载授权，否则返回 403 / 404。
+        响应带 `x-content-sha256`，与文档详情里的 `source_sha256` 一致。
+      operationId: downloadSource
+      x-permission: source:read
+      responses:
+        '200':
+          description: 文件内容
+          headers:
+            content-disposition:
+              description: '`attachment; filename="..."`'
+              schema:
+                type: string
+            x-content-sha256:
+              description: 文件内容的 sha256 十六进制摘要。
+              schema:
+                type: string
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+            text/plain:
+              schema:
+                type: string
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /operations/{operationId}:
+    parameters:
+      - name: operationId
+        in: path
+        required: true
+        description: 异步操作标识。
+        schema:
+          type: string
+    get:
+      tags: [operations]
+      summary: 查询异步操作状态
+      description: |
+        操作状态包括 `pending` / `in_progress` / `succeeded` / `failed` /
+        `unknown_outcome`。`unknown_outcome` 表示写请求的结果无法确认：
+        平台不会盲目重发该写请求，需要人工核对上游后再处理。
+      operationId: getOperation
+      x-permission: operations:read
+      responses:
+        '200':
+          description: 操作视图
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperationEnvelope'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        令牌为 JWT。平台校验签名（JWKS 或 HS256）后读取：
+        `sub`（主体）、`scope` 或 `scp`（项目作用域）、`permissions`（权限数组）、
+        `authz_revision`（授权版本）、可选 `jti`。缺少 `sub` 或 scope 一律 401；
+        scope 与路径 `{projectId}` 不一致返回 403。
+
+  parameters:
+    AssetId:
+      name: assetId
+      in: path
+      required: true
+      description: 资产标识。
+      schema:
+        type: string
+    KbId:
+      name: kbId
+      in: path
+      required: true
+      description: 知识库标识。
+      schema:
+        type: string
+    KnowledgeId:
+      name: knowledgeId
+      in: path
+      required: true
+      description: 知识标识（知识版本的主体）。
+      schema:
+        type: string
+    Version:
+      name: version
+      in: path
+      required: true
+      description: 语义化版本号。
+      schema:
+        type: string
+        pattern: '^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$'
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      description: |
+        幂等键。同一个键 + 同一份请求体会回放第一次的结果；同一个键配不同的请求体
+        返回 409 `IDEMPOTENCY_CONFLICT`。缺少该头返回 400 `IDEMPOTENCY_KEY_REQUIRED`。
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 200
+
+  responses:
+    BadRequest:
+      description: 请求不合法（缺少幂等键、分页参数非法、JSON 解析失败等）
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorBody'
+    Unauthenticated:
+      description: 缺少或无效的 Bearer 令牌
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorBody'
+    Forbidden:
+      description: 权限不足，或作用域与令牌不匹配
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorBody'
+    NotFound:
+      description: |
+        资源不存在。对调用者无权访问的资源，平台统一按 404 处理，
+        不暴露资源是否曾经存在。
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorBody'
+    Conflict:
+      description: |
+        状态或版本冲突：幂等键复用冲突、版本已存在、状态机不允许的迁移、
+        `state_revision` 陈旧、`expected_hash` 不匹配、知识尚未就绪。
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorBody'
+    PayloadTooLarge:
+      description: 请求体或上传文件超过平台上限
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorBody'
+    UnsupportedMediaType:
+      description: 文件类型不受支持（扩展名、MIME 或文件头不匹配）
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorBody'
+    Unprocessable:
+      description: |
+        契约不合法：请求体不符合 schema、版本号非法、引用不可用、权限越权、
+        授权范围超限。
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorBody'
+    BadGateway:
+      description: 上游返回的回包不符合固定契约
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorBody'
+    ServiceUnavailable:
+      description: 上游不可用
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorBody'
+    GatewayTimeout:
+      description: 上游超时
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorBody'
+    InternalError:
+      description: 内部错误（不回显原始异常信息）
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorBody'
+
+  schemas:
+    ErrorBody:
+      type: object
+      required: [code, message, trace_id, details]
+      properties:
+        code:
+          $ref: '#/components/schemas/ErrorCode'
+        message:
+          type: string
+          description: 面向调用方的稳定描述，不包含上游原文与堆栈。
+        trace_id:
+          type: string
+        details:
+          type: array
+          description: 字段级原因列表，无字段级原因时为空数组。
+          items:
+            $ref: '#/components/schemas/FieldIssue'
+
+    ErrorCode:
+      type: string
+      description: 平台稳定错误码。
+      enum:
+        - BAD_REQUEST
+        - IDEMPOTENCY_KEY_REQUIRED
+        - IDEMPOTENCY_CONFLICT
+        - UNAUTHENTICATED
+        - FORBIDDEN
+        - NOT_FOUND
+        - VERSION_EXISTS
+        - STATE_CONFLICT
+        - CONTRACT_INVALID
+        - INVALID_VERSION
+        - REF_NOT_AVAILABLE
+        - PERMISSION_ESCALATION
+        - UPLOAD_TOO_LARGE
+        - UNSUPPORTED_MEDIA_TYPE
+        - INDEX_NOT_READY
+        - AUTHORIZED_SCOPE_TOO_LARGE
+        - RAGFLOW_PROTOCOL_ERROR
+        - RAGFLOW_UNAVAILABLE
+        - RAGFLOW_TIMEOUT
+        - ONTO_UNAVAILABLE
+        - INTERNAL_ERROR
+
+    FieldIssue:
+      type: object
+      required: [field_path, reason]
+      properties:
+        field_path:
+          type: string
+          description: 出问题的字段路径，例如 `payload.skill_refs[0].version`。
+        reason:
+          type: string
+
+    ContractField:
+      type: object
+      required:
+        - name
+        - concept_ref
+        - data_type
+        - unit_ref
+        - ontology_version
+        - vocabulary_version
+        - required
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 128
+        concept_ref:
+          type: [string, 'null']
+          maxLength: 256
+          description: 本体概念引用；为空表示不绑定概念。
+        data_type:
+          type: string
+          enum: [STRING, NUMBER, BOOLEAN, JSON]
+        unit_ref:
+          type: [string, 'null']
+          maxLength: 256
+        ontology_version:
+          type: [string, 'null']
+          maxLength: 256
+          description: 数值契约必须绑定精确的本体版本，否则不具备可验证语义。
+        vocabulary_version:
+          type: [string, 'null']
+          maxLength: 256
+          description: 数值契约必须绑定精确的词表版本。
+        required:
+          type: boolean
+
+    SkillContent:
+      type: object
+      required: [kind, body]
+      properties:
+        kind:
+          type: string
+          enum: [inline_markdown]
+          description: 首批只支持行内 Markdown。
+        body:
+          type: string
+          description: Markdown 正文。
+
+    SkillPayload:
+      type: object
+      required: [content, input_contract, output_contract, concept_validation, tags]
+      properties:
+        content:
+          $ref: '#/components/schemas/SkillContent'
+        input_contract:
+          type: array
+          maxItems: 64
+          items:
+            $ref: '#/components/schemas/ContractField'
+        output_contract:
+          type: array
+          maxItems: 64
+          items:
+            $ref: '#/components/schemas/ContractField'
+        concept_validation:
+          type: string
+          enum: [not_requested, validated]
+          description: |
+            概念校验模式。带 `concept_ref` 的契约会被精确校验：校验不通过就拒绝注册，
+            绝不降级为通过。`not_requested` 表示本次没有可校验的概念引用。
+        tags:
+          type: array
+          maxItems: 20
+          items:
+            type: string
+            minLength: 1
+            maxLength: 32
+
+    SkillRef:
+      type: object
+      required: [asset_id, version]
+      properties:
+        asset_id:
+          type: string
+          minLength: 1
+          maxLength: 128
+        version:
+          type: string
+          pattern: '^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$'
+          description: 绑定的具体 Skill 版本；不含 `latest` 等浮动写法。
+
+    AgentPayload:
+      type: object
+      required:
+        - instructions
+        - skill_refs
+        - model_profile_ref
+        - requested_permissions
+        - config
+        - execution_enabled
+      properties:
+        instructions:
+          type: string
+        skill_refs:
+          type: array
+          minItems: 1
+          maxItems: 50
+          items:
+            $ref: '#/components/schemas/SkillRef'
+        model_profile_ref:
+          type: string
+          minLength: 1
+          maxLength: 128
+        requested_permissions:
+          type: array
+          uniqueItems: true
+          description: |
+            可下放给 Agent 的权限白名单，只有 `asset:read` / `knowledge:read` /
+            `source:read`。请求白名单之外的权限会被拒绝；请求未持有的可下放权限返回
+            422 `PERMISSION_ESCALATION`。
+          items:
+            type: string
+            enum: [asset:read, knowledge:read, source:read]
+        config:
+          type: object
+          description: |
+            自由配置对象。不得包含凭据类字段（`api_key`、URL 凭据、密码等），
+            违规内容会被拒绝，且不会落库。
+        execution_enabled:
+          type: boolean
+          description: |
+            本批必须为 `false`；为 `true` 时返回 422。注册 Agent 不触发任何执行。
+
+    RegisterAssetRequest:
+      type: object
+      required: [type, slug, version, title, description, payload]
+      properties:
+        type:
+          type: string
+          enum: [Skill, Agent]
+        slug:
+          type: string
+          pattern: '^[a-z0-9][a-z0-9-]{0,62}$'
+        version:
+          type: string
+          pattern: '^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$'
+        title:
+          type: string
+          minLength: 1
+          maxLength: 128
+        description:
+          type: string
+          maxLength: 4096
+        payload:
+          oneOf:
+            - $ref: '#/components/schemas/SkillPayload'
+            - $ref: '#/components/schemas/AgentPayload'
+          description: 载荷类型由 `type` 决定：Skill 对应 `SkillPayload`，Agent 对应 `AgentPayload`。
+
+    NewAssetVersionRequest:
+      type: object
+      required: [version, title, description, payload]
+      properties:
+        version:
+          type: string
+          pattern: '^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$'
+        title:
+          type: string
+          minLength: 1
+          maxLength: 128
+        description:
+          type: string
+          maxLength: 4096
+        payload:
+          oneOf:
+            - $ref: '#/components/schemas/SkillPayload'
+            - $ref: '#/components/schemas/AgentPayload'
+
+    AssetStatusChangeRequest:
+      type: object
+      required: [status, expected_state_revision, reason]
+      properties:
+        status:
+          type: string
+          enum: [deprecated, revoked]
+        expected_state_revision:
+          type: integer
+          minimum: 0
+          description: CAS 用的状态版本，陈旧值返回 409 `STATE_CONFLICT`。
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 1024
+
+    AssetSummary:
+      type: object
+      required:
+        - asset_id
+        - type
+        - slug
+        - version
+        - title
+        - description
+        - registration_status
+        - state_revision
+        - content_hash
+        - created_by
+        - created_at
+      properties:
+        asset_id:
+          type: string
+        type:
+          type: string
+          enum: [Skill, Agent]
+        slug:
+          type: string
+        version:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        registration_status:
+          type: string
+          enum: [registered, deprecated, revoked]
+          description: |
+            注册状态，只能 registered → deprecated → revoked 单向推进，`revoked` 是终态。
+            它表示「是否已注册」，**不是**发布批准，也**不是**执行许可。
+        state_revision:
+          type: integer
+          description: 状态版本，状态变更用 CAS 递增。
+        content_hash:
+          type: string
+          description: 资产内容摘要（类型、标题、描述、载荷的稳定哈希）。
+        created_by:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    AssetBindingView:
+      type: object
+      required: [skill_id, skill_version, skill_slug, binding_valid]
+      properties:
+        skill_id:
+          type: string
+        skill_version:
+          type: string
+        skill_slug:
+          type: [string, 'null']
+        binding_valid:
+          type: boolean
+          description: 被绑定的 Skill 版本当前是否仍为 `registered`。
+
+    AssetDetail:
+      allOf:
+        - $ref: '#/components/schemas/AssetSummary'
+        - type: object
+          required: [payload, schema_version, bindings]
+          properties:
+            payload:
+              oneOf:
+                - $ref: '#/components/schemas/SkillPayload'
+                - $ref: '#/components/schemas/AgentPayload'
+            schema_version:
+              type: integer
+            bindings:
+              type: array
+              items:
+                $ref: '#/components/schemas/AssetBindingView'
+
+    AssetRegisterData:
+      type: object
+      required: [asset_id, version, content_hash, registration_status]
+      properties:
+        asset_id:
+          type: string
+        version:
+          type: string
+        content_hash:
+          type: string
+        registration_status:
+          type: string
+          enum: [registered, deprecated, revoked]
+
+    ValidateAssetResult:
+      type: object
+      required: [passed, issues, note]
+      properties:
+        passed:
+          type: boolean
+        issues:
+          type: array
+          items:
+            $ref: '#/components/schemas/FieldIssue'
+        note:
+          type: string
+          description: 明确说明校验结果不是发布批准，也不是执行许可。
+
+    AssetStatusChangeData:
+      type: object
+      required: [asset_id, version, registration_status, state_revision]
+      properties:
+        asset_id:
+          type: string
+        version:
+          type: string
+        registration_status:
+          type: string
+          enum: [registered, deprecated, revoked]
+        state_revision:
+          type: integer
+
+    AppliesTo:
+      type: object
+      required: [mode]
+      description: |
+        适用条件。`unconditional` 表示通用知识；`conditional` 必须带非空 `conditions`，
+        键值全部在检索上下文中命中才算适用。空对象不合法——它无法区分「通用」与
+        「尚未声明」。
+      properties:
+        mode:
+          type: string
+          enum: [unconditional, conditional]
+        conditions:
+          type: object
+          minProperties: 1
+          additionalProperties:
+            type: [string, number, boolean, 'null']
+
+    CreateKnowledgeBaseRequest:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 128
+        description:
+          type: string
+          maxLength: 4096
+
+    KnowledgeBaseSummary:
+      type: object
+      required: [kb_id, name, description, status, ragflow_dataset_id, operation_id, created_at]
+      properties:
+        kb_id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          description: |
+            知识库状态：`creating` 表示上游数据集尚未创建完成；`ready` 表示可以上传文档。
+          examples: [creating, ready]
+        ragflow_dataset_id:
+          type: [string, 'null']
+          description: 上游 RAGFlow 数据集标识；尚未创建完成时为 null。
+        operation_id:
+          type: [string, 'null']
+          description: 创建该知识库的操作号，用于查询进度。
+        created_at:
+          type: string
+          format: date-time
+
+    KnowledgeBaseDetail:
+      allOf:
+        - $ref: '#/components/schemas/KnowledgeBaseSummary'
+        - type: object
+          required: [document_count]
+          properties:
+            document_count:
+              type: integer
+              description: 知识库下的知识版本数量。
+
+    KnowledgeBaseCreateData:
+      type: object
+      required: [operation_id, kb_id]
+      properties:
+        operation_id:
+          type: string
+        kb_id:
+          type: string
+
+    DocumentSummary:
+      type: object
+      required:
+        - knowledge_id
+        - version
+        - kb_id
+        - source_file_id
+        - source_file_version
+        - source_file_name
+        - source_sha256
+        - mime
+        - size
+        - review_status
+        - status
+        - state_revision
+        - index_revision
+        - chunk_count
+        - last_error
+        - stale
+        - applies_to
+        - valid_from
+        - valid_until
+        - content_hash
+        - created_at
+      properties:
+        knowledge_id:
+          type: string
+        version:
+          type: string
+        kb_id:
+          type: string
+        source_file_id:
+          type: string
+        source_file_version:
+          type: string
+        source_file_name:
+          type: string
+        source_sha256:
+          type: string
+        mime:
+          type: string
+        size:
+          type: integer
+          description: 源文件字节数。
+        review_status:
+          type: string
+          enum: [pending, approved, rejected]
+          description: 审核结论状态。
+        status:
+          type: string
+          enum:
+            - uploaded
+            - parse_queued
+            - parsing
+            - ready
+            - empty
+            - failed
+            - unknown_outcome
+            - withdrawn
+          description: 知识版本的处理状态。
+        state_revision:
+          type: integer
+          description: 状态版本，审核与撤回用 CAS 递增。
+        index_revision:
+          type: [string, 'null']
+          description: 索引版本标识；尚未建立索引时为 null。
+        chunk_count:
+          type: [integer, 'null']
+        last_error:
+          type: [string, 'null']
+        stale:
+          type: boolean
+          description: 最近一次操作处于 `unknown_outcome` 时为 true，提示需要人工核对。
+        applies_to:
+          $ref: '#/components/schemas/AppliesTo'
+        valid_from:
+          type: [string, 'null']
+          format: date-time
+          description: 审核结论的生效起点；缺省表示立即生效。
+        valid_until:
+          type: [string, 'null']
+          format: date-time
+          description: 审核结论的失效点；缺省表示长期有效。
+        content_hash:
+          type: string
+          description: 知识版本内容摘要，审核接口的 `expected_hash` 就是它。
+        created_at:
+          type: string
+          format: date-time
+
+    DocumentUploadData:
+      type: object
+      required: [operation_id, knowledge_ref, source_ref]
+      properties:
+        operation_id:
+          type: string
+        knowledge_ref:
+          type: string
+          description: 知识标识（用于后续的版本级接口）。
+        source_ref:
+          type: string
+          description: 源文件标识（用于下载接口）。
+
+    KnowledgeReviewRequest:
+      type: object
+      required: [decision, expected_hash, reason]
+      properties:
+        decision:
+          type: string
+          enum: [approved, rejected]
+        expected_hash:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: 必须等于当前知识版本的 `content_hash`，否则返回 409。
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 1024
+          description: 审核理由，落库保存。
+        valid_from:
+          type: string
+          format: date-time
+          description: 结论生效起点；缺省表示立即生效。
+        valid_until:
+          type: string
+          format: date-time
+          description: 结论失效点；缺省表示长期有效，必须晚于 `valid_from`。
+
+    KnowledgeReviewData:
+      type: object
+      required:
+        - knowledge_id
+        - version
+        - review_status
+        - state_revision
+        - reviewer
+        - expected_hash
+        - reviewed_at
+        - valid_from
+        - valid_until
+      properties:
+        knowledge_id:
+          type: string
+        version:
+          type: string
+        review_status:
+          type: string
+          enum: [pending, approved, rejected]
+        state_revision:
+          type: integer
+        reviewer:
+          type: string
+          description: 审核人（令牌主体），落库保存。
+        expected_hash:
+          type: string
+          description: 审核时观察到的内容摘要，落库保存。
+        reviewed_at:
+          type: string
+          format: date-time
+        valid_from:
+          type: [string, 'null']
+          format: date-time
+        valid_until:
+          type: [string, 'null']
+          format: date-time
+
+    KnowledgeWithdrawRequest:
+      type: object
+      required: [expected_state_revision, reason]
+      properties:
+        expected_state_revision:
+          type: integer
+          minimum: 0
+          description: CAS 用的状态版本，陈旧值返回 409。
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 1024
+
+    KnowledgeWithdrawData:
+      type: object
+      required: [knowledge_id, version, status, state_revision]
+      properties:
+        knowledge_id:
+          type: string
+        version:
+          type: string
+        status:
+          type: string
+          const: withdrawn
+        state_revision:
+          type: integer
+
+    RetrievalRequest:
+      type: object
+      required: [query, kb_ids]
+      properties:
+        query:
+          type: string
+          minLength: 1
+          maxLength: 4096
+        kb_ids:
+          type: array
+          minItems: 1
+          maxItems: 100
+          items:
+            type: string
+            minLength: 1
+        knowledge_refs:
+          type: array
+          maxItems: 200
+          items:
+            type: string
+            minLength: 1
+          description: |
+            显式指定的知识。指定的知识必须已审核通过且已就绪，否则返回
+            409 `INDEX_NOT_READY`；无权访问时按 404 处理。
+        context:
+          type: object
+          description: 检索上下文，用于判定 `conditional` 知识的适用性。
+        top_n:
+          type: integer
+          minimum: 1
+          maximum: 20
+          default: 10
+
+    SourceLocator:
+      type: object
+      required: [source_file_id, source_file_version, incomplete]
+      properties:
+        source_file_id:
+          type: string
+        source_file_version:
+          type: string
+        incomplete:
+          type: boolean
+          description: 文本类来源缺少可核验位置时为 true；禁止伪造页码。
+        positions:
+          type: array
+          items: {}
+        page:
+          type: integer
+        raw:
+          type: string
+
+    EvidenceItem:
+      type: object
+      required:
+        - evidence_id
+        - knowledge_ref
+        - knowledge_version
+        - index_revision
+        - source_file_revision
+        - source_locator
+        - chunk_id
+        - chunk_hash
+        - score
+        - content
+      properties:
+        evidence_id:
+          type: string
+        knowledge_ref:
+          type: string
+        knowledge_version:
+          type: string
+        index_revision:
+          type: string
+        source_file_revision:
+          type: string
+        source_locator:
+          $ref: '#/components/schemas/SourceLocator'
+        chunk_id:
+          type: string
+        chunk_hash:
+          type: string
+        score:
+          type: number
+        content:
+          type: string
+
+    RetrievalData:
+      type: object
+      required: [status, evidence]
+      properties:
+        status:
+          type: string
+          enum: [authorized_evidence, no_match, needs_context]
+          description: |
+            `authorized_evidence` 表示返回了授权范围内的证据；`no_match` 表示授权范围内
+            没有命中；`needs_context` 表示只有条件知识且上下文不足。
+        evidence:
+          type: array
+          items:
+            $ref: '#/components/schemas/EvidenceItem'
+
+    EvidenceDetail:
+      type: object
+      required:
+        - evidence_id
+        - knowledge_ref
+        - knowledge_version
+        - index_revision
+        - source_file_revision
+        - chunk_id
+        - chunk_hash
+        - locator
+        - content
+        - score
+      properties:
+        evidence_id:
+          type: string
+        knowledge_ref:
+          type: string
+        knowledge_version:
+          type: string
+        index_revision:
+          type: string
+        source_file_revision:
+          type: string
+        chunk_id:
+          type: string
+        chunk_hash:
+          type: string
+        locator:
+          $ref: '#/components/schemas/SourceLocator'
+        content:
+          type: string
+        score:
+          type: number
+
+    OperationView:
+      type: object
+      required:
+        - operation_id
+        - kind
+        - state
+        - resource_id
+        - remote_id
+        - attempt
+        - last_error
+        - created_at
+        - updated_at
+      properties:
+        operation_id:
+          type: string
+        kind:
+          type: string
+          enum: [knowledge_base.create, document.upload, document.parse, knowledge.withdraw]
+        state:
+          type: string
+          enum: [pending, in_progress, succeeded, failed, unknown_outcome]
+          description: |
+            `unknown_outcome` 表示写请求的结果无法确认。平台不会盲目重发该写请求，
+            需要人工核对上游后再处理。
+        resource_id:
+          type: [string, 'null']
+        remote_id:
+          type: [string, 'null']
+        attempt:
+          type: integer
+        last_error:
+          type: [string, 'null']
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    AssetRegisterEnvelope:
+      type: object
+      required: [data, trace_id]
+      properties:
+        data:
+          $ref: '#/components/schemas/AssetRegisterData'
+        trace_id:
+          type: string
+
+    AssetListEnvelope:
+      type: object
+      required: [data, next_cursor, trace_id]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/AssetSummary'
+        next_cursor:
+          type: [string, 'null']
+        trace_id:
+          type: string
+
+    AssetDetailEnvelope:
+      type: object
+      required: [data, trace_id]
+      properties:
+        data:
+          $ref: '#/components/schemas/AssetDetail'
+        trace_id:
+          type: string
+
+    ValidateAssetEnvelope:
+      type: object
+      required: [data, trace_id]
+      properties:
+        data:
+          $ref: '#/components/schemas/ValidateAssetResult'
+        trace_id:
+          type: string
+
+    AssetStatusChangeEnvelope:
+      type: object
+      required: [data, trace_id]
+      properties:
+        data:
+          $ref: '#/components/schemas/AssetStatusChangeData'
+        trace_id:
+          type: string
+
+    KnowledgeBaseCreateEnvelope:
+      type: object
+      required: [data, trace_id]
+      properties:
+        data:
+          $ref: '#/components/schemas/KnowledgeBaseCreateData'
+        trace_id:
+          type: string
+
+    KnowledgeBaseListEnvelope:
+      type: object
+      required: [data, trace_id]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/KnowledgeBaseSummary'
+        trace_id:
+          type: string
+
+    KnowledgeBaseDetailEnvelope:
+      type: object
+      required: [data, trace_id]
+      properties:
+        data:
+          $ref: '#/components/schemas/KnowledgeBaseDetail'
+        trace_id:
+          type: string
+
+    DocumentUploadEnvelope:
+      type: object
+      required: [data, trace_id]
+      properties:
+        data:
+          $ref: '#/components/schemas/DocumentUploadData'
+        trace_id:
+          type: string
+
+    DocumentListEnvelope:
+      type: object
+      required: [data, trace_id]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/DocumentSummary'
+        trace_id:
+          type: string
+
+    DocumentEnvelope:
+      type: object
+      required: [data, trace_id]
+      properties:
+        data:
+          $ref: '#/components/schemas/DocumentSummary'
+        trace_id:
+          type: string
+
+    KnowledgeReviewEnvelope:
+      type: object
+      required: [data, trace_id]
+      properties:
+        data:
+          $ref: '#/components/schemas/KnowledgeReviewData'
+        trace_id:
+          type: string
+
+    KnowledgeWithdrawEnvelope:
+      type: object
+      required: [data, trace_id]
+      properties:
+        data:
+          $ref: '#/components/schemas/KnowledgeWithdrawData'
+        trace_id:
+          type: string
+
+    RetrievalEnvelope:
+      type: object
+      required: [data, trace_id]
+      properties:
+        data:
+          $ref: '#/components/schemas/RetrievalData'
+        trace_id:
+          type: string
+
+    EvidenceDetailEnvelope:
+      type: object
+      required: [data, trace_id]
+      properties:
+        data:
+          $ref: '#/components/schemas/EvidenceDetail'
+        trace_id:
+          type: string
+
+    OperationEnvelope:
+      type: object
+      required: [data, trace_id]
+      properties:
+        data:
+          $ref: '#/components/schemas/OperationView'
+        trace_id:
+          type: string
