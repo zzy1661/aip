@@ -15,6 +15,7 @@ export interface AuthorizedDocument {
   document_id: string;
   index_revision: string;
   can_download: boolean;
+  applies_to: Record<string, unknown>;
 }
 
 export async function isDenied(
@@ -145,10 +146,11 @@ export async function listAuthorizedDocuments(
     document_id: string;
     index_revision: string;
     can_download: boolean;
+    applies_to: Record<string, unknown>;
   }>(
     `SELECT kr.knowledge_id, kr.version AS knowledge_version, kim.kb_id,
             kim.dataset_id, kim.document_id, kim.index_revision,
-            dg.can_download
+            dg.can_download, kr.applies_to
        FROM knowledge_revision kr
        JOIN document_grant dg
          ON dg.scope_id = kr.scope_id AND dg.knowledge_id = kr.knowledge_id
@@ -162,6 +164,8 @@ export async function listAuthorizedDocuments(
         AND dg.can_read = true
         AND kr.review_status = 'approved'
         AND kr.status = 'ready'
+        AND (kr.valid_from IS NULL OR kr.valid_from <= now())
+        AND (kr.valid_until IS NULL OR kr.valid_until > now())
         AND (${kbParam}::uuid[] IS NULL OR kim.kb_id = ANY(${kbParam}::uuid[]))
         ${knowledgeFilter}`,
     values,
@@ -174,6 +178,7 @@ export async function listAuthorizedDocuments(
     document_id: row.document_id,
     index_revision: row.index_revision,
     can_download: row.can_download,
+    applies_to: row.applies_to,
   }));
 }
 
@@ -214,7 +219,9 @@ export async function filterStillAuthorized(
       WHERE dg.scope_id = $1 AND dg.subject = $2 AND dg.can_read = true
         AND dg.knowledge_id::text = ANY($3::text[])
         AND kr.status <> 'withdrawn'
-        AND kr.review_status = 'approved'`,
+        AND kr.review_status = 'approved'
+        AND (kr.valid_from IS NULL OR kr.valid_from <= now())
+        AND (kr.valid_until IS NULL OR kr.valid_until > now())`,
     [scopeId, subject, knowledgeIds],
   );
   return new Set(rows.map((row) => row.knowledge_id));

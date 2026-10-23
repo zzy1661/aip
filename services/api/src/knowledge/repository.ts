@@ -30,6 +30,8 @@ export interface KnowledgeRow {
   status: string;
   state_revision: number;
   applies_to: Record<string, unknown>;
+  valid_from: Date | null;
+  valid_until: Date | null;
   content_hash: string;
   created_at: Date;
 }
@@ -199,8 +201,8 @@ export async function insertKnowledgeRevision(
 const KNOWLEDGE_SELECT = `
   SELECT kr.knowledge_id, kr.version, kr.kb_id, kr.source_file_id, kr.source_file_version,
          sfr.name AS source_file_name, sfr.sha256 AS source_sha256, sfr.mime, sfr.size,
-         kr.review_status, kr.status, kr.state_revision, kr.applies_to, kr.content_hash,
-         kr.created_at
+         kr.review_status, kr.status, kr.state_revision, kr.applies_to,
+         kr.valid_from, kr.valid_until, kr.content_hash, kr.created_at
     FROM knowledge_revision kr
     JOIN source_file_revision sfr
       ON sfr.scope_id = kr.scope_id AND sfr.id = kr.source_file_id
@@ -275,22 +277,32 @@ export async function findKnowledgeBySourceFile(
   return rows[0] ?? null;
 }
 
+export interface KnowledgeStatePatch {
+  status?: string;
+  reviewStatus?: string;
+  /** 审核结论的有效区间；与 review_status 同事务写入。 */
+  validFrom?: Date | null;
+  validUntil?: Date | null;
+}
+
 export async function updateKnowledgeState(
   client: QueryClient,
   scopeId: string,
   knowledgeId: string,
   version: string,
-  patch: { status?: string; reviewStatus?: string },
+  patch: KnowledgeStatePatch,
   expectedStateRevision?: number,
 ): Promise<KnowledgeRow | null> {
   const { rows } = await client.query<KnowledgeRow>(
     `UPDATE knowledge_revision
         SET status = COALESCE($4, status),
             review_status = COALESCE($5, review_status),
+            valid_from = CASE WHEN $5::text IS NOT NULL THEN $7::timestamptz ELSE valid_from END,
+            valid_until = CASE WHEN $5::text IS NOT NULL THEN $8::timestamptz ELSE valid_until END,
             state_revision = state_revision + CASE WHEN ($4 IS NOT NULL OR $5 IS NOT NULL) THEN 1 ELSE 0 END
       WHERE scope_id = $1 AND knowledge_id = $2 AND version = $3
         AND ($6::integer IS NULL OR state_revision = $6::integer)
-      RETURNING knowledge_id, version, review_status, status, state_revision`,
+      RETURNING knowledge_id, version, review_status, status, state_revision, valid_from, valid_until`,
     [
       scopeId,
       knowledgeId,
@@ -298,6 +310,8 @@ export async function updateKnowledgeState(
       patch.status ?? null,
       patch.reviewStatus ?? null,
       expectedStateRevision ?? null,
+      patch.validFrom ?? null,
+      patch.validUntil ?? null,
     ],
   );
   return rows[0] ?? null;
@@ -313,12 +327,15 @@ export async function insertReview(
     reviewer: string;
     expectedHash: string;
     reason: string;
+    validFrom?: Date | null;
+    validUntil?: Date | null;
   },
 ): Promise<void> {
   await client.query(
     `INSERT INTO knowledge_review
-       (scope_id, knowledge_id, version, decision, reviewer, expected_hash, reason)
-     VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+       (scope_id, knowledge_id, version, decision, reviewer, expected_hash, reason,
+        valid_from, valid_until)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
     [
       input.scopeId,
       input.knowledgeId,
@@ -327,6 +344,8 @@ export async function insertReview(
       input.reviewer,
       input.expectedHash,
       input.reason,
+      input.validFrom ?? null,
+      input.validUntil ?? null,
     ],
   );
 }
@@ -345,8 +364,11 @@ export async function listReviews(
     expected_hash: string;
     reason: string;
     reviewed_at: Date;
+    valid_from: Date | null;
+    valid_until: Date | null;
   }>(
-    `SELECT knowledge_id, version, decision, reviewer, expected_hash, reason, reviewed_at
+    `SELECT knowledge_id, version, decision, reviewer, expected_hash, reason, reviewed_at,
+            valid_from, valid_until
        FROM knowledge_review
       WHERE scope_id = $1 AND knowledge_id = $2 AND version = $3
       ORDER BY reviewed_at`,
@@ -360,6 +382,8 @@ export async function listReviews(
     expected_hash: row.expected_hash,
     reason: row.reason,
     reviewed_at: row.reviewed_at.toISOString(),
+    valid_from: row.valid_from ? row.valid_from.toISOString() : null,
+    valid_until: row.valid_until ? row.valid_until.toISOString() : null,
   }));
 }
 
@@ -616,6 +640,9 @@ export function toDocumentSummary(
     last_error: extras.lastError,
     stale: extras.stale,
     applies_to: row.applies_to,
+    valid_from: row.valid_from ? row.valid_from.toISOString() : null,
+    valid_until: row.valid_until ? row.valid_until.toISOString() : null,
+    content_hash: row.content_hash,
     created_at: row.created_at.toISOString(),
   };
 }

@@ -9,6 +9,11 @@ export interface RawRequest {
   body: Buffer | null;
   connectTimeoutMs: number;
   readTimeoutMs: number;
+  /**
+   * 本次尝试的总时间上限（含连接与读取）。
+   * 只读重试按剩余预算切分，保证「多次尝试 + 退避」不超过总预算。
+   */
+  attemptTimeoutMs?: number;
 }
 
 export interface RawResponse {
@@ -78,6 +83,11 @@ export const nodeTransport: Transport = (request) =>
   new Promise<RawResponse>((resolve, reject) => {
     const url = new URL(request.url);
     const agent = url.protocol === 'https:' ? https : http;
+    const deadline =
+      request.attemptTimeoutMs === undefined ? undefined : Date.now() + request.attemptTimeoutMs;
+    const remaining = (): number =>
+      deadline === undefined ? Number.POSITIVE_INFINITY : Math.max(1, deadline - Date.now());
+
     const clientRequest = agent.request(
       url,
       { method: request.method, headers: request.headers },
@@ -107,7 +117,7 @@ export const nodeTransport: Transport = (request) =>
     const connectTimer = setTimeout(() => {
       clientRequest.destroy();
       reject(new RagFlowUnavailableError('connect timeout', true));
-    }, request.connectTimeoutMs);
+    }, Math.min(request.connectTimeoutMs, remaining()));
     let readTimer: NodeJS.Timeout | undefined;
 
     clientRequest.on('socket', (socket) => {
@@ -117,7 +127,7 @@ export const nodeTransport: Transport = (request) =>
       readTimer = setTimeout(() => {
         clientRequest.destroy();
         reject(new RagFlowUnavailableError('read timeout', true));
-      }, request.readTimeoutMs);
+      }, Math.min(request.readTimeoutMs, remaining()));
     });
     clientRequest.on('error', (error: NodeJS.ErrnoException) => {
       clearTimeout(connectTimer);
@@ -212,7 +222,11 @@ export function createRagFlowHttpClient(options: RagFlowHttpOptions): RagFlowHtt
       if (remaining <= 0) {
         throw new RagFlowUnavailableError('read retry budget exhausted', true);
       }
-      const raw = await transport(buildRawRequest(request)).catch((error: unknown) => {
+      // 单次尝试的耗时分到剩余预算里，保证「多次尝试 + 退避」不超过总预算。
+      const raw = await transport({
+        ...buildRawRequest(request),
+        attemptTimeoutMs: remaining,
+      }).catch((error: unknown) => {
         lastError = error;
         return null;
       });

@@ -142,6 +142,37 @@ export function parseDocumentStatus(data: unknown): DocumentStatus {
   };
 }
 
+export interface DocumentListEntry {
+  id: string;
+  name: string;
+}
+
+/** 数据集文档列表投影：用于写操作结果未知时的只读核对。 */
+export function parseDocumentList(data: unknown): DocumentListEntry[] {
+  if (typeof data !== 'object' || data === null || Array.isArray(data)) {
+    throw new RagFlowProtocolError('document list response data is not an object');
+  }
+  const docs = (data as Record<string, unknown>).docs;
+  if (!Array.isArray(docs)) {
+    throw new RagFlowProtocolError('document list response is missing docs');
+  }
+  return docs.map((entry) => {
+    if (typeof entry !== 'object' || entry === null) {
+      throw new RagFlowProtocolError('document list entry is not an object');
+    }
+    const record = entry as Record<string, unknown>;
+    const id = record.id;
+    const name = record.name;
+    if (typeof id !== 'string' || id.length === 0) {
+      throw new RagFlowProtocolError('document list entry is missing id');
+    }
+    if (typeof name !== 'string') {
+      throw new RagFlowProtocolError('document list entry is missing name');
+    }
+    return { id, name };
+  });
+}
+
 export interface RetrievedChunk {
   id: string;
   content: string;

@@ -9,12 +9,20 @@ export { traceMiddleware, TRACE_HEADER } from './http/trace.js';
 export { createTokenVerifier, type TokenVerifier } from './auth/verify.js';
 export { createAuthMiddleware, requirePermissionMiddleware } from './auth/middleware.js';
 export { hasPermission, hasAllPermissions, requirePermission } from './auth/policy.js';
-export { createOntoConceptValidator, type ConceptValidator } from './ontology/client.js';
+export {
+  createOntoConceptValidator,
+  type ConceptValidator,
+  type ConceptValidationOutcome,
+  type ConceptReference,
+} from './ontology/client.js';
 export {
   createRagFlowHttpClient,
   nodeTransport,
   type Transport,
+  type RawRequest,
+  type RawResponse,
   type RagFlowHttpOptions,
+  type RagFlowHttpClient,
 } from './ragflow/client.js';
 export { createRagFlowAdapter, type RagFlowAdapter } from './ragflow/adapter.js';
 export {
@@ -24,10 +32,14 @@ export {
 } from './ragflow/errors.js';
 export { FileStore } from './files/store.js';
 export { validateUpload, type ValidatedUpload } from './files/validate.js';
-export { createOperationsService, type OperationsDeps } from './operations/service.js';
-export { createRegistryService, type RegistryDeps } from './registry/service.js';
+export { createOperationsService, type OperationsDeps, type OperationsService } from './operations/service.js';
+export { createRegistryService, type RegistryDeps, type RegistryService } from './registry/service.js';
 export { createRegistryRouter } from './registry/routes.js';
-export { createKnowledgeService, type KnowledgeDeps } from './knowledge/service.js';
+export {
+  createKnowledgeService,
+  type KnowledgeDeps,
+  type KnowledgeService,
+} from './knowledge/service.js';
 export { createKnowledgeRouter } from './knowledge/routes.js';
 export * as knowledgeAuthorization from './knowledge/authorization.js';
 export * as knowledgeRepository from './knowledge/repository.js';

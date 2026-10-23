@@ -172,8 +172,21 @@ export function createKnowledgeRouter(service: KnowledgeService): Router {
   return router;
 }
 
+/**
+ * applies_to 必须是显式声明模式的 JSON 对象。
+ * 缺失时直接报错：空对象会被当成「通用」，让缺少适用条件的事实无法被发现。
+ */
 function parseAppliesTo(raw: unknown): Record<string, unknown> {
-  if (typeof raw !== 'string' || raw.trim() === '') return {};
+  if (raw === undefined || raw === null || (typeof raw === 'string' && raw.trim() === '')) {
+    throw apiError('CONTRACT_INVALID', 'applies_to is required', [
+      fieldIssue('applies_to', 'missing'),
+    ]);
+  }
+  if (typeof raw !== 'string') {
+    throw apiError('CONTRACT_INVALID', 'applies_to must be a JSON object', [
+      fieldIssue('applies_to', 'must be a JSON object encoded as a string'),
+    ]);
+  }
   let parsed: unknown;
   try {
     parsed = JSON.parse(raw);

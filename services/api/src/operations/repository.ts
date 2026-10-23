@@ -102,11 +102,33 @@ export async function setOperationState(
 ): Promise<boolean> {
   const { rowCount } = await client.query(
     `UPDATE operation
-        SET state = $3, last_error = $4, updated_at = now()
+        SET state = $3, last_error = $4, next_attempt_at = NULL, updated_at = now()
       WHERE scope_id = $1 AND id = $2 AND ($5::bigint IS NULL OR epoch = $5::bigint)`,
     [scopeId, id, state, lastError, expectedEpoch ?? null],
   );
   return (rowCount ?? 0) > 0;
+}
+
+/**
+ * 登记「写入结果未知」：推迟下一次自动处理。
+ *
+ * 写请求的结果未知时不能盲目重发，因此这类操作必须先经过只读核对，
+ * 核对不通过就一直停在这里等待人工介入；推迟时间避免 worker 热循环。
+ */
+export async function deferOperation(
+  client: QueryClient,
+  scopeId: string,
+  id: string,
+  deferMs: number,
+  lastError: string | null,
+): Promise<void> {
+  await client.query(
+    `UPDATE operation
+        SET state = 'unknown_outcome', last_error = $3,
+            next_attempt_at = now() + ($4 || ' milliseconds')::interval, updated_at = now()
+      WHERE scope_id = $1 AND id = $2`,
+    [scopeId, id, lastError, String(deferMs)],
+  );
 }
 
 export async function claimOperationLease(
@@ -122,11 +144,24 @@ export async function claimOperationLease(
             updated_at = now()
       WHERE scope_id = $1 AND id = $2
         AND (lease_until IS NULL OR lease_until < now())
+        AND (next_attempt_at IS NULL OR next_attempt_at <= now())
         AND state IN ('pending', 'in_progress', 'unknown_outcome')
       RETURNING *`,
     [scopeId, id, String(leaseMs)],
   );
   return rows[0] ?? null;
+}
+
+export async function releaseOperationLease(
+  client: QueryClient,
+  scopeId: string,
+  id: string,
+): Promise<void> {
+  await client.query(
+    `UPDATE operation SET lease_until = NULL, updated_at = now()
+      WHERE scope_id = $1 AND id = $2`,
+    [scopeId, id],
+  );
 }
 
 export async function listClaimableOperations(

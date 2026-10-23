@@ -2,6 +2,7 @@ import { RagFlowProtocolError, RagFlowUnavailableError } from './errors.js';
 import type { RagFlowHttpClient } from './client.js';
 import {
   parseCreatedDataset,
+  parseDocumentList,
   parseDocumentStatus,
   parseEnvelope,
   parseRetrievalChunks,
@@ -47,6 +48,8 @@ export interface RagFlowAdapter {
   deleteDocument(input: { datasetId: string; documentId: string }): Promise<void>;
   /** 按名称核对数据集，用于写操作响应丢失后的人工前置核查。 */
   listDatasetsByName(name: string): Promise<Array<{ id: string; name: string }>>;
+  /** 列出数据集内的文档，用于上传结果未知时的只读核对。 */
+  listDocuments(datasetId: string): Promise<Array<{ id: string; name: string }>>;
 }
 
 function assertOk(status: number): void {
@@ -192,6 +195,17 @@ export function createRagFlowAdapter(options: RagFlowAdapterOptions): RagFlowAda
             typeof (entry as { name?: unknown }).name === 'string',
         )
         .map((entry) => ({ id: entry.id, name: entry.name }));
+    },
+
+    async listDocuments(datasetId) {
+      const response = await http.execute({
+        method: 'GET',
+        path: `datasets/${encodeURIComponent(datasetId)}/documents?page=1&page_size=100`,
+        idempotentRead: true,
+      });
+      assertOk(response.status);
+      const envelope = parseEnvelope(response.body);
+      return parseDocumentList(envelope.data);
     },
   };
 }

@@ -1,13 +1,18 @@
 import type { Pool, PoolClient } from 'pg';
 import {
+  appliesToSchema,
   createKnowledgeBaseRequestSchema,
+  isApplicable,
+  isConditional,
   knowledgeReviewRequestSchema,
   knowledgeWithdrawRequestSchema,
   retrievalRequestSchema,
+  type AppliesTo,
   type DocumentSummary,
   type EvidenceItem,
   type KnowledgeBaseDetail,
   type KnowledgeBaseSummary,
+  type KnowledgeReviewRequest,
   type RetrievalResponse,
   type RetrievalStatus,
 } from '@aip/contracts';
@@ -50,6 +55,21 @@ export interface UploadInput {
 
 export function createKnowledgeService(deps: KnowledgeDeps) {
   const { pool, validator, ragflow, operations, files } = deps;
+
+  /**
+   * 适用条件必须在入库前显式声明模式。
+   * 空对象不合法：它无法区分「通用」与「尚未声明」，一旦被默认为通用，
+   * 后续审核与检索都无法发现知识缺少适用条件这一事实。
+   */
+  function normalizeAppliesTo(raw: unknown): Record<string, unknown> {
+    const appliesTo = validator.assert<AppliesTo>(appliesToSchema, raw, 'applies_to');
+    if (appliesTo.mode === 'conditional' && Object.keys(appliesTo.conditions ?? {}).length === 0) {
+      throw apiError('CONTRACT_INVALID', 'request failed contract validation', [
+        fieldIssue('applies_to.conditions', 'at least one condition is required'),
+      ]);
+    }
+    return appliesTo as unknown as Record<string, unknown>;
+  }
 
   async function createKnowledgeBase(
     principal: Principal,
@@ -143,6 +163,7 @@ export function createKnowledgeService(deps: KnowledgeDeps) {
       },
       deps.limits.uploadMaxBytes,
     );
+    const appliesTo = normalizeAppliesTo(input.appliesTo);
 
     const kb = await repo.findKnowledgeBase(pool, principal.scope, kbId);
     if (!kb) {
@@ -200,7 +221,7 @@ export function createKnowledgeService(deps: KnowledgeDeps) {
             sourceFileId,
             sourceFileVersion: input.version,
             status: 'uploaded',
-            appliesTo: input.appliesTo,
+            appliesTo,
             contentHash,
             createdBy: principal.subject,
           });
@@ -287,15 +308,15 @@ export function createKnowledgeService(deps: KnowledgeDeps) {
         ORDER BY created_at DESC LIMIT 1`,
       [scopeId, row.knowledge_id],
     );
-    const index = await pool.query<{ id: string }>(
-      `SELECT ir.id FROM index_revision ir
+    const index = await pool.query<{ id: string; chunk_count: number | null }>(
+      `SELECT ir.id, ir.chunk_count FROM index_revision ir
         WHERE ir.scope_id = $1 AND ir.knowledge_id = $2 AND ir.knowledge_version = $3
         ORDER BY ir.created_at DESC LIMIT 1`,
       [scopeId, row.knowledge_id, row.version],
     );
     return repo.toDocumentSummary(row, {
       indexRevision: index.rows[0]?.id ?? null,
-      chunkCount: null,
+      chunkCount: index.rows[0]?.chunk_count ?? null,
       lastError: operation.rows[0]?.last_error ?? null,
       stale: operation.rows[0]?.state === 'unknown_outcome',
     });
@@ -330,11 +351,20 @@ export function createKnowledgeService(deps: KnowledgeDeps) {
     version: string,
     body: unknown,
   ): Promise<{ data: unknown }> {
-    const request = validator.assert<{
-      decision: 'approved' | 'rejected';
-      expected_hash: string;
-      reason: string;
-    }>(knowledgeReviewRequestSchema, body);
+    const request = validator.assert<KnowledgeReviewRequest>(
+      knowledgeReviewRequestSchema,
+      body,
+    );
+    const validFrom = parseValidityPoint(request.valid_from, 'valid_from');
+    const validUntil = parseValidityPoint(request.valid_until, 'valid_until');
+    if (validFrom && validUntil && validUntil.getTime() <= validFrom.getTime()) {
+      throw apiError('CONTRACT_INVALID', 'request failed contract validation', [
+        fieldIssue('valid_until', 'must be later than valid_from'),
+      ]);
+    }
+    // 有效期只对「通过」的审核结论有意义；驳回不写入有效期区间。
+    const effectiveValidFrom = request.decision === 'approved' ? validFrom : null;
+    const effectiveValidUntil = request.decision === 'approved' ? validUntil : null;
 
     return withTransaction(pool, async (client) => {
       const row = await repo.findKnowledgeRevision(client, principal.scope, knowledgeId, version);
@@ -351,7 +381,11 @@ export function createKnowledgeService(deps: KnowledgeDeps) {
         principal.scope,
         knowledgeId,
         version,
-        { reviewStatus: request.decision },
+        {
+          reviewStatus: request.decision,
+          validFrom: effectiveValidFrom,
+          validUntil: effectiveValidUntil,
+        },
         row.state_revision,
       );
       if (!updated) {
@@ -367,6 +401,8 @@ export function createKnowledgeService(deps: KnowledgeDeps) {
         reviewer: principal.subject,
         expectedHash: request.expected_hash,
         reason: request.reason,
+        validFrom,
+        validUntil,
       });
       return {
         data: {
@@ -377,6 +413,8 @@ export function createKnowledgeService(deps: KnowledgeDeps) {
           reviewer: principal.subject,
           expected_hash: request.expected_hash,
           reviewed_at: new Date().toISOString(),
+          valid_from: effectiveValidFrom ? effectiveValidFrom.toISOString() : null,
+          valid_until: effectiveValidUntil ? effectiveValidUntil.toISOString() : null,
         },
       };
     });
@@ -483,20 +521,36 @@ export function createKnowledgeService(deps: KnowledgeDeps) {
       return { status: 'no_match', evidence: [] };
     }
 
-    if (authorized.length > deps.limits.retrievalMaxDocuments) {
+    // 适用条件过滤：条件不适用的知识不得进入白名单，也不得触发上游调用。
+    const applicable = authorized.filter((entry) =>
+      isApplicable(entry.applies_to, request.context),
+    );
+    const awaitingContext = authorized.filter(
+      (entry) =>
+        !isApplicable(entry.applies_to, request.context) && isConditional(entry.applies_to),
+    );
+    if (applicable.length === 0) {
+      // 只有条件知识且上下文不足时返回 needs_context，同样不产生上游请求。
+      return {
+        status: awaitingContext.length > 0 ? 'needs_context' : 'no_match',
+        evidence: [],
+      };
+    }
+
+    if (applicable.length > deps.limits.retrievalMaxDocuments) {
       throw apiError(
         'AUTHORIZED_SCOPE_TOO_LARGE',
         'authorized document count exceeds the platform limit for a single retrieval',
         [
           fieldIssue(
             'kb_ids',
-            `${authorized.length} authorized documents exceed the limit of ${deps.limits.retrievalMaxDocuments}`,
+            `${applicable.length} authorized documents exceed the limit of ${deps.limits.retrievalMaxDocuments}`,
           ),
         ],
       );
     }
 
-    const datasetIds = [...new Set(authorized.map((entry) => entry.dataset_id))];
+    const datasetIds = [...new Set(applicable.map((entry) => entry.dataset_id))];
     if (datasetIds.length > 1) {
       throw apiError(
         'AUTHORIZED_SCOPE_TOO_LARGE',
@@ -505,7 +559,7 @@ export function createKnowledgeService(deps: KnowledgeDeps) {
       );
     }
 
-    const allowedDocumentIds = new Set(authorized.map((entry) => entry.document_id));
+    const allowedDocumentIds = new Set(applicable.map((entry) => entry.document_id));
     const chunks = await ragflow.retrieve({
       question: request.query,
       datasetIds,
@@ -556,7 +610,7 @@ export function createKnowledgeService(deps: KnowledgeDeps) {
           knowledgeRef: mapping.knowledge_id,
           knowledgeVersion: mapping.knowledge_version,
           indexRevision: mapping.index_revision,
-          sourceFileRevision: mapping.source_file_version,
+          sourceFileRevision: mapping.source_file_id,
           chunkId: chunk.id,
           chunkHash,
           locator,
@@ -570,7 +624,7 @@ export function createKnowledgeService(deps: KnowledgeDeps) {
           knowledge_ref: mapping.knowledge_id,
           knowledge_version: mapping.knowledge_version,
           index_revision: mapping.index_revision,
-          source_file_revision: mapping.source_file_version,
+          source_file_revision: mapping.source_file_id,
           source_locator: {
             source_file_id: mapping.source_file_id,
             source_file_version: mapping.source_file_version,
@@ -744,6 +798,17 @@ export function createKnowledgeService(deps: KnowledgeDeps) {
     getEvidence,
     getOperation,
   };
+}
+
+function parseValidityPoint(value: string | undefined, field: string): Date | null {
+  if (value === undefined) return null;
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    throw apiError('CONTRACT_INVALID', 'request failed contract validation', [
+      fieldIssue(field, 'must be an ISO-8601 timestamp'),
+    ]);
+  }
+  return parsed;
 }
 
 function buildLocator(

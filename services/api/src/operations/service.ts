@@ -55,6 +55,8 @@ interface OperationProgress {
   sourceFileId?: string;
   sourceFileVersion?: string;
   datasetName?: string;
+  /** 操作登记时间，用于判断解析是否超过截止时间。 */
+  createdAt?: Date;
 }
 
 export interface OperationsDeps {
@@ -64,7 +66,11 @@ export interface OperationsDeps {
   parseDeadlineMs: number;
   parserHash: string;
   embeddingRevision: string;
+  /** 写入结果未知后的冷静期：期间不自动重发写请求。 */
+  unknownOutcomeDeferMs?: number;
 }
+
+const DEFAULT_UNKNOWN_OUTCOME_DEFER_MS = 60_000;
 
 function describeError(error: unknown): { state: string; message: string } {
   if (error instanceof RagFlowBusinessError) {
@@ -84,6 +90,7 @@ function describeError(error: unknown): { state: string; message: string } {
 
 export function createOperationsService(deps: OperationsDeps) {
   const { pool, ragflow, files } = deps;
+  const unknownOutcomeDeferMs = deps.unknownOutcomeDeferMs ?? DEFAULT_UNKNOWN_OUTCOME_DEFER_MS;
 
   async function createOperation(
     client: PoolClient,
@@ -114,6 +121,7 @@ export function createOperationsService(deps: OperationsDeps) {
     return {
       stage: result.stage ?? 'init',
       subject: row?.subject,
+      createdAt: row?.created_at,
       kbId: result.kbId,
       datasetId: result.datasetId,
       documentId: result.documentId,
@@ -179,9 +187,22 @@ export function createOperationsService(deps: OperationsDeps) {
       }
     } catch (error) {
       const described = describeError(error);
-      await withTransaction(pool, (client) =>
-        opsRepo.setOperationState(client, scopeId, operationId, described.state, described.message),
-      );
+      if (described.state === 'unknown_outcome') {
+        // 写入结果未知：不允许自动重发写请求，推迟后由只读核对决定后续。
+        await withTransaction(pool, (client) =>
+          opsRepo.deferOperation(
+            client,
+            scopeId,
+            operationId,
+            unknownOutcomeDeferMs,
+            described.message,
+          ),
+        );
+      } else {
+        await withTransaction(pool, (client) =>
+          opsRepo.setOperationState(client, scopeId, operationId, described.state, described.message),
+        );
+      }
       const current = await opsRepo.findOperation(pool, scopeId, operationId);
       return {
         operationId,
@@ -190,6 +211,12 @@ export function createOperationsService(deps: OperationsDeps) {
         remoteId: current?.remote_id ?? null,
         lastError: described.message,
       };
+    } finally {
+      // 本轮处理结束即释放租约：未达终态的操作要能被下一轮立即接管，
+      // 否则轮询间隔会被租约时长（30s）悄悄放大。
+      await withTransaction(pool, (client) =>
+        opsRepo.releaseOperationLease(client, scopeId, operationId),
+      );
     }
   }
 
@@ -226,12 +253,27 @@ export function createOperationsService(deps: OperationsDeps) {
       if (existing.length > 1) {
         const message = 'multiple upstream datasets match the stable name; manual check required';
         await withTransaction(pool, (client) =>
-          opsRepo.setOperationState(client, scopeId, operationId, 'unknown_outcome', message),
+          opsRepo.deferOperation(client, scopeId, operationId, unknownOutcomeDeferMs, message),
+        );
+        return { operationId, state: 'unknown_outcome', resourceId: progress.kbId ?? null, remoteId: null, lastError: message };
+      }
+      if (progress.stage === 'dataset_create_attempted') {
+        // 创建请求已经发出过但结果无法确认：禁止重发，否则会造出重复数据集。
+        const message = 'upstream dataset creation outcome is unknown; manual check required';
+        await withTransaction(pool, (client) =>
+          opsRepo.deferOperation(client, scopeId, operationId, unknownOutcomeDeferMs, message),
         );
         return { operationId, state: 'unknown_outcome', resourceId: progress.kbId ?? null, remoteId: null, lastError: message };
       }
     }
 
+    // 发出写请求前先落「已尝试」标记：结果未知时只允许只读核对，不允许重发。
+    await withTransaction(pool, (client) =>
+      writeProgress(client, scopeId, operationId, {
+        ...progress,
+        stage: 'dataset_create_attempted',
+      }),
+    );
     const dataset = await ragflow.createDataset({
       name: progress.datasetName!,
       description: '',
@@ -280,30 +322,88 @@ export function createOperationsService(deps: OperationsDeps) {
         );
         return { operationId, state: 'failed', resourceId: progress.knowledgeId ?? null, remoteId: null, lastError: message };
       }
-      const content = await files.read(source.storage_key);
-      const uploaded = await ragflow.uploadDocument({
-        datasetId: progress.datasetId!,
-        filename: source.name,
-        contentType: source.mime,
-        content,
-      });
-      await withTransaction(pool, (client) =>
-        opsRepo.setOperationRemoteId(client, scopeId, operationId, uploaded.documentId, 'in_progress'),
-      );
-      await withTransaction(pool, (client) =>
-        writeProgress(client, scopeId, operationId, {
-          ...progress,
-          stage: 'uploaded',
-          documentId: uploaded.documentId,
-        }),
-      );
-      progress = { ...progress, stage: 'uploaded', documentId: uploaded.documentId };
+
+      if (progress.stage === 'upload_attempted') {
+        // 上传结果未知：按文件名只读核对上游，唯一命中才认领，绝不重新上传。
+        const documents = await ragflow.listDocuments(progress.datasetId!);
+        const matches = documents.filter((document) => document.name === source.name);
+        if (matches.length !== 1) {
+          const message =
+            matches.length === 0
+              ? 'upstream upload outcome is unknown; manual check required'
+              : 'multiple upstream documents match the file name; manual check required';
+          await withTransaction(pool, (client) =>
+            opsRepo.deferOperation(client, scopeId, operationId, unknownOutcomeDeferMs, message),
+          );
+          return {
+            operationId,
+            state: 'unknown_outcome',
+            resourceId: progress.knowledgeId ?? null,
+            remoteId: null,
+            lastError: message,
+          };
+        }
+        await withTransaction(pool, (client) =>
+          opsRepo.setOperationRemoteId(client, scopeId, operationId, matches[0]!.id, 'in_progress'),
+        );
+        await withTransaction(pool, (client) =>
+          writeProgress(client, scopeId, operationId, {
+            ...progress,
+            stage: 'uploaded',
+            documentId: matches[0]!.id,
+          }),
+        );
+        progress = { ...progress, stage: 'uploaded', documentId: matches[0]!.id };
+      } else {
+        const content = await files.read(source.storage_key);
+        // 发出写请求前先落「已尝试」标记。
+        await withTransaction(pool, (client) =>
+          writeProgress(client, scopeId, operationId, {
+            ...progress,
+            stage: 'upload_attempted',
+          }),
+        );
+        const uploaded = await ragflow.uploadDocument({
+          datasetId: progress.datasetId!,
+          filename: source.name,
+          contentType: source.mime,
+          content,
+        });
+        await withTransaction(pool, (client) =>
+          opsRepo.setOperationRemoteId(client, scopeId, operationId, uploaded.documentId, 'in_progress'),
+        );
+        await withTransaction(pool, (client) =>
+          writeProgress(client, scopeId, operationId, {
+            ...progress,
+            stage: 'uploaded',
+            documentId: uploaded.documentId,
+          }),
+        );
+        progress = { ...progress, stage: 'uploaded', documentId: uploaded.documentId };
+      }
     }
 
-    await ragflow.startParse({
-      datasetId: progress.datasetId!,
-      documentIds: [progress.documentId!],
-    });
+    if (progress.stage === 'parse_attempted') {
+      // 解析启动请求的结果未知：先只读确认上游是否已经在解析，避免重复触发解析。
+      const status = await ragflow.getDocumentStatus({
+        datasetId: progress.datasetId!,
+        documentId: progress.documentId!,
+      });
+      if (status.run === 'UNSTART') {
+        await ragflow.startParse({
+          datasetId: progress.datasetId!,
+          documentIds: [progress.documentId!],
+        });
+      }
+    } else {
+      await withTransaction(pool, (client) =>
+        writeProgress(client, scopeId, operationId, { ...progress, stage: 'parse_attempted' }),
+      );
+      await ragflow.startParse({
+        datasetId: progress.datasetId!,
+        documentIds: [progress.documentId!],
+      });
+    }
     await withTransaction(pool, (client) =>
       writeProgress(client, scopeId, operationId, { ...progress, stage: 'parse_started' }),
     );
@@ -347,6 +447,35 @@ export function createOperationsService(deps: OperationsDeps) {
     if (!progress.datasetId || !progress.documentId) {
       throw new Error('parse operation is missing the remote document identity');
     }
+
+    // 解析有截止时间：超过截止仍未完成就进入终态失败，停止自动轮询，
+    // 并把知识版本置为 failed，让用户看到明确状态而不是一直「解析中」。
+    if (progress.createdAt) {
+      const elapsed = Date.now() - progress.createdAt.getTime();
+      if (elapsed > deps.parseDeadlineMs) {
+        const message = `parse deadline exceeded after ${Math.round(elapsed / 1000)}s`;
+        await withTransaction(pool, async (client) => {
+          await knowledgeRepo.updateKnowledgeState(
+            client,
+            scopeId,
+            progress.knowledgeId!,
+            progress.knowledgeVersion!,
+            { status: 'failed' },
+          );
+        });
+        await withTransaction(pool, (client) =>
+          opsRepo.setOperationState(client, scopeId, operationId, 'failed', message),
+        );
+        return {
+          operationId,
+          state: 'failed',
+          resourceId: progress.knowledgeId ?? null,
+          remoteId: progress.documentId,
+          lastError: message,
+        };
+      }
+    }
+
     const status = await ragflow.getDocumentStatus({
       datasetId: progress.datasetId,
       documentId: progress.documentId,
@@ -392,6 +521,15 @@ export function createOperationsService(deps: OperationsDeps) {
         ? `parse failed: ${status.progress_msg}`
         : 'parse failed';
       await withTransaction(pool, (client) =>
+        knowledgeRepo.updateKnowledgeState(
+          client,
+          scopeId,
+          progress.knowledgeId!,
+          progress.knowledgeVersion!,
+          { status: 'failed' },
+        ),
+      );
+      await withTransaction(pool, (client) =>
         opsRepo.setOperationState(client, scopeId, operationId, 'failed', message),
       );
       return { operationId, state: 'failed', resourceId: progress.knowledgeId ?? null, remoteId: progress.documentId, lastError: message };
@@ -399,6 +537,15 @@ export function createOperationsService(deps: OperationsDeps) {
 
     if (status.run === 'CANCEL') {
       const message = 'parse cancelled';
+      await withTransaction(pool, (client) =>
+        knowledgeRepo.updateKnowledgeState(
+          client,
+          scopeId,
+          progress.knowledgeId!,
+          progress.knowledgeVersion!,
+          { status: 'failed' },
+        ),
+      );
       await withTransaction(pool, (client) =>
         opsRepo.setOperationState(client, scopeId, operationId, 'failed', message),
       );
@@ -422,10 +569,16 @@ export function createOperationsService(deps: OperationsDeps) {
       );
       return { operationId, state: 'succeeded', resourceId: progress.knowledgeId ?? null, remoteId: null, lastError: null };
     }
-    await ragflow.deleteDocument({
-      datasetId: progress.datasetId,
-      documentId: progress.documentId,
-    });
+    // 删除是写操作：先只读确认文档是否还在，在才删，避免结果未知时盲目重发。
+    const documents = await ragflow.listDocuments(progress.datasetId);
+    const stillPresent = documents.some((document) => document.id === progress.documentId);
+    if (stillPresent) {
+      await ragflow.deleteDocument({
+        datasetId: progress.datasetId,
+        documentId: progress.documentId,
+      });
+    }
+
     await withTransaction(pool, (client) =>
       opsRepo.setOperationState(client, scopeId, operationId, 'succeeded', null),
     );

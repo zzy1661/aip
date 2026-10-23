@@ -18,6 +18,9 @@ const FORBIDDEN_CONFIG_KEY = /(token|secret|password|passwd|credential|api_?key|
 
 const URL_LIKE = /^[a-z][a-z0-9+.-]*:\/\//i;
 
+/** 资产主键是 uuid 列；非法格式必须在边界被拒绝，否则会变成数据库层的 500。 */
+const UUID_LIKE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export function byteLength(value: string): number {
   return Buffer.byteLength(value, 'utf8');
 }
@@ -138,6 +141,11 @@ export function validateAgentPayload(
 
   const seen = new Set<string>();
   payload.skill_refs.forEach((ref, index) => {
+    if (!UUID_LIKE.test(ref.asset_id)) {
+      throw apiError('CONTRACT_INVALID', 'skill reference id is malformed', [
+        fieldIssue(`payload.skill_refs[${index}].asset_id`, 'must be a uuid asset id'),
+      ]);
+    }
     const key = `${ref.asset_id}@${ref.version}`;
     if (seen.has(key)) {
       throw apiError('CONTRACT_INVALID', 'duplicate skill reference', [

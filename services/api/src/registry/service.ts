@@ -39,6 +39,35 @@ export interface RegisterResult {
 
 const MAX_PAGE_LIMIT = 100;
 
+/**
+ * 并发注册同一 slug / 版本时，唯一约束是最后一道防线。
+ * 直接把底层唯一冲突暴露成 500 会让调用方无法区分「重名」与「服务故障」，
+ * 这里统一映射为 VERSION_EXISTS（409）。
+ */
+function mapUniqueViolation(error: unknown, fieldPath: string): never {
+  const code = (error as { code?: unknown }).code;
+  if (code === '23505') {
+    throw apiError('VERSION_EXISTS', 'this asset slug or version is already registered', [
+      fieldIssue(fieldPath, 'already registered'),
+    ]);
+  }
+  throw error;
+}
+
+/**
+ * 注册状态机由数据库触发器兜底（registered -> deprecated -> revoked，revoked 终态）。
+ * 非法迁移必须表现为 409 冲突，而不是 500。
+ */
+function mapIllegalStatusTransition(error: unknown, fieldPath: string): never {
+  const code = (error as { code?: unknown }).code;
+  if (code === '23001') {
+    throw apiError('STATE_CONFLICT', 'the requested registration status transition is not allowed', [
+      fieldIssue(fieldPath, 'revoked is terminal and statuses only move forward'),
+    ]);
+  }
+  throw error;
+}
+
 export function createRegistryService(deps: RegistryDeps) {
   const { pool, validator, concepts } = deps;
 
@@ -62,9 +91,19 @@ export function createRegistryService(deps: RegistryDeps) {
 
   async function resolveSkillRefs(
     client: PoolClient,
-    scopeId: string,
+    principal: Principal,
     payload: AgentPayload,
   ): Promise<void> {
+    // 绑定既要求 asset:bind（变更绑定关系的能力），也要求 asset:read（读取被绑定 Skill 的能力）。
+    // 服务端强制校验，页面权限表只是提示，不能作为唯一防线。
+    for (const permission of ['asset:bind', 'asset:read'] as const) {
+      if (!principal.permissions.includes(permission)) {
+        throw apiError('FORBIDDEN', `binding skills requires the ${permission} permission`, [
+          fieldIssue('payload.skill_refs', `missing permission: ${permission}`),
+        ]);
+      }
+    }
+
     // 按稳定顺序加行锁，避免多个 Agent 并发绑定同一批 Skill 时互相死锁。
     const ordered = payload.skill_refs
       .map((ref, index) => ({ ref, index }))
@@ -78,7 +117,7 @@ export function createRegistryService(deps: RegistryDeps) {
       assertVersionFormat(ref.version, `payload.skill_refs[${index}].version`);
       const row = await repo.findRevisionForUpdate(
         client,
-        scopeId,
+        principal.scope,
         ref.asset_id,
         ref.version,
       );
@@ -197,7 +236,7 @@ export function createRegistryService(deps: RegistryDeps) {
             createdBy: principal.subject,
           });
           if (!isSkill) {
-            await resolveSkillRefs(client, principal.scope, payload as AgentPayload);
+            await resolveSkillRefs(client, principal, payload as AgentPayload);
             await repo.insertBindings(
               client,
               principal.scope,
@@ -227,7 +266,7 @@ export function createRegistryService(deps: RegistryDeps) {
         body: outcome.response.body,
         replayed: outcome.replayed,
       };
-    });
+    }).catch((error: unknown) => mapUniqueViolation(error, 'slug'));
   }
 
   async function createVersion(
@@ -303,7 +342,7 @@ export function createRegistryService(deps: RegistryDeps) {
             createdBy: principal.subject,
           });
           if (!isSkill) {
-            await resolveSkillRefs(client, principal.scope, payload as AgentPayload);
+            await resolveSkillRefs(client, principal, payload as AgentPayload);
             await repo.insertBindings(
               client,
               principal.scope,
@@ -337,7 +376,7 @@ export function createRegistryService(deps: RegistryDeps) {
         body: outcome.response.body,
         replayed: outcome.replayed,
       };
-    });
+    }).catch((error: unknown) => mapUniqueViolation(error, 'version'));
   }
 
   async function list(
@@ -436,41 +475,52 @@ export function createRegistryService(deps: RegistryDeps) {
           state_revision: updated.state_revision,
         },
       };
-    });
+    }).catch((error: unknown) => mapIllegalStatusTransition(error, 'status'));
   }
 
+  /**
+   * 只校验不注册。
+   *
+   * 这个端点的语义是「把所有问题一次性列出来」，因此连信封层的错误也进问题列表，
+   * 始终返回 200；只有鉴权失败才会是 4xx。任何进不去校验器的失败都必须变成一条问题，
+   * 否则空问题列表会被读成「校验通过」。
+   */
   async function validateOnly(principal: Principal, body: unknown): Promise<unknown> {
-    assertVersionFormat((body as { version?: string } | null)?.version ?? '', 'version');
-    const request = validator.assert<RegisterAssetRequest>(
-      registerAssetRequestSchema,
-      body,
-    );
-    const isSkill = request.type === 'Skill';
     const issues: Array<{ field_path: string; reason: string }> = [];
-    let payload: SkillPayload | AgentPayload | null = null;
+    let request: RegisterAssetRequest | null = null;
     try {
-      payload = validator.assert<SkillPayload | AgentPayload>(
-        isSkill ? skillPayloadSchema : agentPayloadSchema,
-        request.payload,
-        'payload',
-      );
+      assertVersionFormat((body as { version?: string } | null)?.version ?? '', 'version');
+      request = validator.assert<RegisterAssetRequest>(registerAssetRequestSchema, body);
     } catch (error) {
-      const apiErr = error as { details?: Array<{ field_path: string; reason: string }> };
-      issues.push(...(apiErr.details ?? [{ field_path: 'payload', reason: 'invalid payload' }]));
+      issues.push(...toIssues(error, 'invalid request'));
     }
-    if (payload) {
+
+    if (request) {
+      const isSkill = request.type === 'Skill';
+      let payload: SkillPayload | AgentPayload | null = null;
       try {
-        if (isSkill) {
-          validateSkillPayload(payload as SkillPayload);
-          await validateSkillConcepts(payload as SkillPayload);
-        } else {
-          validateAgentPayload(payload as AgentPayload, principal.permissions);
-        }
+        payload = validator.assert<SkillPayload | AgentPayload>(
+          isSkill ? skillPayloadSchema : agentPayloadSchema,
+          request.payload,
+          'payload',
+        );
       } catch (error) {
-        const apiErr = error as { details?: Array<{ field_path: string; reason: string }> };
-        issues.push(...(apiErr.details ?? [{ field_path: 'payload', reason: 'invalid payload' }]));
+        issues.push(...toIssues(error, 'invalid payload'));
+      }
+      if (payload) {
+        try {
+          if (isSkill) {
+            validateSkillPayload(payload as SkillPayload);
+            await validateSkillConcepts(payload as SkillPayload);
+          } else {
+            validateAgentPayload(payload as AgentPayload, principal.permissions);
+          }
+        } catch (error) {
+          issues.push(...toIssues(error, 'invalid payload'));
+        }
       }
     }
+
     return {
       data: {
         passed: issues.length === 0,
@@ -493,6 +543,30 @@ function clampLimit(raw: string | undefined): number {
     throw apiError('BAD_REQUEST', 'limit must be an integer between 1 and 100');
   }
   return parsed;
+}
+
+/**
+ * 把校验异常转成问题列表。
+ *
+ * 细节为空的异常（例如本体不可达时的 `ONTO_UNAVAILABLE`）必须降级成一条问题，
+ * 否则问题列表为空会被读成「校验通过」——那是伪造成功。
+ */
+function toIssues(
+  error: unknown,
+  fallbackReason: string,
+): Array<{ field_path: string; reason: string }> {
+  const apiErr = error as {
+    code?: string;
+    message?: string;
+    details?: Array<{ field_path: string; reason: string }>;
+  };
+  if (apiErr.details && apiErr.details.length > 0) {
+    return apiErr.details;
+  }
+  const reason = apiErr.message
+    ? `${apiErr.code ? `${apiErr.code}: ` : ''}${apiErr.message}`
+    : fallbackReason;
+  return [{ field_path: 'payload', reason }];
 }
 
 export function encodeCursor(cursor: { assetId: string; version: string }): string {
