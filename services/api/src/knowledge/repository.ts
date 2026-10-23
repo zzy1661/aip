@@ -297,6 +297,52 @@ export async function updateKnowledgeState(
   patch: KnowledgeStatePatch,
   expectedStateRevision?: number,
 ): Promise<KnowledgeRow | null> {
+  return runKnowledgeStateUpdate(
+    client,
+    scopeId,
+    knowledgeId,
+    version,
+    patch,
+    expectedStateRevision,
+    false,
+  );
+}
+
+/**
+ * 更新知识版本状态，但撤回除外。
+ *
+ * 撤回是终态：已撤回的版本不能被任何后续流程改写回 ready/failed。
+ * 这里用条件更新把这条规则落到 SQL 上——命中 0 行说明这个版本已经被撤回，
+ * 调用方必须就此停止状态推进，而不是继续写。
+ */
+export async function updateKnowledgeStateUnlessWithdrawn(
+  client: QueryClient,
+  scopeId: string,
+  knowledgeId: string,
+  version: string,
+  patch: KnowledgeStatePatch,
+  expectedStateRevision?: number,
+): Promise<KnowledgeRow | null> {
+  return runKnowledgeStateUpdate(
+    client,
+    scopeId,
+    knowledgeId,
+    version,
+    patch,
+    expectedStateRevision,
+    true,
+  );
+}
+
+async function runKnowledgeStateUpdate(
+  client: QueryClient,
+  scopeId: string,
+  knowledgeId: string,
+  version: string,
+  patch: KnowledgeStatePatch,
+  expectedStateRevision: number | undefined,
+  guardWithdrawn: boolean,
+): Promise<KnowledgeRow | null> {
   const { rows } = await client.query<KnowledgeRow>(
     `UPDATE knowledge_revision
         SET status = COALESCE($4, status),
@@ -306,6 +352,7 @@ export async function updateKnowledgeState(
             state_revision = state_revision + CASE WHEN ($4 IS NOT NULL OR $5 IS NOT NULL) THEN 1 ELSE 0 END
       WHERE scope_id = $1 AND knowledge_id = $2 AND version = $3
         AND ($6::integer IS NULL OR state_revision = $6::integer)
+        AND ($9::boolean IS FALSE OR status <> 'withdrawn')
       RETURNING knowledge_id, version, review_status, status, state_revision, valid_from, valid_until`,
     [
       scopeId,
@@ -316,9 +363,25 @@ export async function updateKnowledgeState(
       expectedStateRevision ?? null,
       patch.validFrom ?? null,
       patch.validUntil ?? null,
+      guardWithdrawn,
     ],
   );
   return rows[0] ?? null;
+}
+
+/** 读取知识版本的当前状态；撤回判定必须以数据库里的事实为准。 */
+export async function findKnowledgeStatus(
+  client: QueryClient,
+  scopeId: string,
+  knowledgeId: string,
+  version: string,
+): Promise<string | null> {
+  const { rows } = await client.query<{ status: string }>(
+    `SELECT status FROM knowledge_revision
+      WHERE scope_id = $1 AND knowledge_id = $2 AND version = $3`,
+    [scopeId, knowledgeId, version],
+  );
+  return rows[0]?.status ?? null;
 }
 
 export async function insertReview(

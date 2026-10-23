@@ -465,13 +465,34 @@ export function createKnowledgeService(deps: KnowledgeDeps) {
       // 授权版本递增：撤回提交后开始的响应不能再读到旧的授权。
       await authz.bumpAuthzRevision(client, principal.scope);
 
+      // 撤回是终态：取消该版本在途的上传/解析/重建操作。
+      // 取消会递增 epoch，在途 worker 的后续写入命中 0 行并整体回滚，
+      // 迟到的完成分支因此无法把已撤回的版本改回 ready。
+      const inFlight = await opsRepo.findInFlightOperationsForKnowledge(
+        client,
+        principal.scope,
+        knowledgeId,
+        version,
+      );
+      await opsRepo.cancelOperations(
+        client,
+        principal.scope,
+        inFlight.map((row) => row.id),
+        'knowledge version was withdrawn',
+      );
+
       const indexMap = await repo.findIndexMapByDocumentForKnowledge(
         client,
         principal.scope,
         knowledgeId,
         version,
       );
-      if (indexMap) {
+      // 上游身份优先取索引映射；索引还没登记时（在途解析尚未完成），
+      // 从在途操作的进度里取，保证上游文档仍然会被删除。
+      const upstream = indexMap
+        ? { datasetId: indexMap.dataset_id, documentId: indexMap.document_id }
+        : upstreamIdentityFromOperations(inFlight);
+      if (upstream) {
         const operationId = await operations.createOperation(
           client,
           {
@@ -487,8 +508,8 @@ export function createKnowledgeService(deps: KnowledgeDeps) {
           stage: 'withdraw_pending',
           knowledgeId,
           knowledgeVersion: version,
-          datasetId: indexMap.dataset_id,
-          documentId: indexMap.document_id,
+          datasetId: upstream.datasetId,
+          documentId: upstream.documentId,
         });
       }
       return {
@@ -1010,6 +1031,24 @@ export function createKnowledgeService(deps: KnowledgeDeps) {
     getEvidence,
     getOperation,
   };
+}
+
+/**
+ * 从在途操作的进度里取上游身份（数据集 + 文档）。
+ *
+ * 撤回发生在解析登记索引之前时没有索引映射可用，
+ * 但上游文档可能已经存在：这时必须按上游身份删除，否则上游留下孤儿文档。
+ */
+function upstreamIdentityFromOperations(
+  rows: opsRepo.OperationRow[],
+): { datasetId: string; documentId: string } | null {
+  for (const row of rows) {
+    const progress = (row.result ?? {}) as { datasetId?: string; documentId?: string };
+    if (progress.datasetId && progress.documentId) {
+      return { datasetId: progress.datasetId, documentId: progress.documentId };
+    }
+  }
+  return null;
 }
 
 function parseValidityPoint(value: string | undefined, field: string): Date | null {
