@@ -598,6 +598,135 @@ paths:
         '500':
           $ref: '#/components/responses/InternalError'
 
+  /knowledge/{knowledgeId}/versions/{version}/reindex:
+    parameters:
+      - $ref: '#/components/parameters/KnowledgeId'
+      - $ref: '#/components/parameters/Version'
+      - $ref: '#/components/parameters/IdempotencyKey'
+    post:
+      tags: [knowledge]
+      summary: 重建知识版本的索引
+      description: |
+        对已就绪的知识版本触发一次索引重建。重建产生新的索引修订与新的索引映射，
+        旧索引修订与旧映射一律保留：重建前产生的 evidence 仍按自己的
+        `index_revision` 可读，重建不覆盖历史映射。重建不重新上传文件，
+        也不改变审核结论。
+      operationId: reindexKnowledgeVersion
+      x-permission: knowledge:manage
+      responses:
+        '202':
+          description: 已受理重建操作
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReindexEnvelope'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /knowledge/{knowledgeId}/versions/{version}/grants:
+    parameters:
+      - $ref: '#/components/parameters/KnowledgeId'
+      - $ref: '#/components/parameters/Version'
+    get:
+      tags: [knowledge]
+      summary: 列出知识版本的文档级授权
+      description: |
+        返回该知识版本上全部主体的文档级授权。授权是文档级而不是项目级的：
+        主体只能读到被显式授予的知识版本。
+      operationId: listDocumentGrants
+      x-permission: knowledge:manage
+      responses:
+        '200':
+          description: 授权列表
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentGrantListEnvelope'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    post:
+      tags: [knowledge]
+      summary: 授予知识版本的文档级授权
+      description: |
+        授予后目标主体可检索该知识版本；`can_download` 蕴含 `can_read`。
+        授权变更会递增授权版本，交付前会据此复核末次授权。
+      operationId: grantDocumentAccess
+      x-permission: knowledge:manage
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DocumentGrantRequest'
+      responses:
+        '200':
+          description: 已授予
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentGrantEnvelope'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /knowledge/{knowledgeId}/versions/{version}/grants/{subject}:
+    parameters:
+      - $ref: '#/components/parameters/KnowledgeId'
+      - $ref: '#/components/parameters/Version'
+      - $ref: '#/components/parameters/Subject'
+    delete:
+      tags: [knowledge]
+      summary: 撤销知识版本的文档级授权
+      description: |
+        撤销后目标主体立即检索不到该知识版本，也不可下载其来源文件。
+        撤销是显式状态（`can_read`/`can_download` 置 false），不是删除授权行。
+      operationId: revokeDocumentAccess
+      x-permission: knowledge:manage
+      responses:
+        '200':
+          description: 已撤销
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentGrantEnvelope'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
   /retrieval:
     post:
       tags: [knowledge]
@@ -804,6 +933,13 @@ components:
       schema:
         type: string
         pattern: '^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$'
+    Subject:
+      name: subject
+      in: path
+      required: true
+      description: 被授权的主体标识。
+      schema:
+        type: string
     IdempotencyKey:
       name: Idempotency-Key
       in: header
@@ -938,6 +1074,7 @@ components:
         - RAGFLOW_UNAVAILABLE
         - RAGFLOW_TIMEOUT
         - ONTO_UNAVAILABLE
+        - DB_UNAVAILABLE
         - INTERNAL_ERROR
 
     FieldIssue:
@@ -1828,6 +1965,110 @@ components:
       properties:
         data:
           $ref: '#/components/schemas/KnowledgeWithdrawData'
+        trace_id:
+          type: string
+
+    DocumentGrantRequest:
+      type: object
+      additionalProperties: false
+      required: [subject]
+      properties:
+        subject:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: 被授予的主体标识。
+        can_read:
+          type: boolean
+          default: true
+          description: 是否允许检索该知识版本；缺省为 true。
+        can_download:
+          type: boolean
+          default: false
+          description: 是否允许下载来源文件；缺省为 false，且蕴含 `can_read`。
+
+    DocumentGrantItem:
+      type: object
+      required: [knowledge_id, version, subject, can_read, can_download]
+      properties:
+        knowledge_id:
+          type: string
+        version:
+          type: string
+        subject:
+          type: string
+        can_read:
+          type: boolean
+        can_download:
+          type: boolean
+
+    DocumentGrantData:
+      type: object
+      required: [knowledge_id, version, subject, can_read, can_download, authz_revision]
+      properties:
+        knowledge_id:
+          type: string
+        version:
+          type: string
+        subject:
+          type: string
+        can_read:
+          type: boolean
+        can_download:
+          type: boolean
+        authz_revision:
+          type: integer
+          description: 授权版本；撤销后开始的响应不会使用旧授权。
+
+    DocumentGrantListData:
+      type: object
+      required: [knowledge_id, version, grants]
+      properties:
+        knowledge_id:
+          type: string
+        version:
+          type: string
+        grants:
+          type: array
+          items:
+            $ref: '#/components/schemas/DocumentGrantItem'
+
+    DocumentGrantEnvelope:
+      type: object
+      required: [data, trace_id]
+      properties:
+        data:
+          $ref: '#/components/schemas/DocumentGrantData'
+        trace_id:
+          type: string
+
+    DocumentGrantListEnvelope:
+      type: object
+      required: [data, trace_id]
+      properties:
+        data:
+          $ref: '#/components/schemas/DocumentGrantListData'
+        trace_id:
+          type: string
+
+    ReindexData:
+      type: object
+      required: [operation_id, knowledge_ref, version]
+      properties:
+        operation_id:
+          type: string
+          description: 索引重建操作登记号，用于查询操作状态。
+        knowledge_ref:
+          type: string
+        version:
+          type: string
+
+    ReindexEnvelope:
+      type: object
+      required: [data, trace_id]
+      properties:
+        data:
+          $ref: '#/components/schemas/ReindexData'
         trace_id:
           type: string
 
