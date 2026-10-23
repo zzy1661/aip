@@ -49,6 +49,13 @@
    实现：`services/api/src/util/hash.ts` 的 `newDatasetName`。
 8. **解析完成的判据是 `run == 'DONE'` 且 `progress >= 1` 且 `chunk_count > 0`**。
    `DONE` 但 chunk 数为 0 记为 `empty`，不记为成功。
+9. **按名称列数据集时，零命中返回 `code = 108`（PERMISSION_ERROR），不是空数组**。
+   消息形如 `User '<tenant_id>' lacks permission for dataset '<name>'`，
+   与「数据集存在但不属于本租户」是同一个响应。
+   适配器在**这个端点上**把 108 当成「本租户可见且同名的数据集为空」，
+   其余端点的 108 仍然是业务失败。
+   实现：`adapter.ts` 的 `parseEnvelopeAllowingEmptyNameLookup`；
+   常量：`errors.ts` 的 `RAGFLOW_PERMISSION_ERROR`。
 
 ---
 
@@ -89,6 +96,7 @@ GET /api/v1/datasets?name=<encodedName>&page=1&page_size=100
 ```
 
 响应 `data` 是**数组**，元素形如 `{ "id": "...", "name": "..." }`。
+零命中时上游返回 `code = 108` 而不是空数组（见 1.1 第 9 条），适配器把它投影为空列表。
 实现：`adapter.ts` 的 `listDatasetsByName`。
 用途：写操作响应丢失后按稳定名称核对，唯一命中才认领，命中 0 个或多个都不认领
 （`docs/decisions.md` D6）。
@@ -305,9 +313,10 @@ API Key **只从环境变量读取**，不写入仓库任何文件、不落库�
 6. **重跑契约层与真实联调层**：
    ```bash
    pnpm test:contract
-   RUN_REAL_RAGFLOW=1 pnpm test:ragflow:real
+   RUN_REAL_RAGFLOW=1 pnpm exec vitest run --config vitest.real.config.ts --reporter=verbose
    ```
    真实联调层在缺配置时必须**非零退出**，不允许把「被跳过」记成「联调通过」。
+   （`pnpm test:ragflow:real` 不转发 `--` 之后的参数，要带 `--reporter` 时用上面的 `pnpm exec` 形式。）
 7. **改 `RAGFLOW_API_VERSION` 的时机**：只有当新版本的契约已被本文件完整记录、
    且适配器已按新契约重写并通过契约层测试后，才允许改这个值。
 
@@ -317,7 +326,8 @@ API Key **只从环境变量读取**，不写入仓库任何文件、不落库�
 
 | 日期 | 契约版本 | 镜像 digest | 嵌入模型 / 修订 | 复核人 | 备注 |
 | --- | --- | --- | --- | --- | --- |
-| — | `v0.20.5` | 未锁定 | 未锁定 | — | 首批交付：仅完成静态契约与替身测试，真实集成 NOT RUN |
+| 2026-10-23 | `v0.20.5` | 未锁定 | 未锁定 | — | 首批交付：仅完成静态契约与替身测试，真实集成 NOT RUN |
+| 2026-10-24 | `v0.20.5` | `sha256:d95d0e4d…` | `BAAI/bge-large-zh-v1.5@BAAI` / `79e7739b…` | 本次交付 | 本地栈实测复核：八条陷阱逐条抓真实报文核对通过；**新增第 9 条**（按名称列数据集零命中返回 108），适配器、替身、契约测试与本文同批次变更；M26、M27 真实联调通过 |
 
 ---
 
@@ -331,3 +341,8 @@ API Key **只从环境变量读取**，不写入仓库任何文件、不落库�
 替身测试通过**不等于**与真实 RAGFlow 联调通过。真实联调由 `tests/real/` 覆盖，
 需要 `RUN_REAL_RAGFLOW=1` 与完整配置，缺配置时非零退出。
 两者的结果在交付说明中**分开汇报**。
+
+2026-10-24 起，两者都已执行：替身层 10 个文件 / 37 个用例通过，
+真实联调层 2 个文件 / 5 个用例在本地 RAGFlow v0.20.5 上通过。
+本次真实联调暴露了替身未覆盖的上游行为（第 1.1 节第 9 条），
+适配器、替身、契约测试与本文已同批次修正。

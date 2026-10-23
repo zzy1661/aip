@@ -361,7 +361,7 @@ cd ../.. && RUN_REAL_RAGFLOW=1 RAGFLOW_BASE_URL=http://127.0.0.1:19380 \
   RAGFLOW_EMBEDDING_REVISION=79e7739b6ab944e86d6171e44d24c997fc1e0116 \
   RAGFLOW_IMAGE_DIGEST=sha256:d95d0e4dc83a96fafffc5238f15c9192ed76ef2d320adb516f010bdc9876455a \
   RAGFLOW_SOURCE_SHA=e650f0d368b357b0b434b7838177435e3d217de3 \
-  pnpm test:ragflow:real
+  pnpm exec vitest run --config vitest.real.config.ts --reporter=verbose
 
 # 5. 停止（保留数据卷）
 docker compose --env-file .env -f compose.yaml down
@@ -373,4 +373,18 @@ docker compose --env-file .env -f compose.yaml down
 **镜像架构**：RAGFlow 官方镜像只有 amd64，本机是 arm64，因此 RAGFlow 本体跑在
 Docker Desktop 的 x86 模拟层下，嵌入推理也在模拟层里用 CPU 完成，解析明显偏慢；
 解析等待上限用 `AIP_REAL_PARSE_TIMEOUT_MS` 调大（默认 600000 毫秒）。
+
+**命令形式**：`pnpm test:ragflow:real` 不转发 `--` 之后的参数，需要 `--reporter=verbose`
+时用上面的 `pnpm exec vitest run --config vitest.real.config.ts --reporter=verbose`。
+
+**配置项清单**（真实联调层缺任何一项都以非零退出并列出缺失名称）：
+`RUN_REAL_RAGFLOW`、`RAGFLOW_BASE_URL`、`RAGFLOW_API_KEY`、`RAGFLOW_API_VERSION`、
+`RAGFLOW_TEST_PROJECT_ID`、`RAGFLOW_EMBEDDING_MODEL`、`RAGFLOW_EMBEDDING_REVISION`、
+`RAGFLOW_IMAGE_DIGEST`、`RAGFLOW_SOURCE_SHA`；
+可选：`RAGFLOW_PARSER_CONFIG_JSON`（不填则由上游用默认解析配置）、
+`AIP_REAL_DATABASE_URL`、`AIP_REAL_PARSE_TIMEOUT_MS`。
+
+**上游已知行为**：v0.20.5 的「按名称列数据集」在零命中时返回 `code=108`
+（PERMISSION_ERROR），不是空数组；适配器在该端点上把它当成「未命中」。
+详见 `docs/ragflow-lock.md` 第 1.1 节第 9 条。
 

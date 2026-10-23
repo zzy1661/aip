@@ -16,8 +16,10 @@
 | --- | --- |
 | `compose.yaml` | 栈定义，镜像全部按 digest 固定 |
 | `init.sql` | 与官方同版本的建库脚本，不含凭据 |
+| `create-local-account.sh` | 注册本地账号并签发 API Key（结果写入 `.env.api-key`） |
 | `.env.example` | 环境变量模板（占位符，可提交） |
 | `.env` | 本地真实取值，**已被 `.gitignore` 忽略，禁止提交** |
+| `.env.api-key` | 签发出来的 API Key，**已被 `.gitignore` 忽略，禁止提交** |
 
 ## 首次准备
 
@@ -94,3 +96,32 @@ quay.io/minio/minio:RELEASE.2023-12-20T01-00-02Z@sha256:5702ea3614203466e8e66164
 RAGFlow 的 `/api/v1/**` 接口用 API Key 鉴权。本栈开启了注册
 （`REGISTER_ENABLED=1`），创建流程见 `docs/ragflow-lock.md` 的「本地栈 API Key 获取」一节。
 API Key **只从环境变量读取**，不要写进仓库里的任何文件。
+
+```bash
+cd deploy/ragflow
+RAGFLOW_ACCOUNT_PASSWORD='<本地口令>' ./create-local-account.sh
+# API Key 写入 ./.env.api-key（已被 .gitignore 忽略），脚本不打印取值
+```
+
+## 跑真实联调层
+
+```bash
+cd ../..
+set -a; . deploy/ragflow/.env.api-key; set +a
+RUN_REAL_RAGFLOW=1 RAGFLOW_BASE_URL=http://127.0.0.1:19380 \
+  RAGFLOW_API_VERSION=v0.20.5 RAGFLOW_TEST_PROJECT_ID=<aip 项目 id> \
+  RAGFLOW_EMBEDDING_MODEL='BAAI/bge-large-zh-v1.5@BAAI' \
+  RAGFLOW_EMBEDDING_REVISION=79e7739b6ab944e86d6171e44d24c997fc1e0116 \
+  RAGFLOW_IMAGE_DIGEST=sha256:d95d0e4dc83a96fafffc5238f15c9192ed76ef2d320adb516f010bdc9876455a \
+  RAGFLOW_SOURCE_SHA=e650f0d368b357b0b434b7838177435e3d217de3 \
+  pnpm exec vitest run --config vitest.real.config.ts --reporter=verbose
+```
+
+2026-10-24 已用本栈跑通：2 个文件 / 5 个用例全部通过（M26 闭环、M27 隔离失败）。
+
+## 上游已知行为
+
+v0.20.5 的「按名称列数据集」在零命中时返回 `code=108`（PERMISSION_ERROR）而不是空数组，
+消息形如 `User '<tenant>' lacks permission for dataset '<name>'`。
+aip 适配器只在**这个端点**上把 108 当成「未命中」，其余端点的 108 仍是业务失败。
+详见 `docs/ragflow-lock.md` 第 1.1 节第 9 条。
