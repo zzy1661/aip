@@ -55,12 +55,33 @@ export interface RagFlowAdapter {
 function assertOk(status: number): void {
   if (status === 200 || status === 201) return;
   if (status === 401 || status === 403) {
-    throw new RagFlowUnavailableError('upstream rejected the platform credential', false);
+    // 上游明确回了凭据错误：重试没有意义，属于配置问题。
+    throw new RagFlowUnavailableError(
+      'upstream rejected the platform credential',
+      'credential_rejected',
+      false,
+    );
   }
   if (status >= 500) {
-    throw new RagFlowUnavailableError(`upstream returned ${status}`, false);
+    // 上游回了 5xx：请求已经送达，但没有生效，是可重试的瞬时故障。
+    throw new RagFlowUnavailableError(`upstream returned ${status}`, 'upstream_unavailable', false);
   }
   throw new RagFlowProtocolError(`upstream returned ${status}`);
+}
+
+/**
+ * 标记异常来自写请求。
+ *
+ * 写请求失败时远端可能已经生效：调用方据此把操作转入「结果未知」，
+ * 而不是直接重发同一个写请求。
+ */
+async function asWrite<T>(run: () => Promise<T>): Promise<T> {
+  try {
+    return await run();
+  } catch (error) {
+    if (error instanceof RagFlowUnavailableError) error.writeAttempt = true;
+    throw error;
+  }
 }
 
 export function createRagFlowAdapter(options: RagFlowAdapterOptions): RagFlowAdapter {
@@ -77,47 +98,53 @@ export function createRagFlowAdapter(options: RagFlowAdapterOptions): RagFlowAda
       if (options.embeddingModel) body.embedding_model = options.embeddingModel;
       if (Object.keys(options.parserConfig).length > 0) body.parser_config = options.parserConfig;
 
-      const response = await http.execute({
-        method: 'POST',
-        path: 'datasets',
-        idempotentRead: false,
-        json: body,
+      return asWrite(async () => {
+        const response = await http.execute({
+          method: 'POST',
+          path: 'datasets',
+          idempotentRead: false,
+          json: body,
+        });
+        assertOk(response.status);
+        const envelope = parseEnvelope(response.body);
+        return { datasetId: parseCreatedDataset(envelope.data).id };
       });
-      assertOk(response.status);
-      const envelope = parseEnvelope(response.body);
-      return { datasetId: parseCreatedDataset(envelope.data).id };
     },
 
     async uploadDocument(input) {
-      const response = await http.execute({
-        method: 'POST',
-        path: `datasets/${encodeURIComponent(input.datasetId)}/documents`,
-        idempotentRead: false,
-        multipart: {
-          name: 'file',
-          filename: input.filename,
-          contentType: input.contentType,
-          content: input.content,
-        },
+      return asWrite(async () => {
+        const response = await http.execute({
+          method: 'POST',
+          path: `datasets/${encodeURIComponent(input.datasetId)}/documents`,
+          idempotentRead: false,
+          multipart: {
+            name: 'file',
+            filename: input.filename,
+            contentType: input.contentType,
+            content: input.content,
+          },
+        });
+        assertOk(response.status);
+        const envelope = parseEnvelope(response.body);
+        const document = parseUploadedDocuments(envelope.data, input.datasetId);
+        return { documentId: document.id };
       });
-      assertOk(response.status);
-      const envelope = parseEnvelope(response.body);
-      const document = parseUploadedDocuments(envelope.data, input.datasetId);
-      return { documentId: document.id };
     },
 
     async startParse(input) {
       if (input.documentIds.length === 0) {
         throw new RagFlowProtocolError('parse requires at least one document id');
       }
-      const response = await http.execute({
-        method: 'POST',
-        path: `datasets/${encodeURIComponent(input.datasetId)}/chunks`,
-        idempotentRead: false,
-        json: { document_ids: input.documentIds },
+      await asWrite(async () => {
+        const response = await http.execute({
+          method: 'POST',
+          path: `datasets/${encodeURIComponent(input.datasetId)}/chunks`,
+          idempotentRead: false,
+          json: { document_ids: input.documentIds },
+        });
+        assertOk(response.status);
+        parseEnvelope(response.body);
       });
-      assertOk(response.status);
-      parseEnvelope(response.body);
     },
 
     async getDocumentStatus(input) {
@@ -167,12 +194,14 @@ export function createRagFlowAdapter(options: RagFlowAdapterOptions): RagFlowAda
     },
 
     async deleteDocument(input) {
-      const response = await http.execute({
-        method: 'DELETE',
-        path: `datasets/${encodeURIComponent(input.datasetId)}/documents/${encodeURIComponent(input.documentId)}`,
-        idempotentRead: false,
+      await asWrite(async () => {
+        const response = await http.execute({
+          method: 'DELETE',
+          path: `datasets/${encodeURIComponent(input.datasetId)}/documents/${encodeURIComponent(input.documentId)}`,
+          idempotentRead: false,
+        });
+        assertOk(response.status);
       });
-      assertOk(response.status);
     },
 
     async listDatasetsByName(name) {

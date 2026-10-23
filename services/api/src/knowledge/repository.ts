@@ -267,9 +267,13 @@ export async function findKnowledgeBySourceFile(
   scopeId: string,
   fileId: string,
   version: string,
-): Promise<{ knowledge_id: string; version: string } | null> {
-  const { rows } = await client.query<{ knowledge_id: string; version: string }>(
-    `SELECT knowledge_id, version FROM knowledge_revision
+): Promise<{ knowledge_id: string; version: string; status: string } | null> {
+  const { rows } = await client.query<{
+    knowledge_id: string;
+    version: string;
+    status: string;
+  }>(
+    `SELECT knowledge_id, version, status FROM knowledge_revision
       WHERE scope_id = $1 AND source_file_id = $2 AND source_file_version = $3
       ORDER BY created_at DESC LIMIT 1`,
     [scopeId, fileId, version],
@@ -486,7 +490,9 @@ export async function findIndexMapByDocument(
        JOIN knowledge_revision kr
          ON kr.scope_id = ir.scope_id AND kr.knowledge_id = ir.knowledge_id
         AND kr.version = ir.knowledge_version
-      WHERE kim.scope_id = $1 AND kim.document_id = $2`,
+      WHERE kim.scope_id = $1 AND kim.document_id = $2
+      ORDER BY ir.created_at DESC, ir.id DESC
+      LIMIT 1`,
     [scopeId, documentId],
   );
   return rows[0] ?? null;
@@ -507,10 +513,66 @@ export async function findIndexMapByDocumentForKnowledge(
        FROM knowledge_index_map kim
        JOIN index_revision ir
          ON ir.scope_id = kim.scope_id AND ir.id = kim.index_revision
-      WHERE kim.scope_id = $1 AND ir.knowledge_id = $2 AND ir.knowledge_version = $3`,
+      WHERE kim.scope_id = $1 AND ir.knowledge_id = $2 AND ir.knowledge_version = $3
+      ORDER BY ir.created_at DESC, ir.id DESC
+      LIMIT 1`,
     [scopeId, knowledgeId, knowledgeVersion],
   );
   return rows[0] ?? null;
+}
+
+/**
+ * 某个知识版本的全部索引修订，按创建时间倒序。
+ *
+ * 索引重建会产生新的索引修订，旧修订必须保留：旧 evidence 通过自己的
+ * index_revision 继续可读，重建不会覆盖历史。
+ */
+export async function listIndexRevisions(
+  client: QueryClient,
+  scopeId: string,
+  knowledgeId: string,
+  knowledgeVersion: string,
+): Promise<
+  Array<{
+    id: string;
+    status: string;
+    chunk_count: number | null;
+    parser_hash: string;
+    embedding_revision: string;
+    created_at: Date;
+  }>
+> {
+  const { rows } = await client.query<{
+    id: string;
+    status: string;
+    chunk_count: number | null;
+    parser_hash: string;
+    embedding_revision: string;
+    created_at: Date;
+  }>(
+    `SELECT id, status, chunk_count, parser_hash, embedding_revision, created_at
+       FROM index_revision
+      WHERE scope_id = $1 AND knowledge_id = $2 AND knowledge_version = $3
+      ORDER BY created_at DESC, id DESC`,
+    [scopeId, knowledgeId, knowledgeVersion],
+  );
+  return rows;
+}
+
+/** 把某个知识版本的历史索引修订标为已被取代；只改状态，不删行。 */
+export async function supersedeIndexRevisions(
+  client: QueryClient,
+  scopeId: string,
+  knowledgeId: string,
+  knowledgeVersion: string,
+  keepIndexRevision: string,
+): Promise<void> {
+  await client.query(
+    `UPDATE index_revision SET status = 'superseded'
+      WHERE scope_id = $1 AND knowledge_id = $2 AND knowledge_version = $3
+        AND id <> $4 AND status <> 'superseded'`,
+    [scopeId, knowledgeId, knowledgeVersion, keepIndexRevision],
+  );
 }
 
 export async function insertEvidence(

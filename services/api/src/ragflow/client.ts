@@ -57,6 +57,16 @@ const MAX_RESPONSE_BYTES = 5 * 1024 * 1024;
 
 const RETRYABLE_STATUS = new Set([429, 502, 503, 504]);
 
+/** 这些错误码只可能发生在连接建立之前：请求确定没有送达上游。 */
+const NOT_DELIVERED_ERROR_CODES = new Set([
+  'ENOTFOUND',
+  'ECONNREFUSED',
+  'EAI_AGAIN',
+  'EHOSTUNREACH',
+  'ENETUNREACH',
+  'EADDRNOTAVAIL',
+]);
+
 function defaultSleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -88,6 +98,9 @@ export const nodeTransport: Transport = (request) =>
     const remaining = (): number =>
       deadline === undefined ? Number.POSITIVE_INFINITY : Math.max(1, deadline - Date.now());
 
+    let connected = false;
+    let readTimer: NodeJS.Timeout | undefined;
+
     const clientRequest = agent.request(
       url,
       { method: request.method, headers: request.headers },
@@ -105,6 +118,7 @@ export const nodeTransport: Transport = (request) =>
         });
         response.on('end', () => {
           if (readTimer) clearTimeout(readTimer);
+          if (attemptTimer) clearTimeout(attemptTimer);
           resolve({
             status: response.statusCode ?? 0,
             headers: response.headers,
@@ -116,27 +130,59 @@ export const nodeTransport: Transport = (request) =>
 
     const connectTimer = setTimeout(() => {
       clientRequest.destroy();
-      reject(new RagFlowUnavailableError('connect timeout', true));
+      // 连接阶段就超时：请求确定没有送达上游，可以安全重试。
+      reject(new RagFlowUnavailableError('connect timeout', 'not_delivered', true));
     }, Math.min(request.connectTimeoutMs, remaining()));
-    let readTimer: NodeJS.Timeout | undefined;
+
+    // 单次尝试的总时间上限独立计时。上游接受连接却一直不回包时，
+    // 连接计时器已清除、读取计时器还没建立，只有这个计时器能兜底；
+    // 否则整次调用会无限挂起，只读总预算形同虚设。
+    const attemptTimer =
+      deadline === undefined
+        ? undefined
+        : setTimeout(() => {
+            clientRequest.destroy();
+            reject(
+              new RagFlowUnavailableError(
+                'attempt timeout',
+                connected ? 'delivered_unknown' : 'not_delivered',
+                true,
+              ),
+            );
+          }, Math.max(1, deadline - Date.now()));
 
     clientRequest.on('socket', (socket) => {
-      socket.on('connect', () => clearTimeout(connectTimer));
+      // 复用的 keep-alive 连接不会再次触发 connect 事件。
+      if (!socket.connecting) {
+        connected = true;
+        clearTimeout(connectTimer);
+      }
+      socket.on('connect', () => {
+        connected = true;
+        clearTimeout(connectTimer);
+      });
     });
     clientRequest.on('response', () => {
       readTimer = setTimeout(() => {
         clientRequest.destroy();
-        reject(new RagFlowUnavailableError('read timeout', true));
+        // 读超时：请求已被上游接收，回包没有回来。写操作禁止盲重发。
+        reject(new RagFlowUnavailableError('read timeout', 'delivered_unknown', true));
       }, Math.min(request.readTimeoutMs, remaining()));
     });
     clientRequest.on('error', (error: NodeJS.ErrnoException) => {
       clearTimeout(connectTimer);
       if (readTimer) clearTimeout(readTimer);
+      if (attemptTimer) clearTimeout(attemptTimer);
       if (error.name === 'AbortError') {
-        reject(new RagFlowUnavailableError('request aborted', true));
+        reject(new RagFlowUnavailableError('request aborted', 'delivered_unknown', true));
         return;
       }
-      reject(new RagFlowUnavailableError('connection failed', false));
+      // 明确的连接阶段错误码说明请求没有送达；其余（连接重置、管道断开）
+      // 可能发生在请求已经发出之后，只能按「送达未知」处理。
+      const kind = NOT_DELIVERED_ERROR_CODES.has(error.code ?? '')
+        ? 'not_delivered'
+        : 'delivered_unknown';
+      reject(new RagFlowUnavailableError('connection failed', kind, false));
     });
 
     if (request.body) clientRequest.write(request.body);
@@ -210,7 +256,11 @@ export function createRagFlowHttpClient(options: RagFlowHttpOptions): RagFlowHtt
 
   async function execute(request: RagFlowRequest): Promise<RagFlowHttpResponse> {
     if (!request.idempotentRead) {
-      const raw = await transport(buildRawRequest(request));
+      const raw = await transport(buildRawRequest(request)).catch((error: unknown) => {
+        // 写请求一旦送达就可能已经生效，调用方必须据此禁止重发。
+        if (error instanceof RagFlowUnavailableError) error.writeAttempt = true;
+        throw error;
+      });
       return { status: raw.status, body: parseBody(raw) };
     }
 
@@ -220,7 +270,11 @@ export function createRagFlowHttpClient(options: RagFlowHttpOptions): RagFlowHtt
     for (let index = 0; index < options.maxReadAttempts; index += 1) {
       const remaining = deadline - Date.now();
       if (remaining <= 0) {
-        throw new RagFlowUnavailableError('read retry budget exhausted', true);
+        throw new RagFlowUnavailableError(
+          'read retry budget exhausted',
+          'upstream_unavailable',
+          true,
+        );
       }
       // 单次尝试的耗时分到剩余预算里，保证「多次尝试 + 退避」不超过总预算。
       const raw = await transport({
@@ -234,7 +288,11 @@ export function createRagFlowHttpClient(options: RagFlowHttpOptions): RagFlowHtt
         if (!RETRYABLE_STATUS.has(raw.status)) {
           return { status: raw.status, body: parseBody(raw) };
         }
-        lastError = new RagFlowUnavailableError(`upstream returned ${raw.status}`, false);
+        lastError = new RagFlowUnavailableError(
+          `upstream returned ${raw.status}`,
+          'upstream_unavailable',
+          false,
+        );
       }
 
       const delay = retryAfterMs(raw, index);
@@ -243,7 +301,7 @@ export function createRagFlowHttpClient(options: RagFlowHttpOptions): RagFlowHtt
     }
     throw lastError instanceof Error
       ? lastError
-      : new RagFlowUnavailableError('read failed', false);
+      : new RagFlowUnavailableError('read failed', 'upstream_unavailable', false);
   }
 
   return { execute };
