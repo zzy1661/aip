@@ -152,15 +152,17 @@ export const nodeTransport: Transport = (request) =>
           }, Math.max(1, deadline - Date.now()));
 
     clientRequest.on('socket', (socket) => {
-      // 复用的 keep-alive 连接不会再次触发 connect 事件。
-      if (!socket.connecting) {
-        connected = true;
-        clearTimeout(connectTimer);
+      if (socket.connecting) {
+        socket.once('connect', () => {
+          connected = true;
+          clearTimeout(connectTimer);
+        });
+        return;
       }
-      socket.on('connect', () => {
-        connected = true;
-        clearTimeout(connectTimer);
-      });
+      // 复用的 keep-alive 连接不会再次触发 connect 事件，
+      // 连接计时器必须在这里清掉，否则它会在连接早已建立之后才超时。
+      connected = true;
+      clearTimeout(connectTimer);
     });
     clientRequest.on('response', () => {
       readTimer = setTimeout(() => {
