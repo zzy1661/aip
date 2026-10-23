@@ -715,6 +715,11 @@ export function createKnowledgeService(deps: KnowledgeDeps) {
     if (!knowledge) {
       throw apiError('NOT_FOUND', 'source file not found');
     }
+    // 撤回是本地终态：撤回后来源文件立即不可下载，
+    // 不等上游删索引完成，也不因为文档级授权还在就放行。
+    if (knowledge.status === 'withdrawn') {
+      throw apiError('NOT_FOUND', 'source file not found');
+    }
     const allowed = await authz.filterReadable(pool, principal.scope, principal.subject, [
       knowledge.knowledge_id,
     ]);
