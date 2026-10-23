@@ -2,13 +2,15 @@
   "name": "aip",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "description": "智能研发平台首批：Skill/Agent 注册与 RAGFlow 知识库闭环",
   "engines": {
     "node": ">=22.0.0 <23"
   },
   "packageManager": "pnpm@10.28.2",
   "scripts": {
-    "typecheck": "pnpm -r --filter @aip/contracts --filter @aip/api --filter @aip/worker run typecheck",
+    "typecheck": "pnpm -r --filter @aip/contracts --filter @aip/api --filter @aip/worker run typecheck && tsc -p tsconfig.tests.json --noEmit",
+    "typecheck:tests": "tsc -p tsconfig.tests.json --noEmit",
     "build": "pnpm -r --filter @aip/contracts --filter @aip/api --filter @aip/worker run build",
     "test:unit": "vitest run --config vitest.unit.config.ts",
     "test:db": "vitest run --config vitest.db.config.ts",
@@ -21,7 +23,11 @@
   },
   "devDependencies": {
     "@types/node": "26.6.5",
+    "@types/pg": "8.23.1",
+    "jose": "6.2.13",
+    "pg": "8.23.1",
     "typescript": "5.9.3",
-    "vitest": "4.1.12"
+    "vitest": "4.1.12",
+    "yaml": "^2.9.1"
   }
 }

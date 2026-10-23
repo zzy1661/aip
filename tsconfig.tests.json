@@ -1,0 +1,19 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "baseUrl": ".",
+    "typeRoots": ["./node_modules/@types", "./services/api/node_modules/@types"],
+    "types": ["node", "pg"],
+    "paths": {
+      "@aip/contracts": ["./packages/contracts/src/index.ts"],
+      "@aip/api": ["./services/api/src/index.ts"]
+    }
+  },
+  "include": [
+    "tests/**/*.ts",
+    "vitest.shared.ts",
+    "vitest.*.config.ts",
+    "services/api/src/types/express.d.ts"
+  ]
+}
