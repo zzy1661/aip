@@ -57,4 +57,9 @@ if (!output.includes('required configuration is missing')) {
   process.exit(1);
 }
 
-console.log(`real layer exits non-zero without configuration (missing: ${missing.join(', ')})`);
+// 真实联调没有证据 = 这道门没过：必须以非零退出，
+// 否则只看退出码的 CI 会把「没跑」判成「跑通」。
+console.error(
+  `real layer exits non-zero without configuration (missing: ${missing.join(', ')})`,
+);
+process.exit(1);
