@@ -203,6 +203,15 @@ describe('M23 概念契约校验门', () => {
     });
     expect(response.status).toBe(201);
     expect(validatedRefs.length).toBe(before);
+
+    // 详情要标明「未作概念语义验证」，不能让人误以为已经过本体校验。
+    const detail = await harness.request({
+      method: 'GET',
+      path: `/assets/${response.body.data.asset_id}/versions/1.0.0`,
+      token,
+    });
+    expect(detail.status).toBe(200);
+    expect(detail.body.data.payload.concept_validation).toBe('not_requested');
   });
 
   it('数值契约缺少概念引用时直接拒绝', async () => {

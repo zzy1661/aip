@@ -1,9 +1,11 @@
 import { randomUUID } from 'node:crypto';
 import pg from 'pg';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { FileStore } from '@aip/api';
 import { createHarness, type Harness } from '../helpers/app.js';
 import { ALL_PERMISSIONS } from '../helpers/auth.js';
 import { registerSkillRequest } from '../helpers/fixtures.js';
+import { createReadyKnowledgeBase, uploadSampleDocument } from '../helpers/flow.js';
 
 const { Pool: PgPool } = pg;
 const ADMIN_URL = 'postgres://aip_test:aip_test_pw@127.0.0.1:55433/aip_test';
@@ -163,5 +165,44 @@ describe('M02 项目隔离', () => {
       token: tokenB,
     });
     expect(operationB.status).toBe(404);
+  });
+
+  it('文件存储路径按项目隔离，同一文件标识在两个项目落在不同路径', async () => {
+    const { kbId } = await createReadyKnowledgeBase(projectA, tokenA, 'M02 文件隔离');
+    const uploaded = await uploadSampleDocument(projectA, tokenA, kbId, { marker: 'M02-FILE' });
+    await projectA.advanceAll();
+
+    const stored = await projectA.pool.query<{ storage_key: string }>(
+      `SELECT storage_key FROM source_file_revision
+        WHERE scope_id = $1 AND id = $2 AND version = $3`,
+      [projectA.projectId, uploaded.sourceRef, uploaded.version],
+    );
+    expect(stored.rows).toHaveLength(1);
+    const storageKey = stored.rows[0]!.storage_key;
+
+    // 存储键由项目作用域派生：A 的文件落在 A 的前缀下。
+    expect(storageKey).toBe(
+      new FileStore('/tmp/aip-isolation-path-probe').buildStorageKey(
+        'project-a',
+        uploaded.sourceRef,
+        uploaded.version,
+      ),
+    );
+    // 同一个文件标识在 B 项目里必须落在另一个路径，不能命中 A 的文件。
+    expect(
+      new FileStore('/tmp/aip-isolation-path-probe').buildStorageKey(
+        'project-b',
+        uploaded.sourceRef,
+        uploaded.version,
+      ),
+    ).not.toBe(storageKey);
+
+    // B 的令牌下载 A 的来源文件按资源缺失处理。
+    const download = await projectB.request({
+      method: 'GET',
+      path: `/sources/${uploaded.sourceRef}/versions/${uploaded.version}/download`,
+      token: tokenB,
+    });
+    expect(download.status).toBe(404);
   });
 });
