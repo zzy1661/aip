@@ -238,18 +238,49 @@ DELETE /api/v1/datasets/{datasetId}/documents/{documentId}
 | 锁定项 | 环境变量 | 当前值 | 说明 |
 | --- | --- | --- | --- |
 | 契约版本 | `RAGFLOW_API_VERSION` | `v0.20.5` | 非此值启动失败 |
-| 镜像 digest | `RAGFLOW_IMAGE_DIGEST` | **未锁定** | 生产落地前必须补齐并记录到本文件第 5 节 |
-| 契约来源摘要 | `RAGFLOW_SOURCE_SHA` | **未锁定** | 缺省时 `index_revision.parser_hash` 记为 `unpinned` |
-| 嵌入模型 | `RAGFLOW_EMBEDDING_MODEL` | **未锁定** | 生产必须固定到具体模型名 |
-| 嵌入模型修订 | `RAGFLOW_EMBEDDING_REVISION` | **未锁定** | 生产必须固定到具体修订号，否则 `embedding_revision` 记为 `unversioned` |
+| 镜像 digest | `RAGFLOW_IMAGE_DIGEST` | `sha256:d95d0e4dc83a96fafffc5238f15c9192ed76ef2d320adb516f010bdc9876455a` | `infiniflow/ragflow:v0.20.5`，本地栈实测拉取的 manifest digest |
+| 契约来源摘要 | `RAGFLOW_SOURCE_SHA` | `e650f0d368b357b0b434b7838177435e3d217de3` | 上游 `infiniflow/ragflow` 的 `v0.20.5` tag 指向的提交 |
+| 嵌入模型 | `RAGFLOW_EMBEDDING_MODEL` | `BAAI/bge-large-zh-v1.5@BAAI` | 完整版镜像内置，随镜像一起分发，不需要外部向量服务 |
+| 嵌入模型修订 | `RAGFLOW_EMBEDDING_REVISION` | `79e7739b6ab944e86d6171e44d24c997fc1e0116` | 该模型在 HuggingFace 仓库上的 revision |
 | 分块方法 | `RAGFLOW_CHUNK_METHOD` | `naive`（默认值） | 生产建议显式设置 |
 | 解析器配置 | `RAGFLOW_PARSER_CONFIG_JSON` | 空 | 生产建议显式固定 |
 
-> **未锁定项清单**（本批交付时全部为「未锁定」）：
-> `RAGFLOW_IMAGE_DIGEST`、`RAGFLOW_SOURCE_SHA`、`RAGFLOW_EMBEDDING_MODEL`、
-> `RAGFLOW_EMBEDDING_REVISION`。
-> 原因是本批**没有真实 RAGFlow 环境**，无法取得真实 digest 与模型修订号，
-> 不得编造。这四项的缺失直接导致真实集成项（M26/M27）无法验收。
+> **首批交付时**这四项曾全部为「未锁定」：当时没有真实 RAGFlow 环境，
+> 无法取得真实 digest 与模型修订号，按约定记为未锁定而不是编造。
+> 2026-10-24 起，本地栈跑起来后，四项都已按实测值锁定（见上表与 3.1）。
+
+### 3.1 本地栈实测锁定值（2026-10-24）
+
+上面的四个「未锁定」项由本地 `deploy/ragflow/` 栈实测取得，值写进了
+`deploy/ragflow/compose.yaml`（镜像按 digest 固定）与联调用的环境变量文件。
+取值的来源逐条说明：
+
+| 项 | 取值来源 |
+| --- | --- |
+| 镜像 digest | `docker buildx imagetools inspect infiniflow/ragflow:v0.20.5` 报出的 manifest digest |
+| 契约来源摘要 | GitHub `refs/tags/v0.20.5` 指向的 commit |
+| 嵌入模型 | 完整版镜像 `/ragflow/conf/service_conf.yaml` 的 `user_default_llm.default_models.embedding_model` 与 `api/settings.py` 的 `BUILTIN_EMBEDDING_MODELS` |
+| 嵌入模型修订 | HuggingFace `BAAI/bge-large-zh-v1.5` 的 `sha` |
+
+镜像只有 **amd64** 一种架构，本机是 arm64，因此 RAGFlow 本体跑在 x86 模拟层下；
+嵌入模型的推理也在模拟层里用 CPU 完成，解析耗时明显高于原生机器。
+
+### 3.2 本地栈 API Key 获取
+
+RAGFlow 的 `/api/v1/**` 用 API Key 鉴权；`/v1/user/**` 与 `/v1/system/**`
+走 Flask 会话。完整流程（注册 → 登录 → 签发 token）由
+`deploy/ragflow/create-local-account.sh` 封装：
+
+```bash
+cd deploy/ragflow
+RAGFLOW_ACCOUNT_PASSWORD='<本地口令>' ./create-local-account.sh
+# API Key 写入 ./.env.api-key（已被 .gitignore 忽略），不打印到终端
+```
+
+账号口令在传输前用 RSA/PKCS1v1.5 加密，服务端用 `conf/private.pem` 的公钥
+（`conf/public.pem`）解密，因此脚本从容器里取公钥在本地加密。
+
+API Key **只从环境变量读取**，不写入仓库任何文件、不落库、不进日志。
 
 ---
 

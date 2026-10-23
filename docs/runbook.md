@@ -332,3 +332,45 @@ pnpm test:ragflow:real -- --reporter=verbose
 - **数据回滚**：本批迁移只增不改、向前兼容，因此代码回滚到迁移之前不会因缺列而失败；已写入的数据保留。
 - **迁移不可逆项**：`006_review_validity.sql` 会把 `knowledge_revision.applies_to` 的空对象回填为 `{"mode":"unconditional"}`。这是把既有语义显式化，不改变可见范围，但属于数据写入，撤销需要显式 `UPDATE` 回滚。
 - **停机顺序**：先停 Worker（`SIGTERM`），再停 API（`SIGTERM`）。两者都实现了 `SIGTERM`/`SIGINT` 优雅退出：停止接单、关闭连接池。
+
+## 10. 本地 RAGFlow 栈（真实联调用）
+
+`deploy/ragflow/` 下有一套独立的本地 RAGFlow v0.20.5 栈，用于跑第 8 节的真实联调层。
+它与 aip 自身的服务栈完全隔离（独立 compose project、独立数据卷与网络），
+端口只绑定 `127.0.0.1`。详细说明见 `deploy/ragflow/README.md`。
+
+```bash
+cd deploy/ragflow
+
+# 1. 准备环境变量（.env 已被 .gitignore 忽略，禁止提交）
+cp .env.example .env
+# 把 .env 里的 <replace-me> 换成本地随机值
+
+# 2. 启动（首次会拉镜像，RAGFlow 镜像较大）
+docker compose --env-file .env -f compose.yaml up -d
+docker compose --env-file .env -f compose.yaml ps   # 等到全部 healthy
+
+# 3. 创建本地账号并签发 API Key（口令只从环境变量读取）
+RAGFLOW_ACCOUNT_PASSWORD='<本地口令>' ./create-local-account.sh
+set -a; . ./.env.api-key; set +a
+
+# 4. 跑真实联调层
+cd ../.. && RUN_REAL_RAGFLOW=1 RAGFLOW_BASE_URL=http://127.0.0.1:19380 \
+  RAGFLOW_API_VERSION=v0.20.5 RAGFLOW_TEST_PROJECT_ID=<aip 项目 id> \
+  RAGFLOW_EMBEDDING_MODEL='BAAI/bge-large-zh-v1.5@BAAI' \
+  RAGFLOW_EMBEDDING_REVISION=79e7739b6ab944e86d6171e44d24c997fc1e0116 \
+  RAGFLOW_IMAGE_DIGEST=sha256:d95d0e4dc83a96fafffc5238f15c9192ed76ef2d320adb516f010bdc9876455a \
+  RAGFLOW_SOURCE_SHA=e650f0d368b357b0b434b7838177435e3d217de3 \
+  pnpm test:ragflow:real
+
+# 5. 停止（保留数据卷）
+docker compose --env-file .env -f compose.yaml down
+```
+
+栈的进程由 Docker 自行管理，不随终端退出而停止；需要停的时候用上面的 `down`。
+日志：`docker compose --env-file .env -f compose.yaml logs -f ragflow`。
+
+**镜像架构**：RAGFlow 官方镜像只有 amd64，本机是 arm64，因此 RAGFlow 本体跑在
+Docker Desktop 的 x86 模拟层下，嵌入推理也在模拟层里用 CPU 完成，解析明显偏慢；
+解析等待上限用 `AIP_REAL_PARSE_TIMEOUT_MS` 调大（默认 600000 毫秒）。
+
