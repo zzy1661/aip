@@ -19,7 +19,10 @@ export interface ConceptValidator {
 export interface OntoClientOptions {
   baseUrl: string | null;
   audience: string | null;
+  /** 单次概念查询的超时。 */
   timeoutMs?: number;
+  /** 一批引用整体的时间预算：引用条数不设上限，没有总预算会线性放大等待。 */
+  totalTimeoutMs?: number;
   fetchImpl?: typeof fetch;
 }
 
@@ -32,6 +35,7 @@ export interface OntoClientOptions {
  */
 export function createOntoConceptValidator(options: OntoClientOptions): ConceptValidator {
   const timeoutMs = options.timeoutMs ?? 5000;
+  const totalTimeoutMs = options.totalTimeoutMs ?? timeoutMs * 4;
   const doFetch = options.fetchImpl ?? fetch;
 
   return {
@@ -43,7 +47,12 @@ export function createOntoConceptValidator(options: OntoClientOptions): ConceptV
           field_path: 'payload',
         };
       }
+      const deadline = Date.now() + totalTimeoutMs;
       for (const ref of refs) {
+        const remaining = deadline - Date.now();
+        if (remaining <= 0) {
+          throw apiError('ONTO_UNAVAILABLE', 'ontology validation budget exhausted');
+        }
         const url = new URL(
           `/api/ontology/concepts/${encodeURIComponent(ref.concept_ref)}`,
           options.baseUrl,
@@ -55,7 +64,7 @@ export function createOntoConceptValidator(options: OntoClientOptions): ConceptV
         if (ref.unit_ref) url.searchParams.set('unit_ref', ref.unit_ref);
 
         const controller = new AbortController();
-        const timer = setTimeout(() => controller.abort(), timeoutMs);
+        const timer = setTimeout(() => controller.abort(), Math.min(timeoutMs, remaining));
         let response: Response;
         try {
           response = await doFetch(url, {

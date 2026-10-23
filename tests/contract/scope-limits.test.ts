@@ -62,6 +62,23 @@ describe('M22 作用域与访问限制', () => {
     expect(response.body.code).toBe('FORBIDDEN');
   });
 
+  it('声明多个 scope 的令牌被显式拒绝，不按首元素放行', async () => {
+    const multiScopeToken = await mintToken({
+      subject: 'user-1',
+      scope: harness.projectId,
+      scopeClaim: [harness.projectId, 'another-project'],
+      permissions: ALL_PERMISSIONS,
+    });
+    const response = await harness.request({
+      method: 'GET',
+      path: '/assets',
+      token: multiScopeToken,
+    });
+    expect(response.status).toBe(403);
+    expect(response.body.code).toBe('FORBIDDEN');
+    expect(response.body.message).toContain('multi-scope');
+  });
+
   it('缺少所需权限时返回 403 并指明缺哪个权限', async () => {
     const token = await harness.token({ permissions: ['knowledge:read'] });
     const response = await harness.request({

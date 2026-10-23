@@ -2,6 +2,7 @@ import type { NextFunction, Request, Response } from 'express';
 import type { Permission } from '@aip/contracts';
 import type { Principal } from './principal.js';
 import {
+  isMultiScope,
   parseAuthzRevision,
   parsePermissions,
   parseScope,
@@ -42,7 +43,11 @@ export function createAuthMiddleware(deps: AuthDeps) {
         throw apiError('UNAUTHENTICATED', 'token subject missing');
       }
 
-      const scope = parseScope(claims.scope ?? claims.scp);
+      const rawScope = claims.scope ?? claims.scp;
+      if (isMultiScope(rawScope)) {
+        throw apiError('FORBIDDEN', 'multi-scope tokens are not supported by this deployment');
+      }
+      const scope = parseScope(rawScope);
       if (!scope) {
         throw apiError('UNAUTHENTICATED', 'token scope missing');
       }
