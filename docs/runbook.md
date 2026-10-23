@@ -115,6 +115,10 @@ pnpm migrate
 | `004_operations.sql` | `operation` / `idempotency_record` / `audit_event` |
 | `005_evidence.sql` | `evidence` |
 | `006_review_validity.sql` | 审核有效期列与约束、`applies_to` 模式显式化（增量、只增不改） |
+| `007_revision_immutability.sql` | 版本载荷冻结列、`state_revision` 递增与注册状态机约束 |
+| `008_index_rebuild.sql` | 索引重建：同一上游文档允许多份索引修订映射 |
+| `009_audit_detail.sql` | 审计明细列 |
+| `010_withdrawn_terminal.sql` | 撤回终态触发器（禁止把 `withdrawn` 改成别的状态）+ 操作状态 `cancelled` |
 
 迁移策略：只做向前兼容的增量变更，不改写既有列语义、不删除数据；新增约束使用 `NOT VALID`，只约束新写入的行。
 
@@ -192,6 +196,14 @@ Worker 健康以日志为准：启动时打印 `aip worker started`，每轮打�
 | `document.parse` | `GET /api/v1/datasets/{id}/documents?id=<docId>` 看 `run` | `run != UNSTART` 说明已在解析 | `run == UNSTART` 说明确实没开始，可安全再发起 |
 | `knowledge.withdraw` | `GET /api/v1/datasets/{id}/documents` 看文档是否还在 | 文档已不在则视为撤回完成 | 文档仍在则再删一次 |
 
+> **崩溃窗口与响应丢失的区别**：上表适用于「响应丢失」（写请求的响应没回来）。
+> 崩溃窗口是另一种情形——上游写成功、本地提交之前进程退出，
+> 本地只留下「已尝试」标记（`dataset_create_attempted` / `upload_attempted` /
+> `parse_attempted` / `reindex_attempted`）而没有远端 ID。
+> 这种情况下平台会先只读核对：命中唯一对象就认领，**连续两次核对都没命中**才重发。
+> 若两次核对都未命中但上游其实已经写入（可见性延迟），重发会产生第二个同名对象，
+> 因此发现重复 dataset / 文档时按本节人工认领，不要直接重跑写操作。
+
 排查用查询：
 
 ```sql
@@ -219,12 +231,12 @@ SELECT knowledge_id, version, review_status, status, state_revision, applies_to
 | stage | 含义 |
 | --- | --- |
 | `dataset_pending` | 知识库已登记，尚未发出 dataset 创建请求 |
-| `dataset_create_attempted` | **已发出** dataset 创建请求，结果未知；禁止重发 |
+| `dataset_create_attempted` | **已发出** dataset 创建请求，本地还没有远端 ID；先只读核对，命中唯一对象就认领 |
 | `dataset_created` | dataset 已确认创建 |
 | `upload_pending` | 文档已登记，尚未发出上传请求 |
-| `upload_attempted` | **已发出**上传请求，结果未知；禁止重发 |
+| `upload_attempted` | **已发出**上传请求，本地还没有远端 ID；先只读核对，命中唯一对象就认领 |
 | `uploaded` | 文档已确认上传 |
-| `parse_attempted` | **已发出**解析启动请求，结果未知；先只读确认 `run` |
+| `parse_attempted` | **已发出**解析启动请求；先只读确认 `run`，`UNSTART` 才补发 |
 | `parse_started` | 解析已启动，轮询由独立的 `document.parse` 操作负责 |
 | `withdraw_pending` | 撤回已登记，等待远端清理 |
 
@@ -269,6 +281,13 @@ SELECT scope_id, revision FROM authz_state WHERE scope_id = '<project-id>';
 ```
 
 授权行锁（`SELECT ... FOR UPDATE`）只覆盖「本地末次授权判定 + 有界响应交付」这一段，不跨越上游网络调用，也不覆盖长时间下载流。因此：**已经发出的字节无法召回**，撤销只保证撤销之后开始的请求不再拿到内容。
+
+### 6.7 已撤回版本与在途操作
+
+撤回是终态：`withdrawn` 的知识版本不会再被任何流程改回 `ready` / `failed`。
+撤回提交时，平台会同时取消该版本在途的上传 / 解析 / 重建操作
+（操作状态变为 `cancelled`，`epoch` 递增，迟到 worker 的写入命中 0 行）。
+若发现 `cancelled` 的操作，不必人工重跑——那通常意味着对应版本已被撤回。
 
 ## 7. 运维命令
 
