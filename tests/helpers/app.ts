@@ -61,8 +61,18 @@ export interface HarnessOptions {
   connectTimeoutMs?: number;
   /** 解析截止时间；用于验证超时终态。 */
   parseDeadlineMs?: number;
+  /** 真实集成层用真实嵌入模型名；默认用替身值。 */
+  embeddingModel?: string;
+  /** 真实集成层用真实解析器配置；默认用替身值。 */
+  parserConfig?: Record<string, unknown>;
+  /** 记录在知识版本上的解析器来源摘要。 */
+  parserHash?: string;
+  /** 记录在知识版本上的嵌入模型修订号。 */
+  embeddingRevision?: string;
   /** 操作租约时长；用于验证 epoch 栅栏与并发推进。 */
   operationLeaseMs?: number;
+  /** 结果未知后的冷静期；设为 0 可让核对轮次立即可领取。 */
+  unknownOutcomeDeferMs?: number;
   /** 测试库连接串；真实集成层用它指向独立库，不污染默认测试库。 */
   databaseUrl?: string;
 }
@@ -226,8 +236,8 @@ export async function createHarness(options: HarnessOptions = {}): Promise<Harne
 
   const adapter = createRagFlowAdapter({
     http: ragflowHttp,
-    embeddingModel: 'test-embedding-model',
-    parserConfig: { layout_parser: { model: 'test' } },
+    embeddingModel: options.embeddingModel ?? 'test-embedding-model',
+    parserConfig: options.parserConfig ?? { layout_parser: { model: 'test' } },
     chunkMethod: 'naive',
     similarityThreshold: 0.2,
     vectorSimilarityWeight: 0.3,
@@ -240,8 +250,9 @@ export async function createHarness(options: HarnessOptions = {}): Promise<Harne
     files,
     parseDeadlineMs: options.parseDeadlineMs ?? 60_000,
     leaseMs: options.operationLeaseMs ?? 40_000,
-    parserHash: 'test-parser-sha',
-    embeddingRevision: 'test-embedding-revision',
+    unknownOutcomeDeferMs: options.unknownOutcomeDeferMs,
+    parserHash: options.parserHash ?? 'test-parser-sha',
+    embeddingRevision: options.embeddingRevision ?? 'test-embedding-revision',
   });
 
   const registry = createRegistryService({
@@ -262,8 +273,8 @@ export async function createHarness(options: HarnessOptions = {}): Promise<Harne
       retrievalMaxDocuments: options.retrievalMaxDocuments ?? 200,
       parseDeadlineMs: options.parseDeadlineMs ?? 60_000,
     },
-    parserHash: 'test-parser-sha',
-    embeddingRevision: 'test-embedding-revision',
+    parserHash: options.parserHash ?? 'test-parser-sha',
+    embeddingRevision: options.embeddingRevision ?? 'test-embedding-revision',
   });
 
   const logs: Array<{ payload: unknown; message: string }> = [];

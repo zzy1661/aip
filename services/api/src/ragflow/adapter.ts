@@ -1,4 +1,9 @@
-import { RagFlowProtocolError, RagFlowUnavailableError } from './errors.js';
+import {
+  RAGFLOW_PERMISSION_ERROR,
+  RagFlowBusinessError,
+  RagFlowProtocolError,
+  RagFlowUnavailableError,
+} from './errors.js';
 import type { RagFlowHttpClient } from './client.js';
 import {
   parseCreatedDataset,
@@ -8,6 +13,7 @@ import {
   parseRetrievalChunks,
   parseUploadedDocuments,
   type DocumentStatus,
+  type RagFlowEnvelope,
   type RetrievedChunk,
 } from './schemas.js';
 
@@ -67,6 +73,24 @@ function assertOk(status: number): void {
     throw new RagFlowUnavailableError(`upstream returned ${status}`, 'upstream_unavailable', false);
   }
   throw new RagFlowProtocolError(`upstream returned ${status}`);
+}
+
+/**
+ * 解析「按名称列数据集」的响应。
+ *
+ * 上游在零命中时返回 code=108（PERMISSION_ERROR），与「数据集存在但不属于本租户」
+ * 是同一个响应；本调用只需要「本租户可见且同名」的结果，因此 108 等价于空列表。
+ * 返回 null 表示零命中。
+ */
+function parseEnvelopeAllowingEmptyNameLookup(body: unknown): RagFlowEnvelope | null {
+  try {
+    return parseEnvelope(body);
+  } catch (error) {
+    if (error instanceof RagFlowBusinessError && error.upstreamCode === RAGFLOW_PERMISSION_ERROR) {
+      return null;
+    }
+    throw error;
+  }
 }
 
 /**
@@ -211,7 +235,10 @@ export function createRagFlowAdapter(options: RagFlowAdapterOptions): RagFlowAda
         idempotentRead: true,
       });
       assertOk(response.status);
-      const envelope = parseEnvelope(response.body);
+      const envelope = parseEnvelopeAllowingEmptyNameLookup(response.body);
+      if (envelope === null) {
+        return [];
+      }
       if (!Array.isArray(envelope.data)) {
         throw new RagFlowProtocolError('dataset list response data is not an array');
       }

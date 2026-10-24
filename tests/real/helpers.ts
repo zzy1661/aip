@@ -46,6 +46,8 @@ export interface RealEnv {
   embeddingRevision: string;
   imageDigest: string;
   sourceSha: string;
+  /** 真实解析器配置；未配置时交给上游用默认值。 */
+  parserConfig: Record<string, unknown>;
   databaseUrl: string;
   /** 解析等待上限（毫秒）。 */
   parseTimeoutMs: number;
@@ -86,9 +88,20 @@ export function loadRealEnv(env: NodeJS.ProcessEnv = process.env): RealEnv {
     embeddingRevision: env.RAGFLOW_EMBEDDING_REVISION!,
     imageDigest: env.RAGFLOW_IMAGE_DIGEST!,
     sourceSha: env.RAGFLOW_SOURCE_SHA!,
+    parserConfig: parseParserConfig(env.RAGFLOW_PARSER_CONFIG_JSON),
     databaseUrl: env.AIP_REAL_DATABASE_URL ?? TEST_DATABASE_URL,
     parseTimeoutMs: Number.parseInt(env.AIP_REAL_PARSE_TIMEOUT_MS ?? '600000', 10),
   };
+}
+
+/** 解析器配置是可选的；未配置或为空时交给上游用默认配置。 */
+function parseParserConfig(raw: string | undefined): Record<string, unknown> {
+  if (!raw || raw.trim() === '') return {};
+  const parsed: unknown = JSON.parse(raw);
+  if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+    throw new Error('RAGFLOW_PARSER_CONFIG_JSON must be a JSON object');
+  }
+  return parsed as Record<string, unknown>;
 }
 
 export interface RealHarness extends Harness {
@@ -128,6 +141,10 @@ export async function createRealHarness(env: RealEnv): Promise<RealHarness> {
     verifySecret: randomBytes(32).toString('hex'),
     parseDeadlineMs: env.parseTimeoutMs,
     uploadMaxBytes: 20 * 1024 * 1024,
+    embeddingModel: env.embeddingModel,
+    parserConfig: env.parserConfig,
+    parserHash: env.sourceSha,
+    embeddingRevision: env.embeddingRevision,
     // 真实联调必须落在独立库上：AIP_REAL_DATABASE_URL 未设置时退回默认测试库。
     databaseUrl: env.databaseUrl,
   });

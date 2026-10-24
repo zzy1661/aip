@@ -1,5 +1,14 @@
 import { apiError } from '../http/errors.js';
 
+/**
+ * 上游 RetCode.PERMISSION_ERROR。
+ *
+ * v0.20.5 的「按名称列数据集」在零命中时也返回该码（消息形如
+ * `User '<tenant>' lacks permission for dataset '<name>'`），
+ * 详见 docs/ragflow-lock.md §1.1。
+ */
+export const RAGFLOW_PERMISSION_ERROR = 108;
+
 /** 上游业务失败：HTTP 成功但 code 非 0。 */
 export class RagFlowBusinessError extends Error {
   constructor(

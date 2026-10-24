@@ -1,0 +1,188 @@
+# aip 本地开发用 RAGFlow 栈
+#
+# 用途：为 aip 的真实联调（M26 / M27）在本地拉起一套独立的 RAGFlow v0.20.5，
+# 与 aip 自身的服务栈互不干扰（独立 compose project、独立数据卷、独立网络）。
+#
+# 与官方 docker/docker-compose.yml 的差异，以及差异的原因：
+# - 不使用 `container_name:`：避免与机器上已有的其它 RAGFlow 栈容器重名。
+# - 所有端口只绑定 127.0.0.1：本地开发栈不对局域网暴露。
+# - 端口整体后移：官方默认端口（ES 1200 / MySQL 5455 / Redis 6379 / MinIO 9000-9001 /
+#   SVR 9380）已被本机其它服务或历史栈占用，改用下表中的端口。
+# - 不挂载 nginx / entrypoint / service_conf.yaml.template：镜像内已带官方同版本副本，
+#   避免引入与镜像版本不一致的宿主文件。
+# - 镜像全部按 digest 固定，不使用 latest，保证可复现。
+#
+# 凭据：本文件不含任何口令。口令放在同目录的 .env（已被 .gitignore 忽略，禁止提交），
+# 模板见 .env.example。
+
+name: aip-ragflow
+
+services:
+  es01:
+    image: elasticsearch:8.11.3@sha256:58a3a280935d830215802322e9a0373faaacdfd646477aa7e718939c2f29292a
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      node.name: es01
+      ELASTIC_PASSWORD: ${ELASTIC_PASSWORD}
+      bootstrap.memory_lock: "false"
+      discovery.type: single-node
+      xpack.security.enabled: "true"
+      xpack.security.http.ssl.enabled: "false"
+      xpack.security.transport.ssl.enabled: "false"
+      cluster.routing.allocation.disk.watermark.low: 5gb
+      cluster.routing.allocation.disk.watermark.high: 3gb
+      cluster.routing.allocation.disk.watermark.flood_stage: 2gb
+      ES_JAVA_OPTS: ${ES_JAVA_OPTS:--Xms1g -Xmx1g}
+      TZ: ${TIMEZONE}
+    volumes:
+      - esdata:/usr/share/elasticsearch/data
+    ports:
+      - "127.0.0.1:${ES_PORT}:9200"
+    mem_limit: ${ES_MEM_LIMIT:-2147483648}
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - curl -sf -u "elastic:$$ELASTIC_PASSWORD" http://localhost:9200/_cluster/health | grep -qE '"status":"(green|yellow)"'
+      interval: 10s
+      timeout: 10s
+      retries: 120
+      start_period: 30s
+    networks:
+      - ragflow
+
+  mysql:
+    image: mysql:8.0.39@sha256:ccb8f749bb5e59f9f8f03bf7282c7ef27a93a1814a24f0a8a926fb4e19b7fb97
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_PASSWORD}
+      TZ: ${TIMEZONE}
+    command:
+      - --max_connections=1000
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --default-authentication-plugin=mysql_native_password
+      - --tls_version=TLSv1.2,TLSv1.3
+      - --init-file=/data/application/init.sql
+      - --binlog_expire_logs_seconds=604800
+    ports:
+      - "127.0.0.1:${MYSQL_PORT}:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./init.sql:/data/application/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -uroot -p\"$$MYSQL_PASSWORD\" --silent"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+    networks:
+      - ragflow
+
+  minio:
+    # 官方 v0.20.5 用 quay.io/minio/minio:RELEASE.2025-06-13T11-33-47Z，但该仓库对
+    # 匿名拉取返回 401（本机网络如此），因此固定到本机镜像库里已有的较早发布版本，
+    # 仍然按 digest 锁死字节。S3 协议面在对象读写/删除/预签名上是稳定的。
+    image: quay.io/minio/minio:RELEASE.2023-12-20T01-00-02Z@sha256:5702ea3614203466e8e6616469e460567dc0c82def5a024a90426b25ee4a4d23
+    restart: unless-stopped
+    env_file: .env
+    command: server --console-address ":9001" /data
+    environment:
+      MINIO_ROOT_USER: ${MINIO_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_PASSWORD}
+      TZ: ${TIMEZONE}
+    ports:
+      - "127.0.0.1:${MINIO_PORT}:9000"
+      - "127.0.0.1:${MINIO_CONSOLE_PORT}:9001"
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      # 这个 minio 发行版镜像里没有 curl，用自带的 mc 客户端探活。
+      test: ["CMD-SHELL", "mc ready local"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 20s
+    networks:
+      - ragflow
+
+  redis:
+    image: valkey/valkey:8@sha256:640c5e62cea04b6d6f2084232651d0cc70362d31f4f805e7be94dbed6855e8f2
+    restart: unless-stopped
+    env_file: .env
+    # 用 $$ 让口令在容器内从自身环境变量读取，不出现在 inspect 到的启动参数里。
+    command: ["sh", "-c", "exec redis-server --requirepass \"$$REDIS_PASSWORD\" --maxmemory 128mb --maxmemory-policy allkeys-lru"]
+    ports:
+      - "127.0.0.1:${REDIS_PORT}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a \"$$REDIS_PASSWORD\" ping | grep -q PONG"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - ragflow
+
+  ragflow:
+    image: infiniflow/ragflow:v0.20.5@sha256:d95d0e4dc83a96fafffc5238f15c9192ed76ef2d320adb516f010bdc9876455a
+    restart: unless-stopped
+    depends_on:
+      es01:
+        condition: service_healthy
+      mysql:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    env_file: .env
+    environment:
+      TZ: ${TIMEZONE}
+      MACOS: ${MACOS:-1}
+      DOC_ENGINE: ${DOC_ENGINE:-elasticsearch}
+      REGISTER_ENABLED: ${REGISTER_ENABLED:-1}
+      RAGFLOW_SECRET_KEY: ${RAGFLOW_SECRET_KEY}
+      DOC_BULK_SIZE: ${DOC_BULK_SIZE:-4}
+      EMBEDDING_BATCH_SIZE: ${EMBEDDING_BATCH_SIZE:-16}
+      HF_ENDPOINT: ${HF_ENDPOINT:-}
+    ports:
+      - "127.0.0.1:${SVR_HTTP_PORT}:9380"
+    volumes:
+      - ragflow-logs:/ragflow/logs
+      - history-data:/ragflow/history_data_agent
+    healthcheck:
+      # /v1/system/config 不需要登录，是最轻量的存活探针。
+      test: ["CMD-SHELL", "curl -fsS http://localhost:9380/v1/system/config > /dev/null"]
+      interval: 15s
+      timeout: 10s
+      retries: 60
+      start_period: 180s
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - ragflow
+
+volumes:
+  esdata:
+    driver: local
+  mysql_data:
+    driver: local
+  minio_data:
+    driver: local
+  redis_data:
+    driver: local
+  ragflow-logs:
+    driver: local
+  history-data:
+    driver: local
+
+networks:
+  ragflow:
+    driver: bridge

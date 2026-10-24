@@ -48,14 +48,16 @@
 | M23 | 概念契约校验门 | API 技术门 | 无概念引用的字符串契约注册成功且校验器未被调用；数值契约缺概念引用 → 422；本体不可达 → 503 `ONTO_UNAVAILABLE` 且不降级成功；概念不存在 → 422 并指出引用；**详情标 `concept_validation='not_requested'`** | `tests/unit/concept-gate.test.ts:66`、`:84`、`:119`、`:149`、`:180`、`:217`、`:246`、`:275`；详情标记：`tests/contract/retrieval-limits.test.ts:124` | FULL |
 | **M24** | **UI 注册页（`ui/registration.spec.ts`）** | **UI 门** | 列表空/加载/错误/403、直接深链、表单 `field_path`、注册 409、版本选择、binding 失效明显可见 | **本仓库无前端代码、无 `tests/ui/`、无 Playwright、无 `test:platform` 脚本** → 全部无覆盖 | **NOT RUN** |
 | **M25** | **UI 知识页（`ui/knowledge.spec.ts`）** | **UI 门** | pending/parsing/failed/ready 四态、审核、`no_match`/`needs_context`/503、来源缺定位、密钥不入浏览器请求/storage/bundle、401/切项目清理结果 | **同 M24，全部无覆盖** | **NOT RUN** |
-| **M26** | **真实 RAGFlow 闭环** | **真实集成门** | 全步骤真实可追踪，引用指向上传原文并有可核验摘要；真实报告含版本/digest/来源证据；任何 mock 替代判失败 | 代码路径存在：`tests/real/closed-loop.test.ts:50`（未启用时报告 NOT RUN 与缺失配置）、`:63`（闭环流程）；**本轮未在真实 RAGFlow 上执行** | **NOT RUN** |
-| **M27** | **真实 RAGFlow 隔离失败** | **真实集成门** | 真实检索不返回未授权文档；无授权请求 0；真实不可达 503/504；解析失败保持 failed；目标解析失败不可稳定复现时明确 NOT RUN 而非用 mock 记真实通过 | 代码路径存在：`tests/real/isolation-failure.test.ts:48`、`:60`、`:93`；**本轮未在真实 RAGFlow 上执行** | **NOT RUN** |
+| **M26** | **真实 RAGFlow 闭环** | **真实集成门** | 全步骤真实可追踪，引用指向上传原文并有可核验摘要；真实报告含版本/digest/来源证据；任何 mock 替代判失败 | 真实执行（本地 RAGFlow v0.20.5，2026-10-24）：`tests/real/closed-loop.test.ts:64`（建库 → 上传 → 解析 → 审核 → 检索拿到带来源引用的证据）；`:142`–`:146`（引用指向上传原文：source_file_id / 版本 / chunk_id / chunk_hash）；`:149`–`:158`（来源下载字节与上传原文逐字节一致、sha256 一致）；真实报告 `reports/<sha>/real/summary.json`：`ragflow.source_sha=e650f0d368b357b0b434b7838177435e3d217de3`、`ragflow.image_digest=sha256:d95d0e4dc83a96fafffc5238f15c9192ed76ef2d320adb516f010bdc9876455a`、`embedding_revision=79e7739b6ab944e86d6171e44d24c997fc1e0116`、`counts.pass=5`；门禁 `tools/real-guard.mjs`：缺配置非零退出、配置齐备必须 0 退出 | **FULL** |
+| **M27** | **真实 RAGFlow 隔离失败** | **真实集成门** | 真实检索不返回未授权文档；无授权请求 0；真实不可达 503/504；解析失败保持 failed；目标解析失败不可稳定复现时明确 NOT RUN 而非用 mock 记真实通过 | 真实执行：`tests/real/isolation-failure.test.ts:93`（无权文档不出现在真实检索结果中，命中方拿到证据、显式引用无权文档 → 404）；`:60`（授权为空时真实上游请求数为 0）；**未覆盖**：真实不可达 503/504、解析失败保持 failed（这两项只在替身层覆盖，见第 5 节） | **PARTIAL** |
 | M28 | 密钥不落库不落日志 | API 技术门 | 8 张持久化表内无上游 key / DB URL / token；带 `api_key` 的 config 被拒；嵌套 password 与 URL 被拒；上游错误原文不回显；**构建产物扫描无密钥形态**；**日志快照不含敏感内容**；**动态出口 `base_url` 被拒**；**重定向不泄漏 key**；**审计 subject 来自可信 principal** | `tests/unit/security-no-secret.test.ts:47`、`:58`、`:80`、`:105`；构建产物：`tests/unit/secret-scan.test.ts:72`、`:79`、`:86`、`:104`；日志与审计：`tests/contract/audit-and-log-hygiene.test.ts:27`、`:56`、`:76`、`:99`；动态出口：`tests/db/config-policy.test.ts:83`、`:119`、`:137`；重定向：`tests/unit/redirect-key-leak.test.ts:66` | FULL |
 
-**统计：FULL 24 条（M01–M23、M28）／PARTIAL 0 条／NOT RUN 4 条（M24、M25、M26、M27）。**
+**统计：FULL 25 条（M01–M23、M26、M28）／PARTIAL 1 条（M27）／NOT RUN 2 条（M24、M25）。**
 
-> M24 / M25 / M26 / M27 的 NOT RUN **不是本轮降级**：这四项在 ZACH-8 冻结矩阵里分别属于 UI 门与真实集成门，
-> 其交付物不在本仓库（UI 归 ZACH-11，真实 RAGFlow 环境与执行归 ZACH-9）。
+> M24 / M25 的 NOT RUN **不是本轮降级**：这两项在 ZACH-8 冻结矩阵里属于 UI 门，
+> 其交付物不在本仓库（UI 归 ZACH-11）。
+> M27 的 PARTIAL 表示「真实检索不返回未授权文档」「无授权请求 0」两条已在真实上游验证，
+> 「真实不可达 503/504」「解析失败保持 failed」两条只有替身层证据，缺口见第 5 节，不以替身顶替。
 > 本轮不提供替身结果冒充，也不把「无代码」写成「已通过」。
 
 ---
@@ -74,7 +76,8 @@
 | 编号 | 缺陷（来源） | 修复 | 回归证据 |
 | --- | --- | --- | --- |
 | B-1 | 幂等键跨资产静默重放：同一 `Idempotency-Key` + 同一请求体打到资产 A 与资产 B，第二次返回 A 的 `asset_id`，目标版本从未创建（ZACH-10 R-1） | 幂等身份纳入目标资产：版本创建的 operation key 为 `assets.new_version:${assetId}` | `tests/db/idempotency-scope.test.ts:38`、`:85`、`:122` |
-| B-2 | 写请求响应丢失时没有 `unknown_outcome`，会盲目重发写请求 | 写响应丢失 → 操作进入 `unknown_outcome`，不重发，资源状态不再停在 `creating` | `tests/db/operation-fencing.test.ts:195`；`tests/contract/ragflow-dataset.test.ts:132`；`tests/contract/ragflow-upload.test.ts:98`；`tests/contract/ragflow-retry.test.ts:225` |
+| B-2 | 写请求响应丢失时没有 `unknown_outcome`，会盲目重发写请求 | 写响应丢失 → 操作进入 `unknown_outcome`，不重发，资源状态不再停在 `creating` | `tests/db/operation-fencing.test.ts:195`；`tests/contract/ragflow-dataset.test.ts:179`；`tests/contract/ragflow-upload.test.ts:98`；`tests/contract/ragflow-retry.test.ts:225` |
+| R-1（真实集成门发现） | RAGFlow v0.20.5 的「按名称列数据集」在零命中时返回 `code=108`（PERMISSION_ERROR），与「数据集存在但不属于本租户」同码。适配器把它当成业务失败：写操作的结果未知核对直接判 `failed`（真实联调时表现为建库失败） | 按名称核对的响应单独处理：108 视为「未命中」，结果未知的路径据此保持 `unknown_outcome` 并转人工核对，不判失败、不重发写请求 | `tests/contract/ragflow-dataset.test.ts:132`（临时回退该修复后用例立即失败：操作状态由 `unknown_outcome` 变为 `failed`）；替身与上游同语义：`tests/helpers/ragflow.ts`；上游语义与版本证据：`docs/ragflow-lock.md` §1.1 陷阱 9、§2.2 |
 | B-3 | 终态失败时资源状态不回滚（`knowledge_base.status` 停在 `creating` / `knowledge_revision.status` 停在 `parse_queued`），人工无法从资源侧判断原因 | 操作进入终态时同步回落 `knowledge_base.status` / `knowledge_revision.status`，并让 `operation.last_error` 与之对齐 | `tests/db/operation-fencing.test.ts:163`；`tests/e2e/knowledge-stale.test.ts:25` |
 | M-1 | epoch fencing 未接线：`bumpEpoch` 无调用点，`setOperationState` 的 `expectedEpoch` 从未传入 | 领取操作即 `epoch + 1`；所有状态写入以 `WHERE epoch = $n` 条件化；迟到旧 epoch 一律被 DB 拒绝 | `tests/db/operation-fencing.test.ts:68`、`:120` |
 | M-2 | 租约时长 ≤ 只读总预算，同一操作可被两个 worker 同时推进 | 租约默认值 > 上传超时 + 只读预算 + 余量；配置过短直接在启动时拒绝 | `tests/unit/config-defaults.test.ts:39`、`:49`；`tests/unit/operation-lease.test.ts:25`、`:32`、`:38` |
@@ -102,8 +105,11 @@
 - `.trace.jsonl` —— 运行期事实流（断言计数、请求事实），由 reporter 合并进 `cases.json`。
 
 > `reports/` 按仓库既有约定在 `.gitignore` 中，产物不入库；生成器与接线代码入库，任何复核人都能按同样的命令重新生成。
-> 真实集成层（`real`）的产物只有在配置齐备并真实执行后才具备 `ragflow` / `embedding_revision` 的真实值；
-> 本轮未真实执行，因此真实层的 `reports/` 不构成 M26/M27 的证据。
+> 真实集成层（`real`）的产物只有在配置齐备并真实执行后才具备 `ragflow` / `embedding_revision` 的真实值。
+> 本轮真实执行过：real 层 `summary.json` 内 `ragflow.source_sha=e650f0d368b357b0b434b7838177435e3d217de3`、
+> `ragflow.image_digest=sha256:d95d0e4dc83a96fafffc5238f15c9192ed76ef2d320adb516f010bdc9876455a`、
+> `embedding_revision=79e7739b6ab944e86d6171e44d24c997fc1e0116`、`counts.pass=5`，因此它构成 **M26** 的证据；
+> **M27** 只有部分判据有真实证据，缺口见第 5 节，不以替身结果顶替。
 
 ---
 
@@ -112,8 +118,8 @@
 | 项 | 限制 | 原因 |
 | --- | --- | --- |
 | M24 / M25 | **NOT RUN** | 本仓库无前端代码、无 Playwright、无 `test:platform` 脚本。UI 门由 ZACH-11 交付；本轮不产出 UI 结论，也不以文档检查顶替。 |
-| M26 / M27 | **NOT RUN** | 缺真实 RAGFlow v0.20.5 环境与凭据（缺 `RAGFLOW_BASE_URL` / `RAGFLOW_API_KEY` / `RAGFLOW_API_VERSION` / `RAGFLOW_TEST_PROJECT_ID` / `RAGFLOW_EMBEDDING_MODEL` / `RAGFLOW_EMBEDDING_REVISION` / `RAGFLOW_IMAGE_DIGEST` / `RAGFLOW_SOURCE_SHA`）。替身结果不作为真实集成证据。真实环境与执行由 ZACH-9 负责。 |
-| M26 报告产物 | 未产出真实版本/digest 的报告 | 依赖上一行的真实环境；`tools/real-guard.mjs` 会在缺配置时以非零退出并列出缺失项，避免「没跑」被判成「跑通」。 |
+| M27 的两条判据 | **PARTIAL**：真实上游未覆盖「真实不可达 503/504」「解析失败保持 failed」 | 真实环境是共享的本地栈，构造「不可达」会影响其他用例，构造稳定的「解析失败」需要人为破坏上游数据；这两条目前只有替身层证据（`tests/contract/ragflow-unavailable.test.ts:72`、`tests/contract/ragflow-parse.test.ts:68`）。已真实验证的两条：真实检索不返回未授权文档、授权为空时真实上游请求数为 0。 |
+| M26 报告产物 | **已产出**（真实版本 / digest / 来源 sha） | `reports/<sha>/real/summary.json` 含 `ragflow.source_sha`、`ragflow.image_digest`、`embedding_revision`、`counts.pass=5`。产物在 `.gitignore` 内不入库；复核人可按 `deploy/ragflow/README.md` 启动本地栈并执行 `pnpm test:ragflow:real:guard` 重新生成（`tools/real-guard.mjs` 在缺配置时以非零退出并列出缺失项，避免「没跑」被判成「跑通」）。 |
 | DOC-01 | 仍为**人工核对**，无自动化断言 | 环境变量清单分散在 `config.ts`、`main.ts`、`migrate-cli.ts` 与 worker 入口，缺少单一事实来源；本轮未引入配置清单生成器。 |
 | M-3 的两阶段幂等 | **未实现**（有意保留现状） | 把幂等占位行移出业务事务会破坏 M04 依赖的「同键并发等待」语义。本轮按已确认的设计决策保留事务内占位，并在 `tests/db/idempotency-scope.test.ts` 固定其对外语义。 |
 | M14 的真实 20 分钟解析路径 | 只在替身层用缩短的截止时间验证终态 | 真实等待 20 分钟无收益；生产默认值本身由 `tests/unit/config-defaults.test.ts:23` 钉死（20 分钟），超时终态行为由 `tests/contract/parse-recovery.test.ts:26` 覆盖。 |

@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { knowledgeAuthorization, withTransaction } from '@aip/api';
 import {
@@ -80,6 +81,7 @@ describe('M26 真实 RAGFlow 闭环', () => {
 
     // 2. 上传文档。
     const marker = `REAL-LOOP-${Date.now()}`;
+    const content = `# 真实联调样本\n\n唯一标记：${marker}\n\n用于验证真实 RAGFlow 的解析与检索。\n`;
     const upload = await harness.request({
       method: 'POST',
       path: `/knowledge-bases/${kbId}/documents`,
@@ -92,7 +94,7 @@ describe('M26 真实 RAGFlow 闭环', () => {
       file: {
         filename: `${marker}.md`,
         contentType: 'text/markdown',
-        content: `# 真实联调样本\n\n唯一标记：${marker}\n\n用于验证真实 RAGFlow 的解析与检索。\n`,
+        content,
       },
     });
     expect(upload.status).toBe(202);
@@ -142,6 +144,18 @@ describe('M26 真实 RAGFlow 闭环', () => {
     expect(evidence[0]!.source_locator.source_file_version).toBe('1.0.0');
     expect(evidence[0]!.chunk_id).toBeTruthy();
     expect(evidence[0]!.chunk_hash).toBeTruthy();
+
+    // 5.1 引用的来源可核验：下载到的字节与上传原文逐字节相同，哈希一致。
+    const download = await harness.request({
+      method: 'GET',
+      path: `/sources/${upload.body.data.source_ref}/versions/1.0.0/download`,
+      token,
+    });
+    expect(download.status).toBe(200);
+    expect(download.text).toBe(content);
+    expect(download.headers.get('x-content-sha256')).toBe(
+      createHash('sha256').update(content).digest('hex'),
+    );
 
     // 6. 撤销授权后，同一主体不再能拿到该文档的证据。
     await withTransaction(harness.pool, (client) =>
