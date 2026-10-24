@@ -73,6 +73,17 @@ function errorHandler(
 ): void {
   const traceId = req.traceId ?? 'unknown';
 
+  // 响应已经开始发送（例如交付过程中客户端断开）：不能再写错误体，
+  // 否则会抛出「headers already sent」并把连接打断得更难看。
+  if (res.headersSent) {
+    deps.logger?.error(
+      { err: error instanceof Error ? error.message : String(error), trace_id: traceId },
+      'request failed after the response started',
+    );
+    res.end();
+    return;
+  }
+
   if (error instanceof ApiError) {
     res.status(error.status).json(toErrorBody(error, traceId));
     return;

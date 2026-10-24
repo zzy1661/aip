@@ -1,26 +1,34 @@
 import { randomUUID } from 'node:crypto';
-import pg from 'pg';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { FileStore } from '@aip/api';
 import { createHarness, type Harness } from '../helpers/app.js';
 import { ALL_PERMISSIONS } from '../helpers/auth.js';
 import { registerSkillRequest } from '../helpers/fixtures.js';
 import { createReadyKnowledgeBase, uploadSampleDocument } from '../helpers/flow.js';
-
-const { Pool: PgPool } = pg;
-const ADMIN_URL = 'postgres://aip_test:aip_test_pw@127.0.0.1:55433/aip_test';
+import {
+  adminConfigured,
+  createAdminPool,
+  roleDatabaseUrl,
+  verifyTestInstance,
+  type TestInstanceIdentity,
+} from '../helpers/test-instance.js';
 
 /**
  * M02：项目隔离。
  *
  * 断言口径：不同项目用不同的库/账号/schema，同一 slug 互不冲突；
  * 跨项目的令牌、路径、资源 ID 一律被拒；账号之间连不上对方的库。
+ *
+ * 管理连接必须显式指定（AIP_TEST_ADMIN_DATABASE_URL），并在启动时校验实例身份：
+ * 用例要在实例上建角色建库，绝不能落到共享实例或既有数据库上。
+ * 未配置时整组用例标记为 NOT RUN，不静默改用别的实例。
  */
-describe('M02 项目隔离', () => {
+describe.skipIf(!adminConfigured())('M02 项目隔离', () => {
   let projectA: Harness;
   let projectB: Harness;
   let tokenA: string;
   let tokenB: string;
+  let identity: TestInstanceIdentity;
 
   const suffix = randomUUID().replace(/-/g, '').slice(0, 8);
   const roleA = `aip_iso_a_${suffix}`;
@@ -30,12 +38,10 @@ describe('M02 项目隔离', () => {
   const password = 'aip-isolation-only';
 
   beforeAll(async () => {
-    projectA = await createHarness({ label: 'm02a', projectId: 'project-a' });
-    projectB = await createHarness({ label: 'm02b', projectId: 'project-b' });
-    tokenA = await projectA.token({ permissions: ALL_PERMISSIONS });
-    tokenB = await projectB.token({ permissions: ALL_PERMISSIONS });
+    // 实例身份校验：主机回环 + 专用管理库名 + 落库一致。
+    identity = await verifyTestInstance();
 
-    const admin = new PgPool({ connectionString: ADMIN_URL, max: 2 });
+    const admin = createAdminPool();
     try {
       await admin.query(`CREATE ROLE "${roleA}" LOGIN PASSWORD '${password}'`);
       await admin.query(`CREATE ROLE "${roleB}" LOGIN PASSWORD '${password}'`);
@@ -49,10 +55,28 @@ describe('M02 项目隔离', () => {
     } finally {
       await admin.end();
     }
+
+    // 两个项目各自用自己的应用角色连自己的库：API 真的以这两个角色运行。
+    projectA = await createHarness({
+      label: 'm02a',
+      projectId: 'project-a',
+      databaseUrl: roleDatabaseUrl(identity, roleA, dbA, password),
+    });
+    projectB = await createHarness({
+      label: 'm02b',
+      projectId: 'project-b',
+      databaseUrl: roleDatabaseUrl(identity, roleB, dbB, password),
+    });
+    tokenA = await projectA.token({ permissions: ALL_PERMISSIONS });
+    tokenB = await projectB.token({ permissions: ALL_PERMISSIONS });
   });
 
   afterAll(async () => {
-    const admin = new PgPool({ connectionString: ADMIN_URL, max: 2 });
+    // 先关掉两个 API 的连接池，再回收角色与库：
+    // 否则 terminate_backend 会打断仍在使用的连接。
+    await projectA?.close();
+    await projectB?.close();
+    const admin = createAdminPool();
     try {
       await admin.query(
         `SELECT pg_terminate_backend(pid) FROM pg_stat_activity
@@ -66,8 +90,6 @@ describe('M02 项目隔离', () => {
     } finally {
       await admin.end();
     }
-    await projectA.close();
-    await projectB.close();
   });
 
   it('两个项目可以注册同一个 slug，互不冲突', async () => {
@@ -121,8 +143,8 @@ describe('M02 项目隔离', () => {
   });
 
   it('A 的账号连不上 B 的库', async () => {
-    const urlB = `postgres://${roleA}:${password}@127.0.0.1:55433/${dbB}`;
-    const pool = new PgPool({ connectionString: urlB, max: 1, connectionTimeoutMillis: 5000 });
+    const urlB = roleDatabaseUrl(identity, roleA, dbB, password);
+    const pool = createAdminPool(urlB);
     try {
       await expect(pool.query('SELECT 1')).rejects.toThrow(/permission denied/i);
     } finally {
@@ -131,14 +153,29 @@ describe('M02 项目隔离', () => {
   });
 
   it('各自的账号能连自己的库', async () => {
-    const urlA = `postgres://${roleA}:${password}@127.0.0.1:55433/${dbA}`;
-    const pool = new PgPool({ connectionString: urlA, max: 1, connectionTimeoutMillis: 5000 });
+    const urlA = roleDatabaseUrl(identity, roleA, dbA, password);
+    const pool = createAdminPool(urlA);
     try {
       const result = await pool.query('SELECT current_database() AS name');
       expect(result.rows[0].name).toBe(dbA);
     } finally {
       await pool.end();
     }
+  });
+
+  it('两个项目的 API 确实各自跑在自己的应用角色与库上', async () => {
+    const [a, b] = await Promise.all([
+      projectA.pool.query<{ role: string; database: string }>(
+        'SELECT current_user AS role, current_database() AS database',
+      ),
+      projectB.pool.query<{ role: string; database: string }>(
+        'SELECT current_user AS role, current_database() AS database',
+      ),
+    ]);
+    expect(a.rows[0]!.role).toBe(roleA);
+    expect(a.rows[0]!.database).toBe(dbA);
+    expect(b.rows[0]!.role).toBe(roleB);
+    expect(b.rows[0]!.database).toBe(dbB);
   });
 
   it('文件存储路径与操作登记不跨项目串用', async () => {

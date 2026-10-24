@@ -1,9 +1,10 @@
-import { loadConfig } from '../config.js';
+import { loadMigrateConfig } from '../config.js';
 import { migrate } from './migrate.js';
 import { closePool, createPool } from './pool.js';
 
 async function main(): Promise<void> {
-  const config = loadConfig();
+  // 迁移只需要数据库连接：应用角色没有 DDL，迁移必须用迁移角色单独执行。
+  const config = loadMigrateConfig();
   const pool = createPool({ connectionString: config.databaseUrl });
   try {
     const result = await migrate(pool);

@@ -101,7 +101,7 @@ export async function uploadAndParse(
   harness: Harness,
   token: string,
   kbId: string,
-  options: { marker?: string; version?: string; appliesTo?: string } = {},
+  options: { marker?: string; version?: string; appliesTo?: string; fileName?: string } = {},
 ): Promise<UploadedDocument & { documentId: string; datasetId: string }> {
   const uploaded = await uploadSampleDocument(harness, token, kbId, options);
   await harness.advanceAll();
@@ -169,7 +169,7 @@ export async function prepareApprovedDocument(
   harness: Harness,
   token: string,
   kbId: string,
-  options: { marker?: string; version?: string; appliesTo?: string } = {},
+  options: { marker?: string; version?: string; appliesTo?: string; fileName?: string } = {},
 ): Promise<UploadedDocument & { documentId: string; datasetId: string }> {
   const uploaded = await uploadAndParse(harness, token, kbId, options);
   const review = await approveDocument(harness, token, uploaded.knowledgeRef, uploaded.version);

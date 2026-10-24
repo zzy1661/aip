@@ -203,6 +203,57 @@ export async function listClaimableOperations(
   return rows;
 }
 
+/**
+ * 找出某个知识版本在途的上传/解析/重建操作。
+ *
+ * 撤回时用它取消在途操作：撤回是终态，在途的 worker 必须停下来，
+ * 否则迟到的完成分支会把已撤回的版本改回 ready。
+ */
+export async function findInFlightOperationsForKnowledge(
+  client: QueryClient,
+  scopeId: string,
+  knowledgeId: string,
+  version: string,
+): Promise<OperationRow[]> {
+  const { rows } = await client.query<OperationRow>(
+    `SELECT * FROM operation
+      WHERE scope_id = $1
+        AND kind IN ('document.upload', 'document.parse', 'document.reindex')
+        AND state IN ('pending', 'in_progress', 'unknown_outcome')
+        AND result->>'knowledgeId' = $2
+        AND result->>'knowledgeVersion' = $3
+      ORDER BY created_at`,
+    [scopeId, knowledgeId, version],
+  );
+  return rows;
+}
+
+/**
+ * 取消在途操作。
+ *
+ * 取消会递增 epoch：正在跑的那一轮 worker 的后续写入全部命中 0 行，
+ * 它随即回滚，不会再把已撤回的资源改回可检索状态。
+ */
+export async function cancelOperations(
+  client: QueryClient,
+  scopeId: string,
+  ids: string[],
+  reason: string,
+): Promise<number> {
+  if (ids.length === 0) {
+    return 0;
+  }
+  const { rowCount } = await client.query(
+    `UPDATE operation
+        SET state = 'cancelled', epoch = epoch + 1, lease_until = NULL,
+            next_attempt_at = NULL, last_error = $3, updated_at = now()
+      WHERE scope_id = $1 AND id = ANY($2::uuid[])
+        AND state IN ('pending', 'in_progress', 'unknown_outcome')`,
+    [scopeId, ids, reason],
+  );
+  return rowCount ?? 0;
+}
+
 export function toOperationView(row: OperationRow): OperationView {
   return {
     operation_id: row.id,

@@ -106,6 +106,19 @@ function stripApiSuffix(url: string): string {
   return url.replace(/\/+$/, '').replace(/\/api\/v1$/, '');
 }
 
+/**
+ * 迁移用的最小配置。
+ *
+ * 迁移只需要数据库连接：它不访问上游，也不签发令牌。
+ * 应用角色没有 DDL，迁移必须用迁移角色的连接串单独执行，
+ * 因此迁移不加载服务的全部配置，也不要求上游凭据。
+ */
+export function loadMigrateConfig(
+  env: NodeJS.ProcessEnv = process.env,
+): { databaseUrl: string } {
+  return { databaseUrl: requireEnv(env, 'DATABASE_URL') };
+}
+
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
   const nodeEnv = env.NODE_ENV ?? 'development';
   const isProduction = nodeEnv === 'production';

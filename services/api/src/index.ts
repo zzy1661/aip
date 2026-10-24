@@ -1,5 +1,5 @@
 export { createApp, type AppDeps } from './app.js';
-export { ConfigError, loadConfig, type Config } from './config.js';
+export { ConfigError, loadConfig, loadMigrateConfig, type Config } from './config.js';
 export { createPool, closePool, type QueryClient } from './db/pool.js';
 export { withTransaction } from './db/uow.js';
 export { migrate as runMigrations, resolveMigrationsDir } from './db/migrate.js';
@@ -33,7 +33,12 @@ export {
 } from './ragflow/errors.js';
 export { FileStore } from './files/store.js';
 export { validateUpload, type ValidatedUpload } from './files/validate.js';
-export { createOperationsService, type OperationsDeps, type OperationsService } from './operations/service.js';
+export {
+  createOperationsService,
+  remoteDocumentName,
+  type OperationsDeps,
+  type OperationsService,
+} from './operations/service.js';
 export { createRegistryService, type RegistryDeps, type RegistryService } from './registry/service.js';
 export { createRegistryRouter } from './registry/routes.js';
 export {

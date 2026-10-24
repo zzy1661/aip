@@ -75,6 +75,13 @@ export interface HarnessOptions {
   unknownOutcomeDeferMs?: number;
   /** 测试库连接串；真实集成层用它指向独立库，不污染默认测试库。 */
   databaseUrl?: string;
+  /**
+   * 复用已经迁移好的 schema。
+   *
+   * 角色分离用例用它让 API 以「无 DDL 的应用角色」运行：
+   * 该角色不能建 schema，也不能跑迁移。
+   */
+  databaseSchema?: string;
 }
 
 export interface RequestOptions {
@@ -215,7 +222,9 @@ function buildMultipart(
 
 export async function createHarness(options: HarnessOptions = {}): Promise<Harness> {
   const projectId = options.projectId ?? TEST_PROJECT_ID;
-  const db = await createTestDatabase(options.label ?? 'case', options.databaseUrl);
+  const db = await createTestDatabase(options.label ?? 'case', options.databaseUrl, {
+    schema: options.databaseSchema,
+  });
   const fileRoot = await mkdtemp(join(tmpdir(), 'aip-test-files-'));
   const ragflow = await startFakeRagFlow();
 
