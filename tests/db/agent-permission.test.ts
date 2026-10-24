@@ -166,6 +166,12 @@ describe('M08 Agent 权限与配置', () => {
       [harness.projectId, `%${secret}%`],
     );
     expect(stored.rows[0]!.count).toBe('0');
+
+    // 秘密也没有进日志，也没有回显到响应体。
+    const logText = JSON.stringify(harness.logs);
+    expect(logText).not.toContain(secret);
+    expect(JSON.stringify(withKey.body)).not.toContain(secret);
+    expect(JSON.stringify(nested.body)).not.toContain(secret);
   });
 
   it('execution_enabled 必须为 false', async () => {

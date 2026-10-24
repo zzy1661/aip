@@ -2,7 +2,7 @@ import { Router } from 'express';
 import multer from 'multer';
 import { requirePermissionMiddleware } from '../auth/middleware.js';
 import { requireIdempotencyKey } from '../idempotency/service.js';
-import { pathParam } from '../http/params.js';
+import { pathParam, uuidPathParam } from '../http/params.js';
 import { apiError, fieldIssue } from '../http/errors.js';
 import type { KnowledgeService } from './service.js';
 
@@ -39,7 +39,7 @@ export function createKnowledgeRouter(service: KnowledgeService): Router {
     '/knowledge-bases/:kbId',
     requirePermissionMiddleware('knowledge:read'),
     async (req, res) => {
-      const detail = await service.getKnowledgeBase(req.principal, pathParam(req, 'kbId'));
+      const detail = await service.getKnowledgeBase(req.principal, uuidPathParam(req, 'kbId'));
       res.status(200).json({ data: detail, trace_id: req.traceId });
     },
   );
@@ -60,7 +60,7 @@ export function createKnowledgeRouter(service: KnowledgeService): Router {
       const appliesTo = parseAppliesTo(req.body.applies_to);
       const result = await service.uploadDocument(
         req.principal,
-        pathParam(req, 'kbId'),
+        uuidPathParam(req, 'kbId'),
         {
           originalName: file.originalname,
           mimeType: file.mimetype,
@@ -80,7 +80,7 @@ export function createKnowledgeRouter(service: KnowledgeService): Router {
     '/knowledge-bases/:kbId/documents',
     requirePermissionMiddleware('knowledge:read'),
     async (req, res) => {
-      const items = await service.listDocuments(req.principal, pathParam(req, 'kbId'));
+      const items = await service.listDocuments(req.principal, uuidPathParam(req, 'kbId'));
       res.status(200).json({ data: items, trace_id: req.traceId });
     },
   );
@@ -91,7 +91,7 @@ export function createKnowledgeRouter(service: KnowledgeService): Router {
     async (req, res) => {
       const detail = await service.getDocument(
         req.principal,
-        pathParam(req, 'knowledgeId'),
+        uuidPathParam(req, 'knowledgeId'),
         pathParam(req, 'version'),
       );
       res.status(200).json({ data: detail, trace_id: req.traceId });
@@ -104,7 +104,7 @@ export function createKnowledgeRouter(service: KnowledgeService): Router {
     async (req, res) => {
       const result = await service.review(
         req.principal,
-        pathParam(req, 'knowledgeId'),
+        uuidPathParam(req, 'knowledgeId'),
         pathParam(req, 'version'),
         req.body,
       );
@@ -118,9 +118,67 @@ export function createKnowledgeRouter(service: KnowledgeService): Router {
     async (req, res) => {
       const result = await service.withdraw(
         req.principal,
-        pathParam(req, 'knowledgeId'),
+        uuidPathParam(req, 'knowledgeId'),
         pathParam(req, 'version'),
         req.body,
+      );
+      res.status(200).json({ ...result, trace_id: req.traceId });
+    },
+  );
+
+  router.post(
+    '/knowledge/:knowledgeId/versions/:version/reindex',
+    requirePermissionMiddleware('knowledge:manage'),
+    async (req, res) => {
+      const key = requireIdempotencyKey(req.header('idempotency-key'));
+      const result = await service.reindex(
+        req.principal,
+        uuidPathParam(req, 'knowledgeId'),
+        pathParam(req, 'version'),
+        key,
+      );
+      res
+        .status(result.statusCode)
+        .json({ ...(result.body as { data: unknown }), trace_id: req.traceId });
+    },
+  );
+
+  router.get(
+    '/knowledge/:knowledgeId/versions/:version/grants',
+    requirePermissionMiddleware('knowledge:manage'),
+    async (req, res) => {
+      const result = await service.listDocumentGrants(
+        req.principal,
+        uuidPathParam(req, 'knowledgeId'),
+        pathParam(req, 'version'),
+      );
+      res.status(200).json({ ...result, trace_id: req.traceId });
+    },
+  );
+
+  router.post(
+    '/knowledge/:knowledgeId/versions/:version/grants',
+    requirePermissionMiddleware('knowledge:manage'),
+    async (req, res) => {
+      const result = await service.grantDocumentAccess(
+        req.principal,
+        uuidPathParam(req, 'knowledgeId'),
+        pathParam(req, 'version'),
+        req.body,
+      );
+      res.status(200).json({ ...result, trace_id: req.traceId });
+    },
+  );
+
+  router.delete(
+    '/knowledge/:knowledgeId/versions/:version/grants/:subject',
+    requirePermissionMiddleware('knowledge:manage'),
+    async (req, res) => {
+      const result = await service.revokeDocumentAccess(
+        req.principal,
+        uuidPathParam(req, 'knowledgeId'),
+        pathParam(req, 'version'),
+        pathParam(req, 'subject'),
       );
       res.status(200).json({ ...result, trace_id: req.traceId });
     },
@@ -139,7 +197,7 @@ export function createKnowledgeRouter(service: KnowledgeService): Router {
     '/evidence/:evidenceId',
     requirePermissionMiddleware('source:read'),
     async (req, res) => {
-      const evidence = await service.getEvidence(req.principal, pathParam(req, 'evidenceId'));
+      const evidence = await service.getEvidence(req.principal, uuidPathParam(req, 'evidenceId'));
       res.status(200).json({ data: evidence, trace_id: req.traceId });
     },
   );
@@ -150,7 +208,7 @@ export function createKnowledgeRouter(service: KnowledgeService): Router {
     async (req, res) => {
       const file = await service.downloadSource(
         req.principal,
-        pathParam(req, 'fileId'),
+        uuidPathParam(req, 'fileId'),
         pathParam(req, 'version'),
       );
       res.setHeader('content-type', file.mime);
@@ -164,7 +222,7 @@ export function createKnowledgeRouter(service: KnowledgeService): Router {
     '/operations/:operationId',
     requirePermissionMiddleware('operations:read'),
     async (req, res) => {
-      const operation = await service.getOperation(req.principal, pathParam(req, 'operationId'));
+      const operation = await service.getOperation(req.principal, uuidPathParam(req, 'operationId'));
       res.status(200).json({ data: operation, trace_id: req.traceId });
     },
   );

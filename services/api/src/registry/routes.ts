@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { requirePermissionMiddleware } from '../auth/middleware.js';
 import { requireIdempotencyKey } from '../idempotency/service.js';
-import { pathParam } from '../http/params.js';
+import { pathParam, uuidPathParam } from '../http/params.js';
 import type { RegistryService } from './service.js';
 
 export function createRegistryRouter(service: RegistryService): Router {
@@ -45,7 +45,7 @@ export function createRegistryRouter(service: RegistryService): Router {
     async (req, res) => {
       const detail = await service.detail(
         req.principal,
-        pathParam(req, 'assetId'),
+        uuidPathParam(req, 'assetId'),
         pathParam(req, 'version'),
       );
       res.status(200).json({ data: detail, trace_id: req.traceId });
@@ -59,7 +59,7 @@ export function createRegistryRouter(service: RegistryService): Router {
       const key = requireIdempotencyKey(req.header('idempotency-key'));
       const result = await service.createVersion(
         req.principal,
-        pathParam(req, 'assetId'),
+        uuidPathParam(req, 'assetId'),
         req.body,
         key,
       );
@@ -76,7 +76,7 @@ export function createRegistryRouter(service: RegistryService): Router {
     async (req, res) => {
       const result = await service.changeStatus(
         req.principal,
-        pathParam(req, 'assetId'),
+        uuidPathParam(req, 'assetId'),
         pathParam(req, 'version'),
         req.body,
       );

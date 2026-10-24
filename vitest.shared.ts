@@ -15,7 +15,7 @@ export const sourceAlias = {
 
 export function makeConfig(
   include: string[],
-  options: { fileParallelism?: boolean } = {},
+  options: { fileParallelism?: boolean; mode: string },
 ): ReturnType<typeof defineConfig> {
   return defineConfig({
     resolve: { alias: sourceAlias },
@@ -27,6 +27,13 @@ export function makeConfig(
       hookTimeout: 120_000,
       teardownTimeout: 30_000,
       fileParallelism: options.fileParallelism ?? false,
+      // 运行模式写进环境变量：worker 侧的断言计数与请求事实需要知道写到哪个报告目录。
+      env: { AIP_REPORT_MODE: options.mode },
+      setupFiles: [resolve(root, 'tests/helpers/report-setup.ts')],
+      reporters: [
+        'default',
+        [resolve(root, 'tools/report/reporter.ts'), { mode: options.mode }],
+      ],
     },
   });
 }

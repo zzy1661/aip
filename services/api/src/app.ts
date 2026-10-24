@@ -7,6 +7,7 @@ import express, {
 import multer from 'multer';
 import { PAYLOAD_MAX_BYTES } from '@aip/contracts';
 import { ApiError, apiError, toErrorBody } from './http/errors.js';
+import { toDatabaseApiError } from './http/database-errors.js';
 import { toApiError } from './ragflow/errors.js';
 import { traceMiddleware } from './http/trace.js';
 import { createAuthMiddleware } from './auth/middleware.js';
@@ -107,6 +108,12 @@ function errorHandler(
   const upstreamError = toApiError(error);
   if (upstreamError instanceof ApiError) {
     res.status(upstreamError.status).json(toErrorBody(upstreamError, traceId));
+    return;
+  }
+
+  const databaseError = toDatabaseApiError(error);
+  if (databaseError) {
+    res.status(databaseError.status).json(toErrorBody(databaseError, traceId));
     return;
   }
 

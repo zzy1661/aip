@@ -83,13 +83,16 @@ export async function setOperationRemoteId(
   id: string,
   remoteId: string,
   state: string,
-): Promise<void> {
-  await client.query(
+  expectedEpoch?: number,
+): Promise<boolean> {
+  const { rowCount } = await client.query(
     `UPDATE operation
         SET remote_id = $3, state = $4, updated_at = now()
-      WHERE scope_id = $1 AND id = $2`,
-    [scopeId, id, remoteId, state],
+      WHERE scope_id = $1 AND id = $2
+        AND ($5::bigint IS NULL OR epoch = $5::bigint)`,
+    [scopeId, id, remoteId, state, expectedEpoch ?? null],
   );
+  return (rowCount ?? 0) > 0;
 }
 
 export async function setOperationState(
@@ -121,16 +124,25 @@ export async function deferOperation(
   id: string,
   deferMs: number,
   lastError: string | null,
-): Promise<void> {
-  await client.query(
+  expectedEpoch?: number,
+): Promise<boolean> {
+  const { rowCount } = await client.query(
     `UPDATE operation
         SET state = 'unknown_outcome', last_error = $3,
             next_attempt_at = now() + ($4 || ' milliseconds')::interval, updated_at = now()
-      WHERE scope_id = $1 AND id = $2`,
-    [scopeId, id, lastError, String(deferMs)],
+      WHERE scope_id = $1 AND id = $2
+        AND ($5::bigint IS NULL OR epoch = $5::bigint)`,
+    [scopeId, id, lastError, String(deferMs), expectedEpoch ?? null],
   );
+  return (rowCount ?? 0) > 0;
 }
 
+/**
+ * 领取操作租约。
+ *
+ * 领取即开启新的 epoch：epoch 是这一轮推进的栅栏令牌。
+ * 后续所有状态写入都必须带上本轮 epoch，迟到的旧 epoch 写入会被数据库直接忽略。
+ */
 export async function claimOperationLease(
   client: QueryClient,
   scopeId: string,
@@ -141,6 +153,7 @@ export async function claimOperationLease(
     `UPDATE operation
         SET lease_until = now() + ($3 || ' milliseconds')::interval,
             attempt = attempt + 1,
+            epoch = epoch + 1,
             updated_at = now()
       WHERE scope_id = $1 AND id = $2
         AND (lease_until IS NULL OR lease_until < now())
@@ -152,15 +165,23 @@ export async function claimOperationLease(
   return rows[0] ?? null;
 }
 
+/**
+ * 释放租约。
+ *
+ * 必须带上本轮 epoch：迟到的旧 worker 不能把新 worker 的租约清掉，
+ * 否则第二个 worker 会在新 worker 还在处理时再次领取同一操作。
+ */
 export async function releaseOperationLease(
   client: QueryClient,
   scopeId: string,
   id: string,
+  expectedEpoch?: number,
 ): Promise<void> {
   await client.query(
     `UPDATE operation SET lease_until = NULL, updated_at = now()
-      WHERE scope_id = $1 AND id = $2`,
-    [scopeId, id],
+      WHERE scope_id = $1 AND id = $2
+        AND ($3::bigint IS NULL OR epoch = $3::bigint)`,
+    [scopeId, id, expectedEpoch ?? null],
   );
 }
 
@@ -180,17 +201,6 @@ export async function listClaimableOperations(
     [scopeId, limit],
   );
   return rows;
-}
-
-export async function bumpEpoch(
-  client: QueryClient,
-  scopeId: string,
-  id: string,
-): Promise<void> {
-  await client.query(
-    `UPDATE operation SET epoch = epoch + 1, updated_at = now() WHERE scope_id = $1 AND id = $2`,
-    [scopeId, id],
-  );
 }
 
 export function toOperationView(row: OperationRow): OperationView {

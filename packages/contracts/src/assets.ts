@@ -82,6 +82,8 @@ export interface AssetBindingView {
   skill_id: string;
   skill_version: string;
   skill_slug: string | null;
+  /** 被绑定版本的内容哈希：详情要能证明它精确指向哪个事实。 */
+  skill_content_hash: string | null;
   binding_valid: boolean;
 }
 
@@ -188,7 +190,14 @@ export const agentPayloadSchema = {
         },
       },
     },
-    model_profile_ref: { type: 'string', minLength: 1, maxLength: 128 },
+    // 只允许标识符形态：model_profile_ref 未来可能成为动态出网入口，
+    // 不能承载地址或协议串。
+    model_profile_ref: {
+      type: 'string',
+      minLength: 1,
+      maxLength: 128,
+      pattern: '^[A-Za-z0-9._-]+$',
+    },
     requested_permissions: {
       type: 'array',
       uniqueItems: true,

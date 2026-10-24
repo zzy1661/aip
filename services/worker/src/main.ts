@@ -42,6 +42,7 @@ async function main(): Promise<void> {
     ragflow,
     files,
     parseDeadlineMs: config.limits.parseDeadlineMs,
+    leaseMs: config.limits.operationLeaseMs,
     parserHash: config.ragflow.sourceSha ?? 'unpinned',
     embeddingRevision: config.ragflow.embeddingRevision || 'unversioned',
   });
