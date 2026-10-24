@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { remoteDocumentName } from '@aip/api';
 import { createHarness, type Harness } from '../helpers/app.js';
 import { ALL_PERMISSIONS } from '../helpers/auth.js';
 import { createReadyKnowledgeBase, uploadSampleDocument, prepareApprovedDocument } from '../helpers/flow.js';
@@ -127,17 +128,18 @@ describe('崩溃窗口恢复：不重复写入上游', () => {
     expect(datasetCreates()).toBe(0);
   });
 
-  it('文档上传崩溃窗口：上游已有同名文档时认领，不重复上传', async () => {
+  it('文档上传崩溃窗口：上游已有该来源的远端文档时认领，不重复上传', async () => {
     const kb = await createReadyKnowledgeBase(harness, token);
     const doc = await uploadSampleDocument(harness, token, kb.kbId, {
       fileName: 'crash-window.md',
     });
 
     // 上游已经收到文件，但本地还没记住远端文档 ID。
+    // 远端文档名带来源标识：用户文件名可能重复，不能只按用户文件名认领。
     harness.ragflow.documents.set('doc-crash', {
       id: 'doc-crash',
       datasetId: kb.datasetId,
-      name: 'crash-window.md',
+      name: remoteDocumentName('crash-window.md', doc.sourceRef, doc.version),
       run: 'UNSTART',
       progress: 0,
       chunk_count: null,

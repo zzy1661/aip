@@ -57,6 +57,14 @@ interface OperationProgress {
   sourceFileVersion?: string;
   datasetName?: string;
   /**
+   * 远端文档名：由来源标识派生，跨来源唯一。
+   *
+   * 用户文件名可能重复（同一个知识库里两份同名不同正文的文件），
+   * 只按用户文件名核对上游会把旧文档错认成新来源。远端名带来源标识，
+   * 用户可见的显示名仍然是来源文件名。
+   */
+  remoteName?: string;
+  /**
    * 写请求是否已经送达上游但结果不可知。
    *
    * 一旦置位，后续推进只允许只读核对，禁止重发同一个写请求。
@@ -132,6 +140,73 @@ class StaleEpochError extends Error {
   }
 }
 
+/**
+ * 只读核对的失败。
+ *
+ * 只读核对（列数据集 / 列文档 / 查解析状态）失败**什么都证明不了**：
+ * 它既不能证明之前的写请求已经送达，也不能证明没有送达。
+ * 因此它绝不能被当成「写请求未送达」而清掉发送意图——只允许延后这次核对。
+ */
+class ReadCheckError extends Error {
+  constructor(readonly inner: unknown) {
+    super('read-only verification failed');
+    this.name = 'ReadCheckError';
+  }
+}
+
+/**
+ * 写请求的失败。
+ *
+ * 记录这次写对应的发送意图阶段：只有「这个阶段自己的写请求确定没送达」
+ * 才允许把该阶段退回，否则会覆盖掉已经确认过的前序步骤。
+ */
+class WriteAttemptError extends Error {
+  constructor(
+    readonly intentStage: string,
+    readonly inner: unknown,
+  ) {
+    super('upstream write failed');
+    this.name = 'WriteAttemptError';
+  }
+}
+
+/** 执行一次只读核对，并标记它的失败来源。 */
+async function readCheck<T>(run: () => Promise<T>): Promise<T> {
+  try {
+    return await run();
+  } catch (error) {
+    throw new ReadCheckError(error);
+  }
+}
+
+/** 执行一次写请求，并标记它所属的发送意图阶段。 */
+async function writeAttempt<T>(intentStage: string, run: () => Promise<T>): Promise<T> {
+  try {
+    return await run();
+  } catch (error) {
+    throw new WriteAttemptError(intentStage, error);
+  }
+}
+
+/**
+ * 远端文档名：由来源标识派生，跨来源唯一。
+ *
+ * 上游文档名就是上传时的文件名。同一知识库里可能存在同名不同正文的来源，
+ * 只按用户文件名匹配会把旧文档错认成新来源。远端名带上来源标识后，
+ * 「同名」不再是来源身份的唯一线索；用户可见的显示名仍是来源文件名。
+ */
+export function remoteDocumentName(
+  sourceName: string,
+  sourceFileId: string,
+  sourceFileVersion: string,
+): string {
+  const dot = sourceName.lastIndexOf('.');
+  const stem = dot > 0 ? sourceName.slice(0, dot) : sourceName;
+  const extension = dot > 0 ? sourceName.slice(dot) : '';
+  const identity = `${sourceFileId}-${sourceFileVersion}`.replace(/[^a-zA-Z0-9_-]/g, '');
+  return `${stem}--${identity}${extension}`;
+}
+
 interface FailureDecision {
   /** 操作终态：failed / in_progress / unknown_outcome。 */
   state: 'failed' | 'in_progress' | 'unknown_outcome';
@@ -156,8 +231,20 @@ interface FailureDecision {
  *   连接阶段失败（not_delivered）可以安全重发；
  *   中途失败（delivered_unknown）对写请求必须转入 unknown_outcome 并只做只读核对，
  *   对只读请求可以安全重试。
+ *
+ * readOnly 表示这次故障来自**只读核对**而不是写请求。只读核对的失败不能
+ * 用来判断写请求的送达情况：它「确定没送达」的结论只对这次核对成立，
+ * 对之前的写请求不成立，因此 notDelivered 恒为 false，
+ * 否则「核对没连上」会被误当成「之前的写没送达」而触发重发。
+ * 其余分类（确定失败 / 暂时不可用）保持不变。
  */
-function classifyFailure(error: unknown): FailureDecision {
+function classifyFailure(error: unknown, readOnly = false): FailureDecision {
+  const decision = classifyUpstreamFailure(error);
+  if (!readOnly) return decision;
+  return { ...decision, notDelivered: false };
+}
+
+function classifyUpstreamFailure(error: unknown): FailureDecision {
   if (error instanceof RagFlowBusinessError) {
     return {
       state: 'failed',
@@ -312,6 +399,7 @@ export function createOperationsService(deps: OperationsDeps) {
       sourceFileId: result.sourceFileId,
       sourceFileVersion: result.sourceFileVersion,
       datasetName: result.datasetName,
+      remoteName: result.remoteName,
       outcomeUnknown: result.outcomeUnknown === true,
     };
   }
@@ -467,7 +555,7 @@ export function createOperationsService(deps: OperationsDeps) {
           throw new Error(`unsupported operation kind ${claimed.kind}`);
       }
     } catch (error) {
-      return await handleFailure(error, scopeId, operationId, epoch, progress, claimed.attempt);
+      return await handleFailure(error, scopeId, operationId, epoch, claimed.attempt);
     } finally {
       // 本轮处理结束即释放租约：未达终态的操作要能被下一轮立即接管，
       // 否则轮询间隔会被租约时长悄悄放大。释放必须带 epoch，
@@ -499,7 +587,6 @@ export function createOperationsService(deps: OperationsDeps) {
     scopeId: string,
     operationId: string,
     epoch: number,
-    progress: OperationProgress,
     attempt: number,
   ): Promise<OperationResult> {
     if (error instanceof StaleEpochError) {
@@ -507,21 +594,63 @@ export function createOperationsService(deps: OperationsDeps) {
       return currentResult(scopeId, operationId, 'in_progress', null);
     }
 
-    const failure = classifyFailure(error);
+    // 读失败与写失败必须分开处理：
+    // - 写失败：只有「这个写请求自己确定没送达」才允许清掉它的发送意图；
+    // - 读失败：只读核对失败什么都证明不了，任何发送意图都不许清，只能延后核对。
+    const readOnlyFailure = error instanceof ReadCheckError;
+    const intentStage = error instanceof WriteAttemptError ? error.intentStage : undefined;
+    const inner =
+      error instanceof ReadCheckError || error instanceof WriteAttemptError ? error.inner : error;
+    const failure = classifyFailure(inner, readOnlyFailure);
+    // 核对失败要能一眼看出是「核对」失败：它与「写失败」的处置完全不同。
+    // 确定的失败（协议不符、业务失败）保留上游分类原文，不加前缀。
+    const message =
+      readOnlyFailure && failure.state === 'in_progress'
+        ? `upstream verification read failed: ${failure.message}`
+        : failure.message;
+
+    let outcome: { state: string; message: string } = { state: failure.state, message };
     try {
       await withTransaction(pool, async (client) => {
-        // 资源状态先落、操作状态后落：与撤回事务保持同一把行锁顺序
-        // （知识版本 → 操作），否则两边的行锁会互相等待。
-        if (failure.resourceStatus) {
-          await rollbackResourceStatus(client, scopeId, progress, failure.resourceStatus);
-        }
-        if (failure.state === 'unknown_outcome') {
+        // 失败处理必须以数据库里**最新的持久检查点**为准：
+        // 本轮推进过程中可能已经确认过前序步骤（上传成功、解析已触发），
+        // 用入口处的旧快照回写会把这些确认过的进度覆盖掉，
+        // 下一步就会重复已经完成过的写动作。
+        const latest = await readProgress(client, scopeId, operationId);
+
+        // 只有「这个写请求自己确定没送达」才允许清掉它的发送意图。
+        // 读失败的连接错误说的是「这次核对没送达」，与写请求无关。
+        const outstandingIntent = SEND_INTENT_PREVIOUS_STAGE[latest.stage] !== undefined;
+        const mayClearIntent =
+          failure.notDelivered &&
+          !readOnlyFailure &&
+          intentStage !== undefined &&
+          latest.stage === intentStage;
+
+        // 写结果未知，或者核对失败但仍有未确认的写：都转入 unknown_outcome，
+        // 后续只允许只读核对，绝不重发。
+        // 确定的核对失败（协议不符、业务失败）仍然照常终结，不在这里降级。
+        if (
+          failure.state === 'unknown_outcome' ||
+          (readOnlyFailure && failure.state === 'in_progress' && outstandingIntent)
+        ) {
+          const unknownMessage = readOnlyFailure
+            ? `${message}; the earlier write outcome is still unknown`
+            : message;
+          // 资源状态先落、操作状态后落：与撤回事务保持同一把行锁顺序
+          // （知识版本 → 操作），否则两边的行锁会互相等待。
+          await rollbackResourceStatus(
+            client,
+            scopeId,
+            latest,
+            failure.resourceStatus ?? 'unknown_outcome',
+          );
           // 先落「结果未知」标记：它禁止后续推进重发同一个写请求。
           await writeProgress(
             client,
             scopeId,
             operationId,
-            { ...progress, outcomeUnknown: true },
+            { ...latest, outcomeUnknown: true },
             epoch,
           );
           // 自动核对有次数上限：超过上限后不再自动重试，
@@ -533,19 +662,24 @@ export function createOperationsService(deps: OperationsDeps) {
             operationId,
             capped ? MANUAL_REVIEW_PARK_MS : unknownOutcomeDelay(attempt),
             capped
-              ? `${failure.message}; automatic verification stopped after ${attempt} attempts, manual review required`
-              : failure.message,
+              ? `${unknownMessage}; automatic verification stopped after ${attempt} attempts, manual review required`
+              : unknownMessage,
             epoch,
           );
           if (!deferred) throw new StaleEpochError(operationId);
-        } else if (failure.state === 'in_progress') {
-          if (failure.notDelivered) {
-            // 请求确定没有送达上游：清掉发送意图，下一轮可以安全重发。
+          outcome = { state: 'unknown_outcome', message: unknownMessage };
+          return;
+        }
+
+        if (failure.state === 'in_progress') {
+          if (mayClearIntent) {
+            // 请求确定没有送达上游：只清掉这一个写请求的发送意图，
+            // 已经确认过的前序步骤（远端 ID、已上传）原样保留。
             await writeProgress(
               client,
               scopeId,
               operationId,
-              clearSendIntent(progress),
+              clearSendIntent(latest),
               epoch,
             );
           }
@@ -554,19 +688,27 @@ export function createOperationsService(deps: OperationsDeps) {
             scopeId,
             operationId,
             epoch,
-            failure.message,
+            message,
             attempt,
           );
-        } else {
-          await fenceOperationState(
-            client,
-            scopeId,
-            operationId,
-            epoch,
-            failure.state,
-            failure.message,
-          );
+          return;
         }
+
+        // 终态失败：资源状态先落、操作状态后落。
+        await rollbackResourceStatus(
+          client,
+          scopeId,
+          latest,
+          failure.resourceStatus ?? 'failed',
+        );
+        await fenceOperationState(
+          client,
+          scopeId,
+          operationId,
+          epoch,
+          failure.state,
+          message,
+        );
       });
     } catch (writeError) {
       if (writeError instanceof StaleEpochError) {
@@ -575,12 +717,13 @@ export function createOperationsService(deps: OperationsDeps) {
       throw writeError;
     }
 
+    const current = await opsRepo.findOperation(pool, scopeId, operationId);
     return {
       operationId,
-      state: failure.state,
-      resourceId: progress.knowledgeId ?? progress.kbId ?? null,
-      remoteId: progress.documentId ?? progress.datasetId ?? null,
-      lastError: failure.message,
+      state: current?.state ?? outcome.state,
+      resourceId: current?.resource_id ?? null,
+      remoteId: current?.remote_id ?? null,
+      lastError: current?.last_error ?? outcome.message,
     };
   }
 
@@ -592,8 +735,10 @@ export function createOperationsService(deps: OperationsDeps) {
     const capped = attempt >= unknownOutcomeMaxAttempts;
     const lastError = capped ? `${message}; automatic verification stopped, manual review required` : message;
     await withTransaction(pool, async (client) => {
-      await rollbackResourceStatus(client, scopeId, progress, 'unknown_outcome');
-      await writeProgress(client, scopeId, operationId, { ...progress, outcomeUnknown: true }, epoch);
+      // 以数据库里最新的检查点为准：回写时不能覆盖掉本轮已确认的进度。
+      const latest = await readProgress(client, scopeId, operationId);
+      await rollbackResourceStatus(client, scopeId, latest, 'unknown_outcome');
+      await writeProgress(client, scopeId, operationId, { ...latest, outcomeUnknown: true }, epoch);
       const updated = await opsRepo.deferOperation(client, scopeId, operationId,
         capped ? MANUAL_REVIEW_PARK_MS : unknownOutcomeDelay(attempt), lastError, epoch);
       if (!updated) throw new StaleEpochError(operationId);
@@ -621,7 +766,8 @@ export function createOperationsService(deps: OperationsDeps) {
     // 只能只读核对，禁止直接重发——重发会造出第二个同名数据集。
     const interrupted = progress.stage === 'dataset_create_attempted';
     if (progress.outcomeUnknown || interrupted) {
-      const existing = await ragflow.listDatasetsByName(progress.datasetName!);
+      // 只读核对：它失败不能证明上一次的写请求没送达。
+      const existing = await readCheck(() => ragflow.listDatasetsByName(progress.datasetName!));
       if (existing.length === 1) {
         await withTransaction(pool, async (client) => {
           await fenceOperationState(client, scopeId, operationId, epoch, 'succeeded', null);
@@ -663,10 +809,12 @@ export function createOperationsService(deps: OperationsDeps) {
         epoch,
       ),
     );
-    const dataset = await ragflow.createDataset({
-      name: progress.datasetName!,
-      description: '',
-    });
+    const dataset = await writeAttempt('dataset_create_attempted', () =>
+      ragflow.createDataset({
+        name: progress.datasetName!,
+        description: '',
+      }),
+    );
     await withTransaction(pool, async (client) => {
       await fenceOperationState(client, scopeId, operationId, epoch, 'succeeded', null);
       const updated = await opsRepo.setOperationRemoteId(
@@ -739,12 +887,19 @@ export function createOperationsService(deps: OperationsDeps) {
         return { operationId, state: 'failed', resourceId: progress.knowledgeId ?? null, remoteId: null, lastError: message };
       }
 
+      // 远端文档名由来源标识派生：用户文件名可能重复，
+      // 只按用户文件名核对上游会把另一份来源的旧文档错认成这次的上传。
+      const remoteName =
+        progress.remoteName ??
+        remoteDocumentName(source.name, progress.sourceFileId!, progress.sourceFileVersion!);
+
       // 发送意图已落库但本地没有远端文档 ID：上一次上传的结果不可知。
-      // 按文件名只读核对上游，唯一命中才认领，绝不重新上传——重传会造出第二个同名文档。
+      // 按远端唯一名只读核对上游，唯一命中才认领，绝不重新上传——重传会造出第二个同名文档。
       const interrupted = progress.stage === 'upload_attempted';
       if (progress.outcomeUnknown || interrupted) {
-        const documents = await ragflow.listDocuments(progress.datasetId!);
-        const matches = documents.filter((document) => document.name === source.name);
+        // 只读核对：它失败不能证明上一次的写请求没送达。
+        const documents = await readCheck(() => ragflow.listDocuments(progress.datasetId!));
+        const matches = documents.filter((document) => document.name === remoteName);
         if (matches.length === 1) {
           await withTransaction(pool, async (client) => {
             const updated = await opsRepo.setOperationRemoteId(
@@ -760,11 +915,11 @@ export function createOperationsService(deps: OperationsDeps) {
               client,
               scopeId,
               operationId,
-              { ...progress, stage: 'uploaded', documentId: matches[0]!.id },
+              { ...progress, stage: 'uploaded', documentId: matches[0]!.id, remoteName },
               epoch,
             );
           });
-          progress = { ...progress, stage: 'uploaded', documentId: matches[0]!.id };
+          progress = { ...progress, stage: 'uploaded', documentId: matches[0]!.id, remoteName };
         } else {
           return deferUnknownWrite(scopeId, operationId, epoch, progress, attempt,
             matches.length > 1 ? 'multiple upstream documents match; manual check required'
@@ -774,21 +929,25 @@ export function createOperationsService(deps: OperationsDeps) {
 
       if (!progress.documentId) {
         const content = await files.read(source.storage_key);
+        // 发送意图与远端唯一名在同一次写入里落库：
+        // 恢复时才知道上一次到底有没有发出去、发出去的是哪个名字。
         await withTransaction(pool, (client) =>
           writeProgress(
             client,
             scopeId,
             operationId,
-            { ...progress, stage: 'upload_attempted' },
+            { ...progress, stage: 'upload_attempted', remoteName },
             epoch,
           ),
         );
-        const uploaded = await ragflow.uploadDocument({
-          datasetId: progress.datasetId!,
-          filename: source.name,
-          contentType: source.mime,
-          content,
-        });
+        const uploaded = await writeAttempt('upload_attempted', () =>
+          ragflow.uploadDocument({
+            datasetId: progress.datasetId!,
+            filename: remoteName,
+            contentType: source.mime,
+            content,
+          }),
+        );
         await withTransaction(pool, async (client) => {
           const updated = await opsRepo.setOperationRemoteId(
             client,
@@ -803,11 +962,11 @@ export function createOperationsService(deps: OperationsDeps) {
             client,
             scopeId,
             operationId,
-            { ...progress, stage: 'uploaded', documentId: uploaded.documentId },
+            { ...progress, stage: 'uploaded', documentId: uploaded.documentId, remoteName },
             epoch,
           );
         });
-        progress = { ...progress, stage: 'uploaded', documentId: uploaded.documentId };
+        progress = { ...progress, stage: 'uploaded', documentId: uploaded.documentId, remoteName };
       }
     }
 
@@ -815,10 +974,13 @@ export function createOperationsService(deps: OperationsDeps) {
     // 恢复时只读确认上游状态，无法确认送达结果则暂停等待人工核查。
     const parseStartInterrupted = progress.stage === 'parse_attempted';
     if (progress.outcomeUnknown || parseStartInterrupted) {
-      const status = await ragflow.getDocumentStatus({
-        datasetId: progress.datasetId!,
-        documentId: progress.documentId!,
-      });
+      // 只读核对：它失败不能证明上一次的解析启动请求没送达，只能延后核对。
+      const status = await readCheck(() =>
+        ragflow.getDocumentStatus({
+          datasetId: progress.datasetId!,
+          documentId: progress.documentId!,
+        }),
+      );
       if (status.run === 'UNSTART') {
         return deferUnknownWrite(scopeId, operationId, epoch, progress, attempt,
           'upstream parse start outcome is unknown; manual check required');
@@ -833,10 +995,12 @@ export function createOperationsService(deps: OperationsDeps) {
           epoch,
         ),
       );
-      await ragflow.startParse({
-        datasetId: progress.datasetId!,
-        documentIds: [progress.documentId!],
-      });
+      await writeAttempt('parse_attempted', () =>
+        ragflow.startParse({
+          datasetId: progress.datasetId!,
+          documentIds: [progress.documentId!],
+        }),
+      );
     }
     // 解析是独立的长时操作，登记为单独的操作项由 worker 轮询。
     const withdrawn = await withTransaction(pool, async (client) => {
@@ -938,6 +1102,8 @@ export function createOperationsService(deps: OperationsDeps) {
     if (!progress.datasetId || !progress.documentId) {
       throw new Error('parse operation is missing the remote document identity');
     }
+    const datasetId = progress.datasetId;
+    const documentId = progress.documentId;
 
     // 撤回是终态：已撤回的知识版本不再推进解析。
     // 迟到的解析完成不能把它改回 ready——否则撤回的知识会复活，来源文件重新可下载。
@@ -980,10 +1146,12 @@ export function createOperationsService(deps: OperationsDeps) {
       }
     }
 
-    const status = await ragflow.getDocumentStatus({
-      datasetId: progress.datasetId,
-      documentId: progress.documentId,
-    });
+    const status = await readCheck(() =>
+      ragflow.getDocumentStatus({
+        datasetId,
+        documentId,
+      }),
+    );
 
     if (status.run === 'DONE') {
       const chunkCount = status.chunk_count ?? 0;
@@ -1097,6 +1265,8 @@ export function createOperationsService(deps: OperationsDeps) {
     if (!progress.datasetId || !progress.documentId) {
       throw new Error('reindex operation is missing the remote document identity');
     }
+    const datasetId = progress.datasetId;
+    const documentId = progress.documentId;
 
     // 撤回是终态：已撤回的知识版本不再重建索引。
     if (await isWithdrawn(scopeId, progress.knowledgeId, progress.knowledgeVersion)) {
@@ -1116,10 +1286,13 @@ export function createOperationsService(deps: OperationsDeps) {
     const interrupted = progress.stage === 'reindex_attempted';
     if (progress.outcomeUnknown || interrupted) {
       // 启动解析的结果未知：只读核对，禁止根据旧状态重发。
-      const observed = await ragflow.getDocumentStatus({
-        datasetId: progress.datasetId,
-        documentId: progress.documentId,
-      });
+      // 只读核对失败不能证明这次写没送达：它只能延后核对。
+      const observed = await readCheck(() =>
+        ragflow.getDocumentStatus({
+          datasetId,
+          documentId,
+        }),
+      );
       if (observed.run === 'UNSTART' || observed.run === 'DONE') {
         // Neither an idle document nor an old completed index identifies this write.
         return deferUnknownWrite(scopeId, operationId, epoch, progress, attempt,
@@ -1137,10 +1310,12 @@ export function createOperationsService(deps: OperationsDeps) {
           epoch,
         ),
       );
-      await ragflow.startParse({
-        datasetId: progress.datasetId,
-        documentIds: [progress.documentId],
-      });
+      await writeAttempt('reindex_attempted', () =>
+        ragflow.startParse({
+          datasetId,
+          documentIds: [documentId],
+        }),
+      );
       await withTransaction(pool, (client) =>
         writeProgress(
           client,
@@ -1152,10 +1327,12 @@ export function createOperationsService(deps: OperationsDeps) {
       );
     }
 
-    const status = await ragflow.getDocumentStatus({
-      datasetId: progress.datasetId,
-      documentId: progress.documentId,
-    });
+    const status = await readCheck(() =>
+      ragflow.getDocumentStatus({
+        datasetId,
+        documentId,
+      }),
+    );
     if (status.run === 'FAIL' || status.run === 'CANCEL') {
       const message = status.run === 'FAIL' ? 'reindex failed upstream' : 'reindex cancelled';
       const settled = await settleWithResourceStatus(
@@ -1229,14 +1406,19 @@ export function createOperationsService(deps: OperationsDeps) {
       );
       return { operationId, state: 'succeeded', resourceId: progress.knowledgeId ?? null, remoteId: null, lastError: null };
     }
+    const datasetId = progress.datasetId;
+    const documentId = progress.documentId;
     // 删除是写操作：先只读确认文档是否还在，在才删，避免结果未知时盲目重发。
-    const documents = await ragflow.listDocuments(progress.datasetId);
-    const stillPresent = documents.some((document) => document.id === progress.documentId);
+    // 只读核对失败不能证明删除请求没送达，只能延后核对。
+    const documents = await readCheck(() => ragflow.listDocuments(datasetId));
+    const stillPresent = documents.some((document) => document.id === documentId);
     if (stillPresent) {
-      await ragflow.deleteDocument({
-        datasetId: progress.datasetId,
-        documentId: progress.documentId,
-      });
+      await writeAttempt('withdraw_pending', () =>
+        ragflow.deleteDocument({
+          datasetId,
+          documentId,
+        }),
+      );
     }
 
     await withTransaction(pool, (client) =>

@@ -960,13 +960,53 @@ export function createKnowledgeService(deps: KnowledgeDeps) {
     if (!canDownload) {
       throw apiError('FORBIDDEN', 'download is not granted for this document');
     }
+    // 文件读取在事务之外：读文件期间可能发生撤权或撤回，
+    // 因此正文准备好之后、在交付之前必须再做一次末次授权判定。
     const content = await files.read(source.storage_key);
+    await assertDeliveryStillAllowed(principal, knowledge.knowledge_id, knowledge.version);
     return {
       content,
       name: source.name,
       mime: source.mime,
       sha256: source.sha256,
     };
+  }
+
+  /**
+   * 交付前的末次授权判定。
+   *
+   * 文件读取不持锁：授权行锁只覆盖这一小段判定，跨文件 I/O 持锁会把
+   * 撤权请求长时间堵住。这里重新确认三件事：知识版本没被撤回、
+   * 主体仍然可读、仍然有下载授权。任何一项在读取期间发生变化都不放行。
+   */
+  async function assertDeliveryStillAllowed(
+    principal: Principal,
+    knowledgeId: string,
+    version: string,
+  ): Promise<void> {
+    await withTransaction(pool, async (client) => {
+      await authz.lockAuthzState(client, principal.scope);
+      const current = await repo.findKnowledgeRevision(client, principal.scope, knowledgeId, version);
+      if (!current || current.status === 'withdrawn') {
+        throw apiError('NOT_FOUND', 'source file not found');
+      }
+      const stillReadable = await authz.filterReadable(client, principal.scope, principal.subject, [
+        knowledgeId,
+      ]);
+      if (!stillReadable.has(knowledgeId)) {
+        throw apiError('NOT_FOUND', 'source file not found');
+      }
+      const stillDownloadable = await authz.hasDownloadGrant(
+        client,
+        principal.scope,
+        principal.subject,
+        knowledgeId,
+        version,
+      );
+      if (!stillDownloadable) {
+        throw apiError('FORBIDDEN', 'download is not granted for this document');
+      }
+    });
   }
 
   async function getEvidence(principal: Principal, evidenceId: string): Promise<unknown> {

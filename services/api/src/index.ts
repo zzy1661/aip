@@ -33,7 +33,12 @@ export {
 } from './ragflow/errors.js';
 export { FileStore } from './files/store.js';
 export { validateUpload, type ValidatedUpload } from './files/validate.js';
-export { createOperationsService, type OperationsDeps, type OperationsService } from './operations/service.js';
+export {
+  createOperationsService,
+  remoteDocumentName,
+  type OperationsDeps,
+  type OperationsService,
+} from './operations/service.js';
 export { createRegistryService, type RegistryDeps, type RegistryService } from './registry/service.js';
 export { createRegistryRouter } from './registry/routes.js';
 export {
