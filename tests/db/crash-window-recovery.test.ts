@@ -128,27 +128,29 @@ describe('崩溃窗口恢复：不重复写入上游', () => {
     expect(datasetCreates()).toBe(0);
   });
 
-  it('文档上传崩溃窗口：上游已有该来源的远端文档时认领，不重复上传', async () => {
+  it('文档上传崩溃窗口：已持久化远端身份时认领上游文档，不重复上传', async () => {
     const kb = await createReadyKnowledgeBase(harness, token);
     const doc = await uploadSampleDocument(harness, token, kb.kbId, {
       fileName: 'crash-window.md',
     });
+    const remoteName = remoteDocumentName('crash-window.md', doc.sourceRef, doc.version);
 
     // 上游已经收到文件，但本地还没记住远端文档 ID。
     // 远端文档名带来源标识：用户文件名可能重复，不能只按用户文件名认领。
     harness.ragflow.documents.set('doc-crash', {
       id: 'doc-crash',
       datasetId: kb.datasetId,
-      name: remoteDocumentName('crash-window.md', doc.sourceRef, doc.version),
+      name: remoteName,
       run: 'UNSTART',
       progress: 0,
       chunk_count: null,
       progress_msg: '',
       content: '崩溃窗口',
     });
+    // 崩溃发生在「身份已经落库、远端 ID 还没记下来」之后：身份可靠，可以认领。
     await setCrashWindow(
       doc.operationId,
-      { stage: 'upload_attempted', documentId: undefined },
+      { stage: 'upload_attempted', documentId: undefined, remoteName },
       { clearRemoteId: true },
     );
 
@@ -160,6 +162,42 @@ describe('崩溃窗口恢复：不重复写入上游', () => {
       [doc.operationId],
     );
     expect(rows[0]!.remote_id).toBe('doc-crash');
+  });
+
+  it('文档上传崩溃窗口：没有持久化远端身份的历史操作不认领同名候选', async () => {
+    const kb = await createReadyKnowledgeBase(harness, token);
+    const doc = await uploadSampleDocument(harness, token, kb.kbId, {
+      fileName: 'crash-window-legacy.md',
+    });
+
+    // 历史形态：发送意图已落库，但没有持久化远端身份。
+    // 上游恰好存在一个与新算法推算名相同的文档，但没有任何证据证明
+    // 旧实现曾经发送过这个名字：不能据此认领。
+    harness.ragflow.documents.set('doc-legacy-candidate', {
+      id: 'doc-legacy-candidate',
+      datasetId: kb.datasetId,
+      name: remoteDocumentName('crash-window-legacy.md', doc.sourceRef, doc.version),
+      run: 'UNSTART',
+      progress: 0,
+      chunk_count: null,
+      progress_msg: '',
+      content: '历史候选',
+    });
+    await setCrashWindow(
+      doc.operationId,
+      { stage: 'upload_attempted', documentId: undefined, remoteName: undefined },
+      { clearRemoteId: true },
+    );
+
+    await harness.operations.advance(doc.operationId, harness.projectId);
+
+    expect(documentUploads()).toBe(0);
+    const { rows } = await harness.pool.query(
+      `SELECT state, remote_id FROM operation WHERE id = $1`,
+      [doc.operationId],
+    );
+    expect(rows[0]!.remote_id).toBeNull();
+    expect(rows[0]!.state).toBe('unknown_outcome');
   });
 
   it('上传查询持续未命中也不重新上传', async () => {
