@@ -4,6 +4,7 @@ import {
   createRagFlowAdapter,
   createRagFlowHttpClient,
   nodeTransport,
+  type RagFlowAdapter,
   type RawRequest,
   type RawResponse,
   type Transport,
@@ -114,7 +115,7 @@ export interface RealHarness extends Harness {
 /**
  * 真实联调 harness 的可调项。
  *
- * 默认全部指向真实 RAGFlow；只有「真实网络失败」取证才会覆盖上游地址。
+ * 默认全部指向真实 RAGFlow；只有取证与反向对照才会改上游指向。
  */
 export interface RealHarnessOptions {
   /**
@@ -124,6 +125,14 @@ export interface RealHarnessOptions {
    * 让连接被内核真实拒绝（ECONNREFUSED），而不是用替身伪造一个错误响应。
    */
   upstreamBaseUrl?: string;
+  /**
+   * 反向对照专用：把上游换成 harness 自带的记录式替身。
+   *
+   * 这就是「接线退化成替身」的真实形态——`createHarness` 无论如何都会起一个替身，
+   * 一旦上层不再传入真实客户端，被测代码就会静默地对着替身跑。
+   * 开启后 `realCallCount()` 统计的是替身收到的请求数。
+   */
+  useSubstituteUpstream?: boolean;
   /** 复用已经迁移好的 schema：让两个 harness 共享同一份本地状态。 */
   databaseSchema?: string;
   connectTimeoutMs?: number;
@@ -148,17 +157,20 @@ export async function createRealHarness(
   env: RealEnv,
   options: RealHarnessOptions = {},
 ): Promise<RealHarness> {
+  // 反向对照：不传真实客户端，harness 就会退回自带替身。
   const { transport, count } = countingTransport(nodeTransport);
-  const ragflowClient = createRagFlowHttpClient({
-    baseUrl: options.upstreamBaseUrl ?? env.baseUrl,
-    apiKey: env.apiKey,
-    connectTimeoutMs: options.connectTimeoutMs ?? 5_000,
-    readTimeoutMs: options.readTimeoutMs ?? 30_000,
-    uploadTimeoutMs: 120_000,
-    readBudgetMs: options.readBudgetMs ?? 60_000,
-    maxReadAttempts: options.maxReadAttempts ?? 3,
-    transport,
-  });
+  const ragflowClient = options.useSubstituteUpstream
+    ? undefined
+    : createRagFlowHttpClient({
+        baseUrl: options.upstreamBaseUrl ?? env.baseUrl,
+        apiKey: env.apiKey,
+        connectTimeoutMs: options.connectTimeoutMs ?? 5_000,
+        readTimeoutMs: options.readTimeoutMs ?? 30_000,
+        uploadTimeoutMs: 120_000,
+        readBudgetMs: options.readBudgetMs ?? 60_000,
+        maxReadAttempts: options.maxReadAttempts ?? 3,
+        transport,
+      });
 
   const harness = await createHarness({
     label: 'real',
@@ -176,6 +188,10 @@ export async function createRealHarness(
     databaseSchema: options.databaseSchema,
   });
 
+  if (options.useSubstituteUpstream) {
+    // 替身模式下「上游调用数」就是替身收到的请求数。
+    return { ...harness, realCallCount: () => harness.ragflow.calls.length };
+  }
   return { ...harness, realCallCount: count };
 }
 
@@ -212,15 +228,12 @@ export async function probeConnection(port: number): Promise<{ code: string | nu
 }
 
 /**
- * 用真实上游客户端读一次文档状态。
+ * 真实上游适配器：始终指向 `env.baseUrl`（真实 RAGFlow），永远不指向替身。
  *
- * 用于证明「解析失败」来自上游而不是平台自判：
- * 平台侧状态是结论，上游状态是事实。
+ * 真实层的「独立核对」必须走这条路径：
+ * 如果它和被测代码用同一个客户端，退化成替身时就一起骗自己。
  */
-export async function readUpstreamDocumentStatus(
-  env: RealEnv,
-  input: { datasetId: string; documentId: string },
-): Promise<{ run: string; chunk_count: number | null; progress_msg: string }> {
+export function createRealUpstreamAdapter(env: RealEnv): RagFlowAdapter {
   const http = createRagFlowHttpClient({
     baseUrl: env.baseUrl,
     apiKey: env.apiKey,
@@ -231,7 +244,7 @@ export async function readUpstreamDocumentStatus(
     maxReadAttempts: 3,
     transport: nodeTransport,
   });
-  const adapter = createRagFlowAdapter({
+  return createRagFlowAdapter({
     http,
     embeddingModel: env.embeddingModel,
     parserConfig: env.parserConfig,
@@ -240,7 +253,19 @@ export async function readUpstreamDocumentStatus(
     vectorSimilarityWeight: 0.3,
     topK: 64,
   });
-  const status = await adapter.getDocumentStatus({
+}
+
+/**
+ * 用真实上游客户端读一次文档状态。
+ *
+ * 用于证明「解析失败」来自上游而不是平台自判：
+ * 平台侧状态是结论，上游状态是事实。
+ */
+export async function readUpstreamDocumentStatus(
+  env: RealEnv,
+  input: { datasetId: string; documentId: string },
+): Promise<{ run: string; chunk_count: number | null; progress_msg: string }> {
+  const status = await createRealUpstreamAdapter(env).getDocumentStatus({
     datasetId: input.datasetId,
     documentId: input.documentId,
   });
@@ -249,6 +274,90 @@ export async function readUpstreamDocumentStatus(
     chunk_count: status.chunk_count,
     progress_msg: status.progress_msg,
   };
+}
+
+/** 平台记录的上游身份：数据集 id 与稳定名。 */
+export interface UpstreamIdentity {
+  datasetId: string | null;
+  datasetName: string | null;
+}
+
+/**
+ * 读出平台自己记录的上游身份。
+ *
+ * 来源是操作进度（`operation.result`）与知识库行（`knowledge_base.ragflow_dataset_id`）：
+ * 这是平台声称的上游对象，抗替身断言拿它去真实上游核对。
+ */
+export async function readRecordedUpstreamIdentity(
+  harness: RealHarness,
+  env: RealEnv,
+  operationId: string,
+): Promise<UpstreamIdentity> {
+  const { rows } = await harness.pool.query<{
+    result: Record<string, unknown> | null;
+    ragflow_dataset_id: string | null;
+  }>(
+    `SELECT op.result, kb.ragflow_dataset_id
+       FROM operation op
+       LEFT JOIN knowledge_base kb
+         ON kb.scope_id = op.scope_id AND kb.operation_id = op.id
+      WHERE op.scope_id = $1 AND op.id = $2`,
+    [env.projectId, operationId],
+  );
+  const row = rows[0];
+  const progress = (row?.result ?? {}) as {
+    datasetId?: string;
+    datasetName?: string;
+  };
+  return {
+    datasetId: row?.ragflow_dataset_id ?? progress.datasetId ?? null,
+    datasetName: progress.datasetName ?? null,
+  };
+}
+
+/**
+ * 抗替身检查：确认这一轮的上游流量真的落在真实 RAGFlow 上。
+ *
+ * 返回**被违反的信号列表**（空数组 = 通过）。设计成「返回违规项」而不是「直接断言」，
+ * 是为了让反向对照用例能复用它：把上游换成记录式替身后，它必须报告违规。
+ *
+ * 三条信号：
+ * 1. 真实上游传输被调用过——一次都没有说明根本没碰上游；
+ * 2. 记录式替身一次都没被调用——被调用说明接线退化成了替身；
+ * 3. 平台记录的上游数据集**确实存在于真实上游**——这是最硬的一条：
+ *    它证明平台的写操作真的落到了真实 RAGFlow 上。
+ */
+export async function checkRealUpstreamUsed(
+  harness: RealHarness,
+  env: RealEnv,
+  identity: UpstreamIdentity,
+): Promise<string[]> {
+  const violations: string[] = [];
+
+  if (harness.realCallCount() === 0) {
+    violations.push('真实上游传输一次都没有被调用：这一轮没有碰到上游');
+  }
+  if (harness.ragflow.calls.length > 0) {
+    violations.push(
+      `记录式替身收到了 ${harness.ragflow.calls.length} 个请求：上游接线退化成了替身`,
+    );
+  }
+  if (!identity.datasetName) {
+    violations.push('平台没有记录上游数据集身份：无法核对写入是否落到真实上游');
+  } else {
+    const upstream = await createRealUpstreamAdapter(env).listDatasetsByName(
+      identity.datasetName,
+    );
+    const ids = upstream.map((entry) => entry.id);
+    if (!identity.datasetId || !ids.includes(identity.datasetId)) {
+      violations.push(
+        `真实上游没有平台记录的数据集 ${identity.datasetName}` +
+          `（平台记的是 ${identity.datasetId ?? '空'}，真实上游是 ${ids.join(',') || '空'}）：` +
+          '写入没有落到真实上游',
+      );
+    }
+  }
+  return violations;
 }
 
 /** 解析的终态：ready / failed / empty 之外都还在推进。 */
