@@ -56,6 +56,14 @@
    其余端点的 108 仍然是业务失败。
    实现：`adapter.ts` 的 `parseEnvelopeAllowingEmptyNameLookup`；
    常量：`errors.ts` 的 `RAGFLOW_PERMISSION_ERROR`。
+10. **解析失败的上游表现是 `run == 'FAIL'`，不是「解析成功但 0 chunk」**。
+    上传一个「有 `%PDF-` 魔数但结构损坏」的文件时，该 tag 的解析器会走完 OCR 与版面分析，
+    然后在分块阶段报错，文档的 `run` 变成 `FAIL`、`chunk_count` 为 0，
+    `progress_msg` 形如 `[ERROR]Internal server error while chunking: cannot convert float NaN to integer`。
+    适配器把 `FAIL` 映射成平台侧知识版本 `failed`（**不是** `empty`）；
+    `empty` 只留给「`run == 'DONE'` 且 `chunk_count == 0`」这一支。
+    实现：`services/api/src/operations/service.ts` 的 `advanceDocumentParse`；
+    真实取证：`tests/real/parse-failure.test.ts`（2026-10-24）。
 
 ---
 
@@ -328,6 +336,7 @@ API Key **只从环境变量读取**，不写入仓库任何文件、不落库�
 | --- | --- | --- | --- | --- | --- |
 | 2026-10-23 | `v0.20.5` | 未锁定 | 未锁定 | — | 首批交付：仅完成静态契约与替身测试，真实集成 NOT RUN |
 | 2026-10-24 | `v0.20.5` | `sha256:d95d0e4d…` | `BAAI/bge-large-zh-v1.5@BAAI` / `79e7739b…` | 本次交付 | 本地栈实测复核：八条陷阱逐条抓真实报文核对通过；**新增第 9 条**（按名称列数据集零命中返回 108），适配器、替身、契约测试与本文同批次变更；M26、M27 真实联调通过 |
+| 2026-10-24（ZACH-19） | `v0.20.5` | `sha256:d95d0e4d…` | `BAAI/bge-large-zh-v1.5@BAAI` / `79e7739b…` | ZACH-19 | 在冻结 head `468c2cc` 上重取真实联调证据（5/5 通过），并在本分支 HEAD 上补齐 M27 两条真实失败模式（13/13 通过）：**真实不可达**（连接被内核拒绝 → 503 `RAGFLOW_UNAVAILABLE`）与**真实解析失败**；**新增第 10 条陷阱**（解析失败表现为 `run=FAIL`，不是「成功但 0 chunk」），适配器、真实联调用例与本文同批次变更 |
 
 ---
 
@@ -346,3 +355,17 @@ API Key **只从环境变量读取**，不写入仓库任何文件、不落库�
 真实联调层 2 个文件 / 5 个用例在本地 RAGFlow v0.20.5 上通过。
 本次真实联调暴露了替身未覆盖的上游行为（第 1.1 节第 9 条），
 适配器、替身、契约测试与本文已同批次修正。
+
+ZACH-19 再补两条真实失败模式，真实联调层扩到 **4 个文件 / 13 个用例**：
+
+- **真实不可达**：该轮上游指向一个确实没有监听的本地端口，
+  连接被内核拒绝（`ECONNREFUSED`）。这是真实网络失败，不是替身返回的伪造响应：
+  替身层回答的是「上游回了什么」，这一层回答的是「上游根本没连上」。
+  断言：检索返回 503 `RAGFLOW_UNAVAILABLE`（不是 500、错误体不泄露内部错误码）、
+  零证据、写路径不把操作与知识库判成成功。
+- **真实解析失败**：上传一个结构损坏的 PDF，让上游解析器真的判失败
+  （`run=FAIL`，`chunk_count=0`）。断言：上游文档状态是 `FAIL`、
+  平台侧知识版本保持 `failed`、解析操作终态是 `failed`、零证据。
+
+替身层仍保留它自己的覆盖范围（上游 5xx、解析状态分支），
+真实证据不顶替替身证据，替身证据也不顶替真实证据。

@@ -15,7 +15,7 @@ export const sourceAlias = {
 
 export function makeConfig(
   include: string[],
-  options: { fileParallelism?: boolean; mode: string },
+  options: { fileParallelism?: boolean; mode: string; testTimeoutMs?: number },
 ): ReturnType<typeof defineConfig> {
   return defineConfig({
     resolve: { alias: sourceAlias },
@@ -23,7 +23,7 @@ export function makeConfig(
       include,
       environment: 'node',
       globals: false,
-      testTimeout: 60_000,
+      testTimeout: options.testTimeoutMs ?? 60_000,
       hookTimeout: 120_000,
       teardownTimeout: 30_000,
       fileParallelism: options.fileParallelism ?? false,
