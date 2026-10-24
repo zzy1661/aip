@@ -11,6 +11,7 @@ export const ERROR_CODES = [
   'NOT_FOUND',
   'VERSION_EXISTS',
   'STATE_CONFLICT',
+  'REVIEW_ALREADY_APPROVED',
   'CONTRACT_INVALID',
   'INVALID_VERSION',
   'REF_NOT_AVAILABLE',
@@ -38,6 +39,9 @@ export const ERROR_STATUS: Record<ErrorCode, number> = {
   NOT_FOUND: 404,
   VERSION_EXISTS: 409,
   STATE_CONFLICT: 409,
+  // 已批准的版本不能再被改判：业务状态机的终态，与可重试的乐观锁冲突（STATE_CONFLICT）
+  // 用不同错误码区分，调用方按 code 分流而不是按状态码分流。
+  REVIEW_ALREADY_APPROVED: 409,
   CONTRACT_INVALID: 422,
   INVALID_VERSION: 422,
   REF_NOT_AVAILABLE: 422,

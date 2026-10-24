@@ -523,6 +523,23 @@ paths:
         `valid_from` / `valid_until` 是结论的有效区间与适用条件：缺省表示立即生效
         且长期有效；`valid_until` 必须晚于 `valid_from`。有效期只对 `approved` 生效，
         `rejected` 不写入有效期区间。
+
+        审核结论的状态机（`approved` 是终态）：
+
+        | 当前 `review_status` | 本次 `decision` | 结果 |
+        | --- | --- | --- |
+        | `pending` | `approved` / `rejected` | 落库，写审核记录，推进 `state_revision` |
+        | `rejected` | `approved` / `rejected` | 落库，写审核记录，推进 `state_revision` |
+        | `approved` | `approved` | 幂等：返回当前已生效的审核事实，不写审核记录、不推进 `state_revision` |
+        | `approved` | `rejected` | 409 `REVIEW_ALREADY_APPROVED`，状态与审核记录都不变 |
+
+        已批准的版本不能再被改判为拒绝：否则同一个版本在检索（按 `approved` 过滤）
+        与下载（按文档级授权放行）两条路径上会被解释成两种结果。
+
+        终态判定排在 `expected_hash` 校验之前：`approved` 版本上的任何请求都按上表
+        处理（改判 → 409 `REVIEW_ALREADY_APPROVED`，同结论 → 幂等 200），
+        不会因为哈希不匹配被改写成 409 `STATE_CONFLICT`；`expected_hash` 前置条件
+        只对真正要落库的新结论有效。
       operationId: reviewKnowledgeVersion
       x-permission: knowledge:review
       requestBody:
@@ -983,7 +1000,8 @@ components:
     Conflict:
       description: |
         状态或版本冲突：幂等键复用冲突、版本已存在、状态机不允许的迁移、
-        `state_revision` 陈旧、`expected_hash` 不匹配、知识尚未就绪。
+        `state_revision` 陈旧、`expected_hash` 不匹配、知识尚未就绪、
+        已批准的版本不能再被改判为拒绝（`REVIEW_ALREADY_APPROVED`）。
       content:
         application/json:
           schema:
@@ -1063,6 +1081,7 @@ components:
         - NOT_FOUND
         - VERSION_EXISTS
         - STATE_CONFLICT
+        - REVIEW_ALREADY_APPROVED
         - CONTRACT_INVALID
         - INVALID_VERSION
         - REF_NOT_AVAILABLE

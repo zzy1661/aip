@@ -309,6 +309,39 @@ export async function updateKnowledgeState(
 }
 
 /**
+ * 写入审核结论。
+ *
+ * 与 updateKnowledgeState 的差别只有一处：WHERE 里额外挡住
+ * 「已批准的版本被改判为 rejected」。这一层不依赖应用层先查后写，
+ * 因此并发改判也不会写进去；命中 0 行由调用方区分原因
+ * （已批准不可改判 / 修订号过期）。
+ */
+export async function applyReviewDecision(
+  client: QueryClient,
+  scopeId: string,
+  knowledgeId: string,
+  version: string,
+  decision: string,
+  validFrom: Date | null,
+  validUntil: Date | null,
+  expectedStateRevision: number,
+): Promise<KnowledgeRow | null> {
+  const { rows } = await client.query<KnowledgeRow>(
+    `UPDATE knowledge_revision
+        SET review_status = $5,
+            valid_from = $6,
+            valid_until = $7,
+            state_revision = state_revision + 1
+      WHERE scope_id = $1 AND knowledge_id = $2 AND version = $3
+        AND state_revision = $4
+        AND NOT (review_status = 'approved' AND $5 <> 'approved')
+      RETURNING knowledge_id, version, review_status, status, state_revision, valid_from, valid_until`,
+    [scopeId, knowledgeId, version, expectedStateRevision, decision, validFrom, validUntil],
+  );
+  return rows[0] ?? null;
+}
+
+/**
  * 更新知识版本状态，但撤回除外。
  *
  * 撤回是终态：已撤回的版本不能被任何后续流程改写回 ready/failed。
@@ -417,31 +450,20 @@ export async function insertReview(
   );
 }
 
-export async function listReviews(
-  client: QueryClient,
-  scopeId: string,
-  knowledgeId: string,
-  version: string,
-): Promise<KnowledgeReviewRecord[]> {
-  const { rows } = await client.query<{
-    knowledge_id: string;
-    version: string;
-    decision: 'approved' | 'rejected';
-    reviewer: string;
-    expected_hash: string;
-    reason: string;
-    reviewed_at: Date;
-    valid_from: Date | null;
-    valid_until: Date | null;
-  }>(
-    `SELECT knowledge_id, version, decision, reviewer, expected_hash, reason, reviewed_at,
-            valid_from, valid_until
-       FROM knowledge_review
-      WHERE scope_id = $1 AND knowledge_id = $2 AND version = $3
-      ORDER BY reviewed_at`,
-    [scopeId, knowledgeId, version],
-  );
-  return rows.map((row) => ({
+interface ReviewRow {
+  knowledge_id: string;
+  version: string;
+  decision: 'approved' | 'rejected';
+  reviewer: string;
+  expected_hash: string;
+  reason: string;
+  reviewed_at: Date;
+  valid_from: Date | null;
+  valid_until: Date | null;
+}
+
+function toReviewRecord(row: ReviewRow): KnowledgeReviewRecord {
+  return {
     knowledge_id: row.knowledge_id,
     version: row.version,
     decision: row.decision,
@@ -451,7 +473,50 @@ export async function listReviews(
     reviewed_at: row.reviewed_at.toISOString(),
     valid_from: row.valid_from ? row.valid_from.toISOString() : null,
     valid_until: row.valid_until ? row.valid_until.toISOString() : null,
-  }));
+  };
+}
+
+export async function listReviews(
+  client: QueryClient,
+  scopeId: string,
+  knowledgeId: string,
+  version: string,
+): Promise<KnowledgeReviewRecord[]> {
+  const { rows } = await client.query<ReviewRow>(
+    `SELECT knowledge_id, version, decision, reviewer, expected_hash, reason, reviewed_at,
+            valid_from, valid_until
+       FROM knowledge_review
+      WHERE scope_id = $1 AND knowledge_id = $2 AND version = $3
+      ORDER BY reviewed_at`,
+    [scopeId, knowledgeId, version],
+  );
+  return rows.map(toReviewRecord);
+}
+
+/**
+ * 最近一条指定结论的审核记录。
+ *
+ * 同结论重复审核（approved → approved）按幂等返回当前状态：
+ * 响应里的审核人与时间必须来自库里真实存在的那条记录，
+ * 不能拿本次请求的调用者冒充审核人。
+ */
+export async function findLatestReview(
+  client: QueryClient,
+  scopeId: string,
+  knowledgeId: string,
+  version: string,
+  decision: 'approved' | 'rejected',
+): Promise<KnowledgeReviewRecord | null> {
+  const { rows } = await client.query<ReviewRow>(
+    `SELECT knowledge_id, version, decision, reviewer, expected_hash, reason, reviewed_at,
+            valid_from, valid_until
+       FROM knowledge_review
+      WHERE scope_id = $1 AND knowledge_id = $2 AND version = $3 AND decision = $4
+      ORDER BY reviewed_at DESC
+      LIMIT 1`,
+    [scopeId, knowledgeId, version, decision],
+  );
+  return rows[0] ? toReviewRecord(rows[0]) : null;
 }
 
 export async function insertIndexRevision(

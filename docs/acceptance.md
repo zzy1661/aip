@@ -151,10 +151,39 @@
 
 - **客户端契约**：审核请求只要求 `decision` / `expected_hash` / `reason`（`packages/contracts/src/knowledge.ts:197`）。
   `expected_state_revision` 只存在于**撤回**契约（`packages/contracts/src/knowledge.ts:210`），两者不可混用。
-- **客户端的过期评审意图**：`expected_hash` 承载的是**正文版本一致性** —— 与当前 `content_hash` 不一致时返回 409 `STATE_CONFLICT` 并定位到 `expected_hash` 字段（`services/api/src/knowledge/service.ts:384`）。
+- **客户端的过期评审意图**：`expected_hash` 承载的是**正文版本一致性** —— 与当前 `content_hash` 不一致时返回 409 `STATE_CONFLICT` 并定位到 `expected_hash` 字段（`services/api/src/knowledge/service.ts:427`）。
   它**不**覆盖「客户端观察到旧审核状态后、别人已经完成审核才提交」的并发意图：正文未变时 `content_hash` 不变，旧客户端仍会以服务端最新修订号提交。
   这类客户端乐观并发需要单独裁决契约（是否新增必填的审核修订号），本轮不发明字段、不改契约。
-- **服务端内部 CAS**：审核在同一事务内读取 `state_revision` 后做比较并交换，修订号过期时返回 409 `STATE_CONFLICT`（`services/api/src/knowledge/service.ts:399`）。这一步对客户端不可见，是防止两个审核人互相覆盖的内部保证。
+- **服务端内部 CAS**：审核在同一事务内读取 `state_revision` 后做比较并交换，修订号过期时返回 409 `STATE_CONFLICT`（`services/api/src/knowledge/service.ts:449`）。这一步对客户端不可见，是防止两个审核人互相覆盖的内部保证。
 - **因此**：不需要、也不应该发明新的必需字段。审查中「审核调用未提供 `expected_state_revision`」这一怀疑不成立；真实联调层此前失败的原因是缺真实 RAGFlow 配置，而不是缺字段。
 
 回归证据：`tests/e2e/knowledge-review.test.ts:89`（哈希不符 → 409）、`tests/e2e/knowledge-review.test.ts:108`（并发审核 → 过期修订号被拒）。
+
+---
+
+## 7. 审核终态：已批准的版本不可改判（ZACH-17 裁决 a）
+
+ZACH-10 复审发现（既有行为，非某次改动引入）：已批准且可下载的版本被再次审核为 `rejected` 时接口返回 200，
+之后检索按 `review_status='approved'` 过滤返回 0 条证据，而下载仍按文档级授权返回 200 并发出正文——
+同一个状态在两条路径上被解释成两种结果。成员裁决取 (a)：**禁止把已 approved 的版本改判为 rejected**；
+(b)（改下载判定去检查 `review_status`）不做。
+
+- **服务层**：`approved` 是终态。`approved → rejected` 一律拒绝，返回 409 `REVIEW_ALREADY_APPROVED`
+  并定位到 `decision` 字段（`services/api/src/knowledge/service.ts:418`）；状态、审核记录、`state_revision` 都不变。
+  `approved → approved`（同结论重放）按幂等返回当前已生效的审核事实（审核人、时间、有效期取自库里那条记录），
+  不写审核记录、不推进 `state_revision`，因此**不是 409**。
+  尚未批准的版本（`pending` / `rejected`）两条路径维持原行为。
+- **判定顺序**：终态判定排在 `expected_hash` 校验之前（`services/api/src/knowledge/service.ts:418` 早于 `:417`）。
+  已批准版本上的任何请求都按上表处理，不会因为哈希不匹配被改写成 `STATE_CONFLICT`——否则同一个失败会
+  有两个错误码，调用方无法稳定分流。`expected_hash` 前置条件只对真正要落库的新结论有效。
+- **并发**：同一版本的并发审核仍走既有 CAS（`UPDATE ... WHERE state_revision = <期望值>`），只有一方成功，
+  另一方拿到明确的 409（`STATE_CONFLICT`，或在对 approved 的改判上拿到 `REVIEW_ALREADY_APPROVED`），不产生双写。
+- **数据库层兜底**：迁移 `011_review_approved_final.sql` 加了 `BEFORE UPDATE` 触发器，
+  任何写入路径（直连 SQL、未来新增的代码路径）都不能把 `approved` 改写成别的结论；
+  触发器抛本仓自定义 SQLSTATE `AIP01`，API 层映射成同一个 `REVIEW_ALREADY_APPROVED`（409），不混成 500。
+- **同步面**：错误码进 `packages/contracts/src/errors.ts`（`ERROR_CODES` / `ERROR_STATUS`）、
+  `openapi/aip-v1.yaml`（`ErrorCode` 枚举 + 审核接口的状态机说明 + `Conflict` 响应说明）与 `docs/decisions.md` D14。
+
+回归证据：`tests/unit/review-policy.test.ts`（状态机分支）、`tests/contract/review-verdict-final.test.ts`
+（409 错误码、无副作用、幂等、pending 两条路径、并发双审核、检索与下载一致）、`tests/db/review-verdict-final.test.ts`
+（数据库层拒写、`AIP01` 映射、同结论放行）、`tests/db/migration-upgrade.test.ts`（011 升级路径）。

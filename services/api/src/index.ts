@@ -47,6 +47,12 @@ export {
   type KnowledgeService,
 } from './knowledge/service.js';
 export { createKnowledgeRouter } from './knowledge/routes.js';
+export {
+  classifyReview,
+  type ReviewDecision,
+  type ReviewOutcome,
+  type ReviewStatus,
+} from './knowledge/review-policy.js';
 export * as knowledgeAuthorization from './knowledge/authorization.js';
 export * as knowledgeRepository from './knowledge/repository.js';
 export * as operationsRepository from './operations/repository.js';
