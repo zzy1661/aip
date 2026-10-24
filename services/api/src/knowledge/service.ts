@@ -18,7 +18,7 @@ import {
   type RetrievalResponse,
   type RetrievalStatus,
 } from '@aip/contracts';
-import { apiError, fieldIssue } from '../http/errors.js';
+import { apiError, fieldIssue, type ApiError } from '../http/errors.js';
 import { Validator } from '../http/validate.js';
 import { runIdempotent } from '../idempotency/service.js';
 import { withTransaction } from '../db/uow.js';
@@ -31,6 +31,7 @@ import { validateUpload, type ValidatedUpload } from '../files/validate.js';
 import * as repo from './repository.js';
 import * as authz from './authorization.js';
 import * as opsRepo from '../operations/repository.js';
+import { classifyReview } from './review-policy.js';
 
 export interface KnowledgeDeps {
   pool: Pool;
@@ -61,6 +62,25 @@ export interface SourceFileDownload {
   name: string;
   mime: string;
   sha256: string;
+}
+
+/**
+ * 已批准版本被改判时的稳定错误。
+ *
+ * 终态语义，与可重试的乐观锁冲突（`STATE_CONFLICT`）分开：
+ * 调用方按 `code` 分流，不按状态码分流。
+ */
+function reviewAlreadyApprovedError(): ApiError {
+  return apiError(
+    'REVIEW_ALREADY_APPROVED',
+    'an approved knowledge version cannot be judged as rejected',
+    [
+      fieldIssue(
+        'decision',
+        'the review verdict of an approved version is final; approved cannot be changed to rejected',
+      ),
+    ],
+  );
 }
 
 export function createKnowledgeService(deps: KnowledgeDeps) {
@@ -389,26 +409,48 @@ export function createKnowledgeService(deps: KnowledgeDeps) {
       if (!row) {
         throw apiError('NOT_FOUND', 'knowledge version not found');
       }
+      // 审核结论的状态机：approved 是终态。
+      //
+      // 终态判定刻意排在 expected_hash 校验之前：一旦批准，任何从 approved 出发的
+      // 改判都必须落在同一个稳定错误码上，不能被「哈希不匹配」改写成 STATE_CONFLICT；
+      // 同结论重放同理按幂等返回当前已生效的事实，不因哈希前置条件被拒。
+      // 哈希前置条件只对真正要落库的新结论有效。
+      const outcome = classifyReview(row.review_status, request.decision);
+      if (outcome === 'forbidden') {
+        throw reviewAlreadyApprovedError();
+      }
+      if (outcome === 'idempotent') {
+        // 同结论重复审核：按幂等返回当前已生效的审核事实，不写审核记录、不推进修订号。
+        return { data: await describeApprovedReview(client, principal, knowledgeId, version, row) };
+      }
       if (row.content_hash !== request.expected_hash) {
         throw apiError('STATE_CONFLICT', 'expected_hash does not match the current content', [
           fieldIssue('expected_hash', 'content changed since the hash was observed'),
         ]);
       }
-      const updated = await repo.updateKnowledgeState(
+      const updated = await repo.applyReviewDecision(
         client,
         principal.scope,
         knowledgeId,
         version,
-        {
-          reviewStatus: request.decision,
-          validFrom: effectiveValidFrom,
-          validUntil: effectiveValidUntil,
-        },
+        request.decision,
+        effectiveValidFrom,
+        effectiveValidUntil,
         row.state_revision,
       );
       if (!updated) {
+        // 命中 0 行有两种原因，含义不同：修订号过期（重试有意义），
+        // 或并发期间这个版本刚被批准（改判已被终态禁止，重试没有意义）。
+        // 重新读一次当前状态把两者区分开，给出稳定的错误码。
+        const current = await repo.findKnowledgeRevision(client, principal.scope, knowledgeId, version);
+        if (current?.review_status === 'approved' && request.decision === 'rejected') {
+          throw reviewAlreadyApprovedError();
+        }
         throw apiError('STATE_CONFLICT', 'state revision is stale', [
-          fieldIssue('state_revision', `current state revision is ${row.state_revision}`),
+          fieldIssue(
+            'state_revision',
+            `current state revision is ${current?.state_revision ?? row.state_revision}`,
+          ),
         ]);
       }
       await repo.insertReview(client, {
@@ -436,6 +478,48 @@ export function createKnowledgeService(deps: KnowledgeDeps) {
         },
       };
     });
+  }
+
+  /**
+   * 已批准版本的当前审核事实（同结论重复审核的幂等响应）。
+   *
+   * 返回库里已经生效的那次批准，而不是本次请求的入参：
+   * 幂等重放不产生新的审核记录，因此响应里的审核人、审核时间、
+   * 有效期都取自已落库的审核记录；确实没有记录时才退回版本行本身。
+   */
+  async function describeApprovedReview(
+    client: PoolClient,
+    principal: Principal,
+    knowledgeId: string,
+    version: string,
+    row: repo.KnowledgeRow,
+  ): Promise<Record<string, unknown>> {
+    const approval = await repo.findLatestReview(
+      client,
+      principal.scope,
+      knowledgeId,
+      version,
+      'approved',
+    );
+    return {
+      knowledge_id: knowledgeId,
+      version,
+      review_status: 'approved',
+      state_revision: row.state_revision,
+      reviewer: approval?.reviewer ?? principal.subject,
+      expected_hash: approval?.expected_hash ?? row.content_hash,
+      reviewed_at: approval?.reviewed_at ?? row.created_at.toISOString(),
+      valid_from: approval
+        ? approval.valid_from
+        : row.valid_from
+          ? row.valid_from.toISOString()
+          : null,
+      valid_until: approval
+        ? approval.valid_until
+        : row.valid_until
+          ? row.valid_until.toISOString()
+          : null,
+    };
   }
 
   async function withdraw(

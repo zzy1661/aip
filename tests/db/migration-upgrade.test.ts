@@ -43,7 +43,7 @@ describe('迁移 010 升级路径', () => {
     return dir;
   }
 
-  it('从 009 升到 010：既有数据保留，撤回变成终态', async () => {
+  it('从 009 升到最新：既有数据保留，撤回与已批准的审核结论都变成终态', async () => {
     const db = await openEmpty('migrate010');
     const prefix = await migrationsUpTo(9);
     const before = await runMigrations(db.pool, prefix);
@@ -81,9 +81,9 @@ describe('迁移 010 升级路径', () => {
       [withdrawnId, kb!.id, source!.id, liveId],
     );
 
-    // 升级：补齐 010。
+    // 升级：补齐 010（以及其后的追加迁移）。
     const after = await runMigrations(db.pool);
-    expect(after.applied.map((name) => name.startsWith('010_'))).toEqual([true]);
+    expect(after.applied.filter((name) => name.startsWith('010_'))).toHaveLength(1);
     expect(after.skipped).toHaveLength(9);
 
     // 既有数据不丢。
@@ -120,6 +120,19 @@ describe('迁移 010 升级路径', () => {
          VALUES ('m010', gen_random_uuid(), 'owner', 'document.upload', 'k-010', 'h', 'cancelled')`,
       ),
     ).resolves.toBeDefined();
+
+    // 审核终态（011）：升级前就存在的已批准版本，升级后同样不可被改判为拒绝。
+    expect(
+      after.applied.some((name) => name.startsWith('011_')),
+      '升级这一批应包含 011',
+    ).toBe(true);
+    await expect(
+      db.pool.query(
+        `UPDATE knowledge_revision SET review_status = 'rejected'
+          WHERE scope_id = 'm010' AND knowledge_id = $1`,
+        [liveId],
+      ),
+    ).rejects.toThrow(/an approved review verdict is final/i);
   });
 
   it('010 的台账 checksum 与文件内容一致', async () => {
