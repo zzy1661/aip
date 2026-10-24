@@ -48,11 +48,11 @@
 | M23 | 概念契约校验门 | API 技术门 | 无概念引用的字符串契约注册成功且校验器未被调用；数值契约缺概念引用 → 422；本体不可达 → 503 `ONTO_UNAVAILABLE` 且不降级成功；概念不存在 → 422 并指出引用；**详情标 `concept_validation='not_requested'`** | `tests/unit/concept-gate.test.ts:66`、`:84`、`:119`、`:149`、`:180`、`:217`、`:246`、`:275`；详情标记：`tests/contract/retrieval-limits.test.ts:124` | FULL |
 | **M24** | **UI 注册页（`ui/registration.spec.ts`）** | **UI 门** | 列表空/加载/错误/403、直接深链、表单 `field_path`、注册 409、版本选择、binding 失效明显可见 | **本仓库无前端代码、无 `tests/ui/`、无 Playwright、无 `test:platform` 脚本** → 全部无覆盖 | **NOT RUN** |
 | **M25** | **UI 知识页（`ui/knowledge.spec.ts`）** | **UI 门** | pending/parsing/failed/ready 四态、审核、`no_match`/`needs_context`/503、来源缺定位、密钥不入浏览器请求/storage/bundle、401/切项目清理结果 | **同 M24，全部无覆盖** | **NOT RUN** |
-| **M26** | **真实 RAGFlow 闭环** | **真实集成门** | 全步骤真实可追踪，引用指向上传原文并有可核验摘要；真实报告含版本/digest/来源证据；任何 mock 替代判失败 | **本 SHA 未执行**：真实栈与凭据归 ZACH-9，本轮没有可用的真实 RAGFlow 凭据（`pnpm test:ragflow:real` 报 NOT RUN，`pnpm test:ragflow:real:guard` 非零退出）。PR2 在 `8993b86` 上的真实证据（`ragflow.source_sha=e650f0d368b357b0b434b7838177435e3d217de3`、`image_digest=sha256:d95d0e4dc83a96fafffc5238f15c9192ed76ef2d320adb516f010bdc9876455a`、`embedding_revision=79e7739b6ab944e86d6171e44d24c997fc1e0116`、`counts.pass=5`）**不迁移**到本 SHA：本轮改了上传远端名与下载交付路径，旧栈报告证明不了新语义。组合验收需在最终 SHA 上重跑 | **NOT RUN** |
-| **M27** | **真实 RAGFlow 隔离失败** | **真实集成门** | 真实检索不返回未授权文档；无授权请求 0；真实不可达 503/504；解析失败保持 failed；目标解析失败不可稳定复现时明确 NOT RUN 而非用 mock 记真实通过 | **本 SHA 未执行**（同 M26：无真实凭据，真实栈与执行归 ZACH-9）。`8993b86` 上的真实证据同样不迁移；组合验收需在最终 SHA 上重跑 | **NOT RUN** |
+| **M26** | **真实 RAGFlow 闭环** | **真实集成门** | 全步骤真实可追踪，引用指向上传原文并有可核验摘要；真实报告含版本/digest/来源证据；任何 mock 替代判失败 | **冻结 head `468c2cc` 上实跑**：`pnpm test:ragflow:real` 与 `pnpm test:ragflow:real:guard` 均 5/5 通过，`reports/468c2cc587ca73013135e1e30bd0a9b1c8d7df5c/real/summary.json`（`commit=468c2cc…`、`dirty=false`、`ragflow.source_sha=e650f0d…`＝上游 `v0.20.5` tag 提交、`image_digest=sha256:d95d0e4dc83a96fafffc5238f15c9192ed76ef2d320adb516f010bdc9876455a`、`embedding_revision=79e7739b6ab944e86d6171e44d24c997fc1e0116`、`counts.pass=5`、`run_end_reason=passed`）。**本分支 HEAD 上再跑一遍**（含新增 M27 用例）：13/13 通过，`reports/<HEAD>/real/summary.json`（上游事实同上，`counts.pass=13`）。**旧的 `8993b86` 证据仍不迁移**：它的 `commit` 字段指向旧 SHA，证明不了本轮的语义；本表的证据由 `commit` 字段与报告目录名双重绑定 | **FULL** |
+| **M27** | **真实 RAGFlow 隔离失败** | **真实集成门** | 真实检索不返回未授权文档；无授权请求 0；真实不可达 503/504；解析失败保持 failed；目标解析失败不可稳定复现时明确 NOT RUN 而非用 mock 记真实通过 | **四条判据全部真实执行**（本分支 HEAD，`reports/<HEAD>/real/summary.json`，`counts.pass=13`）：① 真实检索不返回未授权文档 `tests/real/isolation-failure.test.ts:93`；② 无授权时上游请求数 0（真实传输计数）`tests/real/isolation-failure.test.ts:60`；③ **真实不可达 → 503 `RAGFLOW_UNAVAILABLE`**：把该轮上游指向确实没有监听的本地端口，连接被内核拒绝（`ECONNREFUSED`，用例内直连复核）`tests/real/upstream-unreachable.test.ts:149`、`:158`（503 与不泄露内部错误码）、`:191`（写路径不落成成功）；④ **真实解析失败保持 failed**：上传有 PDF 魔数但结构损坏的文件，上游解析器真的判失败 `tests/real/parse-failure.test.ts:105`（上游 `run=FAIL`）、`:141`（平台侧 `failed`）、`:200`（零证据） | **FULL** |
 | M28 | 密钥不落库不落日志 | API 技术门 | 8 张持久化表内无上游 key / DB URL / token；带 `api_key` 的 config 被拒；嵌套 password 与 URL 被拒；上游错误原文不回显；**构建产物扫描无密钥形态**；**日志快照不含敏感内容**；**动态出口 `base_url` 被拒**；**重定向不泄漏 key**；**审计 subject 来自可信 principal** | `tests/unit/security-no-secret.test.ts:47`、`:58`、`:80`、`:105`；构建产物：`tests/unit/secret-scan.test.ts:72`、`:79`、`:86`、`:104`；日志与审计：`tests/contract/audit-and-log-hygiene.test.ts:27`、`:56`、`:76`、`:99`；动态出口：`tests/db/config-policy.test.ts:83`、`:119`、`:137`；重定向：`tests/unit/redirect-key-leak.test.ts:66` | FULL |
 
-**统计：FULL 22 条／PARTIAL 2 条（M09、M14）／NOT RUN 4 条（M24、M25、M26、M27）。**
+**统计：FULL 24 条／PARTIAL 2 条（M09、M14）／NOT RUN 2 条（M24、M25）。**
 
 > 本表不再把 M01–M23 一律记 FULL：M09（缺确定性 barrier 覆盖两个提交顺序）与
 > M14（未真的 kill 进程、崩溃窗口用持久状态重建模拟）按 ZACH-10 复审口径保留 PARTIAL。
@@ -60,10 +60,11 @@
 
 > M24 / M25 的 NOT RUN **不是本轮降级**：这两项在 ZACH-8 冻结矩阵里属于 UI 门，
 > 其交付物不在本仓库（UI 归 ZACH-11）。
-> M26 / M27 的 NOT RUN 是**本 SHA 没有真实凭据**：真实栈与执行归 ZACH-9，
-> 且 `8993b86` 上的真实证据不迁移到本 SHA（本轮改了上传远端名与下载交付路径）。
-> 组合验收需要在最终组合 SHA 上重新执行真实层。
-> 本轮不提供替身结果冒充，也不把「无代码」写成「已通过」。
+> M26 / M27 的 NOT RUN 已解除：真实栈（compose project `aip-ragflow`，镜像
+> `infiniflow/ragflow:v0.20.5`）在本机可用，本轮在冻结 head `468c2cc` 与本分支 HEAD 上
+> **实跑了真实联调层**，证据见 `reports/<sha>/real/summary.json`。
+> 替身层结果仍不顶替真实证据，两者在第 4 节分开汇报；
+> `8993b86` 上的旧证据不迁移到本轮（`commit` 字段指向旧 SHA）。
 
 ---
 
@@ -117,9 +118,17 @@
 
 > `reports/` 按仓库既有约定在 `.gitignore` 中，产物不入库；生成器与接线代码入库，任何复核人都能按同样的命令重新生成。
 > 真实集成层（`real`）的产物只有在配置齐备并真实执行后才具备 `ragflow` / `embedding_revision` 的真实值。
-> **本 SHA 的 real 层没有真实执行**：缺真实凭据，报告如实记 `not_run`，
-> `ragflow.source_sha` / `image_digest` / `embedding_revision` 为 null。
-> `8993b86` 上曾有真实执行（`counts.pass=5`），但那是旧 SHA 的证据，不迁移到本 SHA。
+> **本轮 real 层已真实执行**（`RUN_REAL_RAGFLOW=1` + 完整配置），两份产物：
+>
+> | 报告目录 | `commit` | `dirty` | `counts` | 上游事实 |
+> | --- | --- | --- | --- | --- |
+> | `reports/468c2cc587ca73013135e1e30bd0a9b1c8d7df5c/real/` | `468c2cc…`（冻结 head） | `false` | `cases=5, pass=5, fail=0, not_run=0` | `ragflow.source_sha=e650f0d…`（上游 `v0.20.5` tag）、`image_digest=sha256:d95d0e4d…`、`embedding_revision=79e7739b…` |
+> | `reports/<本分支 HEAD>/real/` | 本分支 HEAD | `false` | `cases=13, pass=13, fail=0, not_run=0` | 同上 |
+>
+> 字段口径：`commit` 是**被测 aip 代码的 SHA**（证据归属哪个 head 由它和报告目录名决定）；
+> `ragflow.source_sha` 是**上游 RAGFlow 的提交**（`v0.20.5` tag，见 `docs/ragflow-lock.md` §3），
+> 同时作为 `parser_digest` 记进知识版本。两者含义不同，不要混用。
+> 旧的 `8993b86` 证据不迁移：`commit` 字段指向旧 SHA，证明不了本轮语义。
 
 ---
 
@@ -128,8 +137,10 @@
 | 项 | 限制 | 原因 |
 | --- | --- | --- |
 | M24 / M25 | **NOT RUN** | 本仓库无前端代码、无 Playwright、无 `test:platform` 脚本。UI 门由 ZACH-11 交付；本轮不产出 UI 结论，也不以文档检查顶替。 |
-| M26 / M27 | **NOT RUN（本 SHA）** | 本轮没有可用的真实 RAGFlow 凭据：真实栈与执行归 ZACH-9。`pnpm test:ragflow:real` 报 NOT RUN，`pnpm test:ragflow:real:guard` 非零退出并列出缺失配置名——门禁按预期拦住了「没跑当跑通」。`8993b86` 上的真实证据不迁移：本轮改了上传远端名与下载交付路径，真实层必须在最终组合 SHA 上重跑。 |
-| M26 / M27 的替身层覆盖 | 替身层覆盖「真实不可达 503/504」「解析失败保持 failed」 | `tests/contract/ragflow-unavailable.test.ts:72`、`tests/contract/ragflow-parse.test.ts:68`。替身结果不顶替真实集成证据，只说明代码路径在替身下可判定。 |
+| M26 / M27 的替身层覆盖 | 替身层仍覆盖「上游 5xx」与「解析状态分支」 | `tests/contract/ragflow-unavailable.test.ts:72`、`tests/contract/ragflow-parse.test.ts:68`。替身结果不顶替真实集成证据，只说明代码路径在替身下可判定。真实层的覆盖见下两条。 |
+| M27「真实不可达」的取证边界 | 失败发生在**连接上游**这一层（内核拒绝连接 `ECONNREFUSED`），**不覆盖「上游进程自己回 5xx」** | 本轮的可控故障只有「连不上」：把该轮上游指向确实没有监听的本地端口，连接被内核拒绝。这验证了「上游连不上时对外是 503、不是 500、且不写半条成功状态」；上游进程返回 5xx 的变体在本机无法在不干扰共享栈的前提下制造，仍只有替身层覆盖（`tests/contract/ragflow-unavailable.test.ts:72`）。失败分类（`not_delivered`，可安全重试/重发）与 503/504 的映射在两条路径上同一份代码，但**不能据此宣称 5xx 变体已真实验证**。 |
+| M27「真实解析失败」的取证边界 | 真实覆盖的是「上游解析器判失败（`run=FAIL`）」；**加密 PDF 这一变体被平台自己的上传校验拦下，不算真实上游解析失败** | 损坏 PDF（有 `%PDF-` 魔数、无对象与交叉引用表）会真正走到上游解析器，上游 `run=FAIL`、`chunk_count=0`，平台侧保持 `failed`（`tests/real/parse-failure.test.ts:105`、`:141`）。加密 PDF 在 `validateUpload` 就被拒（`/Encrypt` 标记，`services/api/src/files/validate.ts`），根本不会产生上游请求，因此**不作为真实解析失败证据**。 |
+| 真实联调层的隔离域 | 真实层的作用域是 `RAGFLOW_TEST_PROJECT_ID` 指定的 scope（本轮 `aip-zach19`），上游数据集因此命名为 `aip-aip-zach19-<16 位十六进制>` | 上游 dataset 名由 scope 派生（`services/api/src/util/hash.ts` 的 `newDatasetName`），平台侧知识库名带可识别前缀（`real-闭环-*` / `real-隔离*` / `real-不可达-*` / `real-解析失败-*`）。本轮两次运行共留下 10 个 `aip-aip-zach19-*` 数据集，未删除、未改他人数据集（他人数据集与 `smoke-probe` 均未触碰）。 |
 | DOC-01 | 仍为**人工核对**，无自动化断言 | 环境变量清单分散在 `config.ts`、`main.ts`、`migrate-cli.ts` 与 worker 入口，缺少单一事实来源；本轮未引入配置清单生成器。 |
 | M-3 的两阶段幂等 | **未实现**（有意保留现状） | 把幂等占位行移出业务事务会破坏 M04 依赖的「同键并发等待」语义。本轮按已确认的设计决策保留事务内占位，并在 `tests/db/idempotency-scope.test.ts` 固定其对外语义。 |
 | M14 的真实 20 分钟解析路径 | 只在替身层用缩短的截止时间验证终态 | 真实等待 20 分钟无收益；生产默认值本身由 `tests/unit/config-defaults.test.ts:23` 钉死（20 分钟），超时终态行为由 `tests/contract/parse-recovery.test.ts:26` 覆盖。 |

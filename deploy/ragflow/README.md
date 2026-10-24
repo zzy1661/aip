@@ -117,7 +117,14 @@ RUN_REAL_RAGFLOW=1 RAGFLOW_BASE_URL=http://127.0.0.1:19380 \
   pnpm exec vitest run --config vitest.real.config.ts --reporter=verbose
 ```
 
-2026-10-24 已用本栈跑通：2 个文件 / 5 个用例全部通过（M26 闭环、M27 隔离失败）。
+2026-10-24 已用本栈跑通：4 个文件 / 13 个用例全部通过
+（M26 闭环、M27 隔离失败、M27 真实不可达 503、M27 真实解析失败保持 failed）。
+
+> `RAGFLOW_SOURCE_SHA` 填**上游 RAGFlow 的提交**（`v0.20.5` tag 指向的 commit），
+> 不是本仓库的提交：报告里的 `ragflow.source_sha` 与 `parser_digest` 记的是上游解析器来源。
+> 被测 aip 代码的 SHA 由报告的 `commit` 字段与 `reports/<sha>/` 目录名决定。
+> `RAGFLOW_TEST_PROJECT_ID` 决定作用域，上游数据集因此命名为 `aip-<scope>-<16 位十六进制>`；
+> 用一个可识别的 scope（例如 `aip-zach19`）能让本轮留下的数据集一眼认出来。
 
 ## 上游已知行为
 

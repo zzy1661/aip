@@ -1,5 +1,7 @@
 import { randomBytes } from 'node:crypto';
+import net from 'node:net';
 import {
+  createRagFlowAdapter,
   createRagFlowHttpClient,
   nodeTransport,
   type RawRequest,
@@ -109,6 +111,27 @@ export interface RealHarness extends Harness {
   realCallCount(): number;
 }
 
+/**
+ * 真实联调 harness 的可调项。
+ *
+ * 默认全部指向真实 RAGFlow；只有「真实网络失败」取证才会覆盖上游地址。
+ */
+export interface RealHarnessOptions {
+  /**
+   * 覆盖上游地址。
+   *
+   * 只用于「真实不可达」取证：指向一个确实没有监听的本地端口，
+   * 让连接被内核真实拒绝（ECONNREFUSED），而不是用替身伪造一个错误响应。
+   */
+  upstreamBaseUrl?: string;
+  /** 复用已经迁移好的 schema：让两个 harness 共享同一份本地状态。 */
+  databaseSchema?: string;
+  connectTimeoutMs?: number;
+  readTimeoutMs?: number;
+  readBudgetMs?: number;
+  maxReadAttempts?: number;
+}
+
 /** 统计真实上游调用次数的传输包装。 */
 function countingTransport(inner: Transport): { transport: Transport; count: () => number } {
   let calls = 0;
@@ -121,16 +144,19 @@ function countingTransport(inner: Transport): { transport: Transport; count: () 
   };
 }
 
-export async function createRealHarness(env: RealEnv): Promise<RealHarness> {
+export async function createRealHarness(
+  env: RealEnv,
+  options: RealHarnessOptions = {},
+): Promise<RealHarness> {
   const { transport, count } = countingTransport(nodeTransport);
   const ragflowClient = createRagFlowHttpClient({
-    baseUrl: env.baseUrl,
+    baseUrl: options.upstreamBaseUrl ?? env.baseUrl,
     apiKey: env.apiKey,
-    connectTimeoutMs: 5_000,
-    readTimeoutMs: 30_000,
+    connectTimeoutMs: options.connectTimeoutMs ?? 5_000,
+    readTimeoutMs: options.readTimeoutMs ?? 30_000,
     uploadTimeoutMs: 120_000,
-    readBudgetMs: 60_000,
-    maxReadAttempts: 3,
+    readBudgetMs: options.readBudgetMs ?? 60_000,
+    maxReadAttempts: options.maxReadAttempts ?? 3,
     transport,
   });
 
@@ -147,12 +173,88 @@ export async function createRealHarness(env: RealEnv): Promise<RealHarness> {
     embeddingRevision: env.embeddingRevision,
     // 真实联调必须落在独立库上：AIP_REAL_DATABASE_URL 未设置时退回默认测试库。
     databaseUrl: env.databaseUrl,
+    databaseSchema: options.databaseSchema,
   });
 
   return { ...harness, realCallCount: count };
 }
 
-/** 等待知识版本进入终态：ready 或 failed。 */
+/**
+ * 取一个「确实没有监听」的本地端口。
+ *
+ * 先监听 0 号端口拿到一个空闲端口，随即关闭它：此后该端口没有任何进程监听，
+ * 客户端的连接会被内核直接拒绝（ECONNREFUSED）。
+ * 这不是伪造的失败，而是真实的网络层失败。
+ */
+export async function reserveClosedPort(): Promise<number> {
+  const server = net.createServer();
+  await new Promise<void>((resolve, reject) => {
+    server.once('error', reject);
+    server.listen(0, '127.0.0.1', () => resolve());
+  });
+  const port = (server.address() as net.AddressInfo).port;
+  await new Promise<void>((resolve) => server.close(() => resolve()));
+  return port;
+}
+
+/** 直连目标端口，确认失败原因确实是内核拒绝连接。 */
+export async function probeConnection(port: number): Promise<{ code: string | null }> {
+  return new Promise((resolve) => {
+    const socket = net.connect({ port, host: '127.0.0.1' });
+    const finish = (code: string | null): void => {
+      socket.destroy();
+      resolve({ code });
+    };
+    socket.once('connect', () => finish(null));
+    socket.once('error', (error: NodeJS.ErrnoException) => finish(error.code ?? 'UNKNOWN'));
+    socket.setTimeout(2_000, () => finish('ETIMEDOUT'));
+  });
+}
+
+/**
+ * 用真实上游客户端读一次文档状态。
+ *
+ * 用于证明「解析失败」来自上游而不是平台自判：
+ * 平台侧状态是结论，上游状态是事实。
+ */
+export async function readUpstreamDocumentStatus(
+  env: RealEnv,
+  input: { datasetId: string; documentId: string },
+): Promise<{ run: string; chunk_count: number | null; progress_msg: string }> {
+  const http = createRagFlowHttpClient({
+    baseUrl: env.baseUrl,
+    apiKey: env.apiKey,
+    connectTimeoutMs: 5_000,
+    readTimeoutMs: 30_000,
+    uploadTimeoutMs: 120_000,
+    readBudgetMs: 60_000,
+    maxReadAttempts: 3,
+    transport: nodeTransport,
+  });
+  const adapter = createRagFlowAdapter({
+    http,
+    embeddingModel: env.embeddingModel,
+    parserConfig: env.parserConfig,
+    chunkMethod: 'naive',
+    similarityThreshold: 0.2,
+    vectorSimilarityWeight: 0.3,
+    topK: 64,
+  });
+  const status = await adapter.getDocumentStatus({
+    datasetId: input.datasetId,
+    documentId: input.documentId,
+  });
+  return {
+    run: status.run,
+    chunk_count: status.chunk_count,
+    progress_msg: status.progress_msg,
+  };
+}
+
+/** 解析的终态：ready / failed / empty 之外都还在推进。 */
+const TERMINAL_STATUSES = new Set(['ready', 'failed', 'empty']);
+
+/** 等待知识版本进入终态：ready、failed 或 empty。 */
 export async function waitForKnowledgeReady(
   harness: RealHarness,
   token: string,
@@ -174,7 +276,7 @@ export async function waitForKnowledgeReady(
         status: response.body.data.status,
         review_status: response.body.data.review_status,
       };
-      if (last.status === 'ready' || last.status === 'failed') return last;
+      if (TERMINAL_STATUSES.has(last.status)) return last;
     }
     await new Promise((resolve) => setTimeout(resolve, 3_000));
   }
