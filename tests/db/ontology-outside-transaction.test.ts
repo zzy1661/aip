@@ -8,7 +8,7 @@ import { registerSkillRequest, skillPayload } from '../helpers/fixtures.js';
  * M-7：本体网络调用不得发生在数据库事务内。
  *
  * 断言方式不是「看代码」，而是观测事实：本体校验执行的那一刻，
- * 数据库里不允许存在处于 `idle in transaction` 的连接。
+ * 本用例连接池不允许存在处于 `idle in transaction` 的连接。
  * 事务跨越网络调用时，连接正停在这个状态上。
  */
 describe('M-7 本体调用在事务之外', () => {
@@ -23,6 +23,7 @@ describe('M-7 本体调用在事务之外', () => {
           `SELECT count(*)::int AS count
              FROM pg_stat_activity
             WHERE datname = current_database()
+              AND application_name = current_setting('application_name')
               AND state = 'idle in transaction'`,
         );
         idleInTransaction.push(rows[0]!.count);

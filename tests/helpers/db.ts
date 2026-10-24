@@ -38,6 +38,7 @@ async function createSchema(
 
   const pool = new PgPool({
     connectionString: databaseUrl,
+    application_name: schema,
     max: 6,
     options: `-c search_path=${schema}`,
   });
