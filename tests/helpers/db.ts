@@ -22,6 +22,16 @@ export interface TestDatabase {
   close(): Promise<void>;
 }
 
+export interface TestDatabaseOptions {
+  /**
+   * 复用已经建好并迁移过的 schema。
+   *
+   * 角色分离用例需要「迁移角色建 schema、应用角色只跑业务」：
+   * 应用角色不能建 schema，也不能跑迁移。
+   */
+  schema?: string;
+}
+
 async function createSchema(
   label: string,
   databaseUrl: string = TEST_DATABASE_URL,
@@ -78,7 +88,24 @@ export async function createEmptyDatabase(
 export async function createTestDatabase(
   label = 'case',
   databaseUrl: string = TEST_DATABASE_URL,
+  options: TestDatabaseOptions = {},
 ): Promise<TestDatabase> {
+  if (options.schema) {
+    // 复用既有 schema：不建、不迁移、也不删——它不属于本用例。
+    const pool = new PgPool({
+      connectionString: databaseUrl,
+      application_name: options.schema,
+      max: 6,
+      options: `-c search_path=${options.schema}`,
+    });
+    return {
+      pool,
+      schema: options.schema,
+      async close(): Promise<void> {
+        await pool.end();
+      },
+    };
+  }
   const { pool, schema } = await createSchema(label, databaseUrl);
   await runMigrations(pool);
   return {

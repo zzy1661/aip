@@ -115,8 +115,29 @@ pnpm migrate
 | `004_operations.sql` | `operation` / `idempotency_record` / `audit_event` |
 | `005_evidence.sql` | `evidence` |
 | `006_review_validity.sql` | 审核有效期列与约束、`applies_to` 模式显式化（增量、只增不改） |
+| `007_revision_immutability.sql` | 版本载荷冻结列、`state_revision` 递增与注册状态机约束 |
+| `008_index_rebuild.sql` | 索引重建：同一上游文档允许多份索引修订映射 |
+| `009_audit_detail.sql` | 审计明细列 |
+| `010_withdrawn_terminal.sql` | 撤回终态触发器（禁止把 `withdrawn` 改成别的状态）+ 操作状态 `cancelled` |
 
 迁移策略：只做向前兼容的增量变更，不改写既有列语义、不删除数据；新增约束使用 `NOT VALID`，只约束新写入的行。
+
+### 3.1 迁移角色与应用角色
+
+迁移需要 DDL，应用不需要：两者必须是两个账号。
+
+- **迁移角色**：库的属主（compose 示例里的 `POSTGRES_USER`）。只给迁移步骤用。
+- **应用角色**：只有业务读写权限，**没有 DDL**（compose 示例里的 `POSTGRES_APP_USER`）。api 与 worker 都用它。
+  建表、改表、删表、建 schema 对它一律被拒，断言见 `tests/db/app-role-separation.test.ts`。
+
+```bash
+# 迁移：用迁移角色的连接串，单独执行
+DATABASE_URL=postgres://<migration-user>:<password>@<host>:5432/<database> pnpm migrate
+# 输出：migrations applied: N, already present: M
+```
+
+`pnpm migrate` 只读 `DATABASE_URL`（`loadMigrateConfig`），不要求上游凭据：迁移不访问上游，也不签发令牌。
+compose 示例里的 `migrate` 服务跑完即退出，`api` / `worker` 依赖它成功后再启动。
 
 ## 4. 启动
 
@@ -188,8 +209,8 @@ Worker 健康以日志为准：启动时打印 `aip worker started`，每轮打�
 | 写操作 | 只读核对方式 | 唯一命中时 | 命中 0 个或多个时 |
 | --- | --- | --- | --- |
 | `knowledge_base.create` | `GET /api/v1/datasets?name=<稳定名称>` | 认领该 dataset，继续 | 停留 `unknown_outcome`，转人工 |
-| `document.upload` | `GET /api/v1/datasets/{id}/documents` 按文件名匹配 | 认领该 document，继续 | 停留 `unknown_outcome`，转人工 |
-| `document.parse` | `GET /api/v1/datasets/{id}/documents?id=<docId>` 看 `run` | `run != UNSTART` 说明已在解析 | `run == UNSTART` 说明确实没开始，可安全再发起 |
+| `document.upload` | `GET /api/v1/datasets/{id}/documents` 按**远端唯一名**匹配 | 认领该 document，继续 | 停留 `unknown_outcome`，转人工 |
+| `document.parse` | `GET /api/v1/datasets/{id}/documents?id=<docId>` 看 `run` | `run != UNSTART` 说明已在解析 | `run == UNSTART` **不足以证明未送达**，停留 `unknown_outcome`，转人工 |
 | `knowledge.withdraw` | `GET /api/v1/datasets/{id}/documents` 看文档是否还在 | 文档已不在则视为撤回完成 | 文档仍在则再删一次 |
 
 排查用查询：
@@ -222,11 +243,31 @@ SELECT knowledge_id, version, review_status, status, state_revision, applies_to
 | `dataset_create_attempted` | **已发出** dataset 创建请求，结果未知；禁止重发 |
 | `dataset_created` | dataset 已确认创建 |
 | `upload_pending` | 文档已登记，尚未发出上传请求 |
-| `upload_attempted` | **已发出**上传请求，结果未知；禁止重发 |
+| `upload_attempted` | **已发出**上传请求，结果未知；只读核对按远端唯一名，禁止重发 |
 | `uploaded` | 文档已确认上传 |
 | `parse_attempted` | **已发出**解析启动请求，结果未知；先只读确认 `run` |
 | `parse_started` | 解析已启动，轮询由独立的 `document.parse` 操作负责 |
 | `withdraw_pending` | 撤回已登记，等待远端清理 |
+
+### 6.3.1 远端文档名带来源标识
+
+上游文档名就是上传时的文件名。平台的远端名由**来源标识**派生（`<原文件名>--<source-id>-<version><扩展名>`），
+用户可见的显示名仍然是原始文件名。
+
+原因：同一个知识库里可能有多个同名不同正文的文件。只按用户文件名核对上游，
+会把另一份来源的旧文档错认成这次的上传，来源与索引因此错配。
+核对时用远端唯一名；排查时按远端名而不是用户文件名去找上游文档。
+
+### 6.3.2 读失败与写失败不是一回事
+
+- **写失败**（POST 建库 / 上传 / 触发解析 / 触发重建）：只有「这个写请求自己连接都没建立」
+  才允许把它的发送意图退回，让下一轮重发同一个写请求。
+- **只读核对失败**（列数据集 / 列文档 / 查解析状态）：**什么都证明不了**。
+  核对连不上不代表之前的写没送达，因此只读核对失败只会延后核对，
+  绝不会清掉任何写请求的发送意图，也不会把已确认过的前序步骤回退。
+
+因此 `last_error` 里 `upstream verification read failed: ...` 表示「核对没做成，等下再核对」，
+而上游分类原文（业务失败 / 协议不符）表示确定失败。
 
 人工确认远端事实后，如需推动操作继续，可把 `next_attempt_at` 置空并把 `state` 改回 `in_progress`，让 Worker 重新领取：
 
@@ -302,6 +343,25 @@ pnpm test:ragflow:real # 真实 RAGFlow 联调，缺配置时必须非零退出
 数据库层与契约层连接的是**测试库**，不是服务运行库，连接串来自 `AIP_TEST_DATABASE_URL`
 （未设置时默认指向本机一次性测试容器 `postgres://aip_test:aip_test_pw@127.0.0.1:55433/aip_test`）。
 测试自行创建隔离 schema，测试结束清理自己创建的 schema，不会触碰服务库与其它项目的数据。
+
+### 8.0 需要管理连接的用例（M01 角色分离 / M02 项目隔离）
+
+这两组用例要在数据库实例上**建角色、建库**，因此不能共用应用测试库：
+它们使用独立的管理连接 `AIP_TEST_ADMIN_DATABASE_URL`，并在启动时校验实例身份
+（回环地址 + 专用管理库名 `aip_test_admin` / `aip_test_isolation` + 落库一致 +
+实例上没有共享的应用测试库 `aip_test`）。校验不通过就直接失败，不会「换个库继续」。
+
+未设置 `AIP_TEST_ADMIN_DATABASE_URL` 时，这两组用例整体标记为 **NOT RUN**（不静默改用别的实例）。
+
+```bash
+# 一次性专用实例（不复用共享容器）
+docker run -d --name aip-test-admin -e POSTGRES_USER=aip_admin -e POSTGRES_PASSWORD=aip_admin_pw \
+  -e POSTGRES_DB=aip_test_admin -p 127.0.0.1:55442:5432 postgres:16-alpine
+
+export AIP_TEST_DATABASE_URL='postgres://aip_app:aip_app_pw@127.0.0.1:55442/aip_app_test'
+export AIP_TEST_ADMIN_DATABASE_URL='postgres://aip_admin:aip_admin_pw@127.0.0.1:55442/aip_test_admin'
+pnpm test:db
+```
 
 真实联调层需要 `RUN_REAL_RAGFLOW=1` 与 `RAGFLOW_API_KEY`、`RAGFLOW_BASE_URL` 等，
 另外可用 `AIP_REAL_DATABASE_URL` 覆盖联调用的库、`AIP_REAL_PARSE_TIMEOUT_MS` 覆盖解析等待上限

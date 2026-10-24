@@ -1,5 +1,5 @@
 export { createApp, type AppDeps } from './app.js';
-export { ConfigError, loadConfig, type Config } from './config.js';
+export { ConfigError, loadConfig, loadMigrateConfig, type Config } from './config.js';
 export { createPool, closePool, type QueryClient } from './db/pool.js';
 export { withTransaction } from './db/uow.js';
 export { migrate as runMigrations, resolveMigrationsDir } from './db/migrate.js';

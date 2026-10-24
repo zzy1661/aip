@@ -113,3 +113,14 @@ export function roleDatabaseUrl(
 export function createAdminPool(adminUrl: string = ADMIN_DATABASE_URL): Pool {
   return new PgPool({ connectionString: adminUrl, max: 2 });
 }
+
+/** 把管理连接指向同一实例上的另一个库：授权必须发生在目标库里。 */
+export function adminDatabaseUrl(
+  identity: TestInstanceIdentity,
+  database: string,
+): string {
+  const url = new URL(ADMIN_DATABASE_URL);
+  url.pathname = `/${database}`;
+  if (identity.port) url.port = identity.port;
+  return url.toString();
+}

@@ -3,7 +3,12 @@
 # 这是示例文件，不是可直接投产的配置：
 # - 镜像名与标签是占位符，需要替换成实际构建产物；
 # - 所有凭据都通过 ${VAR} 从环境变量注入，文件里不出现任何真实口令；
-# - 首次上线前请先跑 `pnpm migrate` 完成迁移，再启动 api 与 worker。
+# - 首次上线前先跑 migrate 服务完成迁移，再启动 api 与 worker。
+#
+# 角色分离（对应原设计 §3）：
+# - 迁移角色（POSTGRES_USER，库属主）只给 migrate 服务用，能改结构；
+# - 应用角色（POSTGRES_APP_USER）只给 api 与 worker 用，没有 DDL 权限。
+#   建表、改表、删表都由应用角色被拒（见 tests/db/app-role-separation.test.ts）。
 #
 # 变量来源见 .env.example。
 
@@ -17,6 +22,9 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-aip}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB:-aip}
+      # 应用角色：只有业务读写权限，没有 DDL
+      POSTGRES_APP_USER: ${POSTGRES_APP_USER:-aip_app}
+      POSTGRES_APP_PASSWORD: ${POSTGRES_APP_PASSWORD}
     volumes:
       - postgres-data:/var/lib/postgresql/data
     healthcheck:
@@ -29,18 +37,34 @@ services:
     expose:
       - "5432"
 
+  # 迁移：一次性任务，用库属主角色跑完即退出。
+  # 应用角色没有 DDL，迁移不能由 api / worker 的角色执行。
+  migrate:
+    image: ${AIP_MIGRATE_IMAGE:-<aip-api-image:tag>}
+    restart: "no"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      DATABASE_URL: postgres://${POSTGRES_USER:-aip}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-aip}
+      AIP_MIGRATIONS_DIR: ${AIP_MIGRATIONS_DIR:-}
+    command: ["node", "dist/src/db/migrate-cli.js"]
+
   api:
     image: ${AIP_API_IMAGE:-<aip-api-image:tag>}
     restart: unless-stopped
     depends_on:
       postgres:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     environment:
       NODE_ENV: ${NODE_ENV:-production}
       PORT: "8080"
       LOG_LEVEL: ${LOG_LEVEL:-info}
       AIP_PROJECT_ID: ${AIP_PROJECT_ID}
-      DATABASE_URL: postgres://${POSTGRES_USER:-aip}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-aip}
+      DATABASE_URL: postgres://${POSTGRES_APP_USER:-aip_app}:${POSTGRES_APP_PASSWORD}@postgres:5432/${POSTGRES_DB:-aip}
       AIP_FILE_STORE_ROOT: /var/lib/aip/files
       AUTH_MODE: ${AUTH_MODE:-jwks}
       OIDC_ISSUER: ${OIDC_ISSUER}
@@ -76,13 +100,15 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
       api:
         condition: service_healthy
     environment:
       NODE_ENV: ${NODE_ENV:-production}
       LOG_LEVEL: ${LOG_LEVEL:-info}
       AIP_PROJECT_ID: ${AIP_PROJECT_ID}
-      DATABASE_URL: postgres://${POSTGRES_USER:-aip}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-aip}
+      DATABASE_URL: postgres://${POSTGRES_APP_USER:-aip_app}:${POSTGRES_APP_PASSWORD}@postgres:5432/${POSTGRES_DB:-aip}
       AIP_FILE_STORE_ROOT: /var/lib/aip/files
       RAGFLOW_API_VERSION: ${RAGFLOW_API_VERSION:-v0.20.5}
       RAGFLOW_BASE_URL: ${RAGFLOW_BASE_URL}
