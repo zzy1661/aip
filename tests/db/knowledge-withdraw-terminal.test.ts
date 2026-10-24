@@ -192,4 +192,34 @@ describe('撤回终态：迟到的完成与失败都不能复活已撤回的版�
 
     expect((await detail(doc.knowledgeRef, doc.version)).status).toBe('withdrawn');
   });
+
+  it.each(['DONE', 'FAIL'])('已领取 worker 等待上游 %s 时撤回，迟到回包不能复活版本', async (run) => {
+    const kb = await createReadyKnowledgeBase(harness, token);
+    const doc = await uploadSampleDocument(harness, token, kb.kbId);
+    await harness.advanceAll();
+    const upstream = [...harness.ragflow.documents.values()].at(-1)!;
+    const { rows: [op] } = await harness.pool.query(
+      "SELECT id FROM operation WHERE kind='document.parse' AND resource_id=$1", [doc.knowledgeRef]);
+    let received!: () => void;
+    const barrier = new Promise<void>((resolve) => { received = resolve; });
+    harness.ragflow.enqueue((call) => {
+      if (call.method !== 'GET' || call.query.id !== upstream.id) return false;
+      received();
+      return true;
+    }, { status: 200, delayMs: 300, body: { code: 0, data: { docs: [{
+      id: upstream.id, run, progress: 1, chunk_count: 1,
+    }] } } });
+    const advancing = harness.operations.advance(op.id, harness.projectId);
+    try {
+      await barrier;
+      const before = await detail(doc.knowledgeRef, doc.version);
+      expect((await withdraw(doc.knowledgeRef, doc.version, before.state_revision)).status).toBe(200);
+    } finally {
+      await advancing;
+    }
+    expect((await detail(doc.knowledgeRef, doc.version)).status).toBe('withdrawn');
+    expect(await downloadStatus(doc.sourceRef, doc.version)).toBe(404);
+    const { rows: [after] } = await harness.pool.query('SELECT state FROM operation WHERE id=$1', [op.id]);
+    expect(after.state).toBe('cancelled');
+  });
 });

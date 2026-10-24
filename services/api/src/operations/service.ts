@@ -62,13 +62,6 @@ interface OperationProgress {
    * 一旦置位，后续推进只允许只读核对，禁止重发同一个写请求。
    */
   outcomeUnknown?: boolean;
-  /**
-   * 连续只读核对都没有在上游命中的次数。
-   *
-   * 单次未命中不足以证明上一次写入没有生效（上游可能有可见性延迟），
-   * 连续两次才可以据此判定允许重发。
-   */
-  reconcileMisses?: number;
   /** 操作登记时间，用于判断解析是否超过截止时间。 */
   createdAt?: Date;
 }
@@ -112,14 +105,6 @@ const MANUAL_REVIEW_PARK_MS = 100 * 365 * 24 * 60 * 60 * 1000;
 const DEFAULT_LEASE_MS = 180_000;
 const DEFAULT_RETRY_BACKOFF_MS = 5_000;
 const DEFAULT_RETRY_BACKOFF_MAX_MS = 300_000;
-
-/**
- * 允许重发上游写请求前，必须连续多少次只读核对都没有命中。
- *
- * 单次未命中不能证明上一次写入没有生效：上游写入与可查询之间可能有延迟。
- * 连续两次核对都确认上游没有对应对象，才把它当作「未送达」的可靠证据。
- */
-const RECONCILE_MISS_LIMIT = 2;
 
 /**
  * 发送意图阶段 -> 上一个阶段。
@@ -286,7 +271,7 @@ export function createOperationsService(deps: OperationsDeps) {
   function clearSendIntent(progress: OperationProgress): OperationProgress {
     const previous = SEND_INTENT_PREVIOUS_STAGE[progress.stage];
     if (previous === undefined) return progress;
-    return { ...progress, stage: previous, reconcileMisses: 0 };
+    return { ...progress, stage: previous };
   }
 
   async function createOperation(
@@ -328,7 +313,6 @@ export function createOperationsService(deps: OperationsDeps) {
       sourceFileVersion: result.sourceFileVersion,
       datasetName: result.datasetName,
       outcomeUnknown: result.outcomeUnknown === true,
-      reconcileMisses: result.reconcileMisses,
     };
   }
 
@@ -600,6 +584,25 @@ export function createOperationsService(deps: OperationsDeps) {
     };
   }
 
+  /** A missing listing or idle state never proves that a write was not delivered. */
+  async function deferUnknownWrite(
+    scopeId: string, operationId: string, epoch: number,
+    progress: OperationProgress, attempt: number, message: string,
+  ): Promise<OperationResult> {
+    const capped = attempt >= unknownOutcomeMaxAttempts;
+    const lastError = capped ? `${message}; automatic verification stopped, manual review required` : message;
+    await withTransaction(pool, async (client) => {
+      await rollbackResourceStatus(client, scopeId, progress, 'unknown_outcome');
+      await writeProgress(client, scopeId, operationId, { ...progress, outcomeUnknown: true }, epoch);
+      const updated = await opsRepo.deferOperation(client, scopeId, operationId,
+        capped ? MANUAL_REVIEW_PARK_MS : unknownOutcomeDelay(attempt), lastError, epoch);
+      if (!updated) throw new StaleEpochError(operationId);
+    });
+    return { operationId, state: 'unknown_outcome',
+      resourceId: progress.knowledgeId ?? progress.kbId ?? null,
+      remoteId: progress.documentId ?? progress.datasetId ?? null, lastError };
+  }
+
   async function advanceKnowledgeBaseCreate(
     scopeId: string,
     operationId: string,
@@ -635,7 +638,7 @@ export function createOperationsService(deps: OperationsDeps) {
             client,
             scopeId,
             operationId,
-            { ...progress, stage: 'dataset_created', datasetId: existing[0]!.id, reconcileMisses: 0 },
+            { ...progress, stage: 'dataset_created', datasetId: existing[0]!.id },
             epoch,
           );
           await knowledgeRepo.updateKnowledgeBase(client, scopeId, progress.kbId!, {
@@ -645,61 +648,9 @@ export function createOperationsService(deps: OperationsDeps) {
         });
         return { operationId, state: 'succeeded', resourceId: progress.kbId ?? null, remoteId: existing[0]!.id, lastError: null };
       }
-      if (existing.length > 1) {
-        const message = 'multiple upstream datasets match the stable name; manual check required';
-        await withTransaction(pool, async (client) => {
-          const deferred = await opsRepo.deferOperation(
-            client,
-            scopeId,
-            operationId,
-            unknownOutcomeDelay(1),
-            message,
-            epoch,
-          );
-          if (!deferred) throw new StaleEpochError(operationId);
-        });
-        return { operationId, state: 'unknown_outcome', resourceId: progress.kbId ?? null, remoteId: null, lastError: message };
-      }
-      if (progress.outcomeUnknown) {
-        // 已确认写请求送达过，上游却没有同名数据集：结果未知，等人工核对，不重发。
-        const message = 'upstream dataset creation outcome is unknown; manual check required';
-        await withTransaction(pool, async (client) => {
-          const deferred = await opsRepo.deferOperation(
-            client,
-            scopeId,
-            operationId,
-            unknownOutcomeDelay(1),
-            message,
-            epoch,
-          );
-          if (!deferred) throw new StaleEpochError(operationId);
-        });
-        return { operationId, state: 'unknown_outcome', resourceId: progress.kbId ?? null, remoteId: null, lastError: message };
-      }
-      // 崩溃窗口：上一次写入是否送达未知。
-      // 单次核对未命中不足以证明没送达（上游写入与可查询之间可能有延迟），
-      // 连续两次核对都未命中才可以判定允许重发。
-      const misses = (progress.reconcileMisses ?? 0) + 1;
-      if (misses < RECONCILE_MISS_LIMIT) {
-        const message =
-          'upstream dataset creation outcome is unknown; verifying again before any resend';
-        await withTransaction(pool, async (client) => {
-          await writeProgress(
-            client,
-            scopeId,
-            operationId,
-            { ...progress, reconcileMisses: misses },
-            epoch,
-          );
-          await retryOperation(client, scopeId, operationId, epoch, message, attempt);
-        });
-        return { operationId, state: 'in_progress', resourceId: progress.kbId ?? null, remoteId: null, lastError: message };
-      }
-      // 连续两次核对都没有命中：可以判定上一次写入没有生效，清掉发送意图后重发。
-      progress = { ...progress, stage: 'dataset_pending', reconcileMisses: 0 };
-      await withTransaction(pool, (client) =>
-        writeProgress(client, scopeId, operationId, progress, epoch),
-      );
+      return deferUnknownWrite(scopeId, operationId, epoch, progress, attempt,
+        existing.length > 1 ? 'multiple upstream datasets match; manual check required'
+          : 'upstream dataset creation outcome is unknown; manual check required');
     }
 
     // 请求确定没有送达上游时重发是安全的；这里只记录尝试痕迹。
@@ -708,7 +659,7 @@ export function createOperationsService(deps: OperationsDeps) {
         client,
         scopeId,
         operationId,
-        { ...progress, stage: 'dataset_create_attempted', reconcileMisses: 0 },
+        { ...progress, stage: 'dataset_create_attempted' },
         epoch,
       ),
     );
@@ -809,79 +760,15 @@ export function createOperationsService(deps: OperationsDeps) {
               client,
               scopeId,
               operationId,
-              { ...progress, stage: 'uploaded', documentId: matches[0]!.id, reconcileMisses: 0 },
+              { ...progress, stage: 'uploaded', documentId: matches[0]!.id },
               epoch,
             );
           });
           progress = { ...progress, stage: 'uploaded', documentId: matches[0]!.id };
-        } else if (matches.length > 1) {
-          const message = 'multiple upstream documents match the file name; manual check required';
-          await withTransaction(pool, async (client) => {
-            const deferred = await opsRepo.deferOperation(
-              client,
-              scopeId,
-              operationId,
-              unknownOutcomeDelay(1),
-              message,
-              epoch,
-            );
-            if (!deferred) throw new StaleEpochError(operationId);
-          });
-          return {
-            operationId,
-            state: 'unknown_outcome',
-            resourceId: progress.knowledgeId ?? null,
-            remoteId: null,
-            lastError: message,
-          };
-        } else if (progress.outcomeUnknown) {
-          const message = 'upstream upload outcome is unknown; manual check required';
-          await withTransaction(pool, async (client) => {
-            const deferred = await opsRepo.deferOperation(
-              client,
-              scopeId,
-              operationId,
-              unknownOutcomeDelay(1),
-              message,
-              epoch,
-            );
-            if (!deferred) throw new StaleEpochError(operationId);
-          });
-          return {
-            operationId,
-            state: 'unknown_outcome',
-            resourceId: progress.knowledgeId ?? null,
-            remoteId: null,
-            lastError: message,
-          };
         } else {
-          // 崩溃窗口：连续两次核对都没有命中才允许重传。
-          const misses = (progress.reconcileMisses ?? 0) + 1;
-          if (misses < RECONCILE_MISS_LIMIT) {
-            const message =
-              'upstream upload outcome is unknown; verifying again before any resend';
-            await withTransaction(pool, async (client) => {
-              await writeProgress(
-                client,
-                scopeId,
-                operationId,
-                { ...progress, reconcileMisses: misses },
-                epoch,
-              );
-              await retryOperation(client, scopeId, operationId, epoch, message, attempt);
-            });
-            return {
-              operationId,
-              state: 'in_progress',
-              resourceId: progress.knowledgeId ?? null,
-              remoteId: null,
-              lastError: message,
-            };
-          }
-          progress = { ...progress, stage: 'upload_pending', reconcileMisses: 0 };
-          await withTransaction(pool, (client) =>
-            writeProgress(client, scopeId, operationId, progress, epoch),
-          );
+          return deferUnknownWrite(scopeId, operationId, epoch, progress, attempt,
+            matches.length > 1 ? 'multiple upstream documents match; manual check required'
+              : 'upstream upload outcome is unknown; manual check required');
         }
       }
 
@@ -892,7 +779,7 @@ export function createOperationsService(deps: OperationsDeps) {
             client,
             scopeId,
             operationId,
-            { ...progress, stage: 'upload_attempted', reconcileMisses: 0 },
+            { ...progress, stage: 'upload_attempted' },
             epoch,
           ),
         );
@@ -925,7 +812,7 @@ export function createOperationsService(deps: OperationsDeps) {
     }
 
     // 触发解析同样是一个写请求：发送意图先落库，
-    // 恢复时先只读确认上游状态，只有确认上游确实没开始才补发。
+    // 恢复时只读确认上游状态，无法确认送达结果则暂停等待人工核查。
     const parseStartInterrupted = progress.stage === 'parse_attempted';
     if (progress.outcomeUnknown || parseStartInterrupted) {
       const status = await ragflow.getDocumentStatus({
@@ -933,11 +820,8 @@ export function createOperationsService(deps: OperationsDeps) {
         documentId: progress.documentId!,
       });
       if (status.run === 'UNSTART') {
-        // 上游确实还没开始解析：这是可靠的「未送达」证据，可以补发。
-        await ragflow.startParse({
-          datasetId: progress.datasetId!,
-          documentIds: [progress.documentId!],
-        });
+        return deferUnknownWrite(scopeId, operationId, epoch, progress, attempt,
+          'upstream parse start outcome is unknown; manual check required');
       }
     } else {
       await withTransaction(pool, (client) =>
@@ -945,7 +829,7 @@ export function createOperationsService(deps: OperationsDeps) {
           client,
           scopeId,
           operationId,
-          { ...progress, stage: 'parse_attempted', reconcileMisses: 0 },
+          { ...progress, stage: 'parse_attempted' },
           epoch,
         ),
       );
@@ -1231,49 +1115,17 @@ export function createOperationsService(deps: OperationsDeps) {
 
     const interrupted = progress.stage === 'reindex_attempted';
     if (progress.outcomeUnknown || interrupted) {
-      // 启动解析的结果未知：先只读确认上游状态，确认还没开始解析才允许启动，
-      // 避免重复触发重建。
+      // 启动解析的结果未知：只读核对，禁止根据旧状态重发。
       const observed = await ragflow.getDocumentStatus({
         datasetId: progress.datasetId,
         documentId: progress.documentId,
       });
-      if (observed.run === 'UNSTART') {
-        // 上游确实还没开始解析：可靠的「未送达」证据，可以补发。
-        await ragflow.startParse({
-          datasetId: progress.datasetId,
-          documentIds: [progress.documentId],
-        });
-      } else if (observed.run === 'DONE' && !progress.outcomeUnknown) {
-        // 崩溃窗口：上游已经是完成态，无法判断这次重建有没有触发过。
-        // 连续两次都看到完成态才允许重新触发一次重建解析。
-        const misses = (progress.reconcileMisses ?? 0) + 1;
-        if (misses < RECONCILE_MISS_LIMIT) {
-          const message =
-            'upstream reindex outcome is unknown; verifying again before any resend';
-          await withTransaction(pool, async (client) => {
-            await writeProgress(
-              client,
-              scopeId,
-              operationId,
-              { ...progress, reconcileMisses: misses },
-              epoch,
-            );
-            await retryOperation(client, scopeId, operationId, epoch, message, attempt);
-          });
-          return {
-            operationId,
-            state: 'in_progress',
-            resourceId: progress.knowledgeId ?? null,
-            remoteId: progress.documentId,
-            lastError: message,
-          };
-        }
-        await ragflow.startParse({
-          datasetId: progress.datasetId,
-          documentIds: [progress.documentId],
-        });
+      if (observed.run === 'UNSTART' || observed.run === 'DONE') {
+        // Neither an idle document nor an old completed index identifies this write.
+        return deferUnknownWrite(scopeId, operationId, epoch, progress, attempt,
+          'upstream reindex outcome is unknown; manual check required');
       }
-      // 上游正在解析：重建已经触发过，不重复触发。
+      // An active parse can be polled without sending another write.
     } else if (progress.stage !== 'reindex_started') {
       // 发送意图先落库：恢复时才知道上一次到底有没有发出去。
       await withTransaction(pool, (client) =>
@@ -1281,7 +1133,7 @@ export function createOperationsService(deps: OperationsDeps) {
           client,
           scopeId,
           operationId,
-          { ...progress, stage: 'reindex_attempted', reconcileMisses: 0 },
+          { ...progress, stage: 'reindex_attempted' },
           epoch,
         ),
       );

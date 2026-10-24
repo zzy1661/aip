@@ -75,7 +75,7 @@
 | --- | --- | --- | --- |
 | B-1 | 幂等键跨资产静默重放：同一 `Idempotency-Key` + 同一请求体打到资产 A 与资产 B，第二次返回 A 的 `asset_id`，目标版本从未创建（ZACH-10 R-1） | 幂等身份纳入目标资产：版本创建的 operation key 为 `assets.new_version:${assetId}` | `tests/db/idempotency-scope.test.ts:38`、`:85`、`:122` |
 | B-2 | 写请求响应丢失时没有 `unknown_outcome`，会盲目重发写请求 | 写响应丢失 → 操作进入 `unknown_outcome`，不重发，资源状态不再停在 `creating` | `tests/db/operation-fencing.test.ts:195`；`tests/contract/ragflow-dataset.test.ts:132`；`tests/contract/ragflow-upload.test.ts:98`；`tests/contract/ragflow-retry.test.ts:225` |
-| B-4（复审发现） | **崩溃窗口重复写上游**：上游写成功、本地提交之前进程退出，恢复时无条件重发同名写请求，上游出现第二个同名 dataset / 文档 | 发送意图先落库（`dataset_create_attempted` / `upload_attempted` / `parse_attempted` / `reindex_attempted`）；恢复时先只读核对上游：命中唯一对象则认领，命中多个则转人工；**连续两次核对都未命中**才允许重发；解析触发以「上游仍是 `UNSTART`」作为可靠未送达证据 | `tests/db/crash-window-recovery.test.ts:69`（认领同名 dataset，不重复创建）、`:105`（先只读核对、连续两次未命中才重发）、`:131`（认领同名文档，不重复上传）、`:164`（上游未开始解析才补发）、`:201`（上游已在解析则不重复触发） |
+| B-4（复审发现） | **崩溃窗口重复写上游**：上游写成功、本地提交之前进程退出，恢复时无条件重发同名写请求，上游出现第二个同名 dataset / 文档 | 发送意图先落库（`dataset_create_attempted` / `upload_attempted` / `parse_attempted` / `reindex_attempted`）；恢复时先只读核对上游：命中唯一对象则认领，命中多个则转人工；未命中保持 unknown_outcome，反复核对不重发；UNSTART / 旧 DONE 也不作为未送达证据 | `tests/db/crash-window-recovery.test.ts:69`（认领同名 dataset，不重复创建）、`:105`（反复未命中仍不重发、迟到对象可认领）、`:131`（认领同名文档，不重复上传）、`:164`（UNSTART 不重发）、`:201`（上游已在解析则不重复触发） |
 | B-3 | 终态失败时资源状态不回滚（`knowledge_base.status` 停在 `creating` / `knowledge_revision.status` 停在 `parse_queued`），人工无法从资源侧判断原因 | 操作进入终态时同步回落 `knowledge_base.status` / `knowledge_revision.status`，并让 `operation.last_error` 与之对齐 | `tests/db/operation-fencing.test.ts:163`；`tests/e2e/knowledge-stale.test.ts:25` |
 | M-1 | epoch fencing 未接线：`bumpEpoch` 无调用点，`setOperationState` 的 `expectedEpoch` 从未传入 | 领取操作即 `epoch + 1`；所有状态写入以 `WHERE epoch = $n` 条件化；迟到旧 epoch 一律被 DB 拒绝 | `tests/db/operation-fencing.test.ts:68`、`:120` |
 | M-2 | 租约时长 ≤ 只读总预算，同一操作可被两个 worker 同时推进 | 租约默认值 > 上传超时 + 只读预算 + 余量；配置过短直接在启动时拒绝 | `tests/unit/config-defaults.test.ts:39`、`:49`；`tests/unit/operation-lease.test.ts:25`、`:32`、`:38` |
@@ -121,7 +121,7 @@
 | M14 的真实 20 分钟解析路径 | 只在替身层用缩短的截止时间验证终态 | 真实等待 20 分钟无收益；生产默认值本身由 `tests/unit/config-defaults.test.ts:23` 钉死（20 分钟），超时终态行为由 `tests/contract/parse-recovery.test.ts:26` 覆盖。 |
 | M19 的「总预算 ≤30s」 | 用缩短预算跑同一代码路径 | 30 秒的墙钟等待不产生额外信息；生产默认值由 `tests/unit/config-defaults.test.ts:33` 断言（30 秒 / 3 次），预算切分与兜底超时行为由 `tests/contract/ragflow-unavailable.test.ts:72`、`tests/contract/ragflow-retry.test.ts:178` 与 `tests/unit/ragflow-timeout.test.ts:33` 覆盖。 |
 | M19 的「送达未知 / 未送达」可观测性 | 只读路径上两者结论相同（均 `in_progress`） | 「已送达 / 未送达」的差异只在写路径有可判别后果（`unknown_outcome` vs 可重试）；只读路径两者都允许重试，因此不额外暴露内部差异。 |
-| B-4 的「连续两次核对未命中」 | 是**推断**而不是证明 | 上游写入与可查询之间可能存在可见性延迟：两次只读核对都没命中，仍不能严格排除「上一次写入其实生效了」。因此重发只在两次核对都未命中后发生，且重发前清掉发送意图；`unknown_outcome`（响应丢失）路径一律不重发，直接转人工。 |
+| B-4 的恢复限制 | 无法确认时保守暂停 | 上游未命中、UNSTART 或旧 DONE 均不能证明未送达。保持 unknown_outcome，达到次数上限后等待人工核查，不自动重发。 |
 | 撤回与在途操作的并发 | 撤回可能返回 409，需要重读重试 | 撤回是 `expected_state_revision` 的 CAS 写；在途 worker 改过状态时修订号会变，撤回按契约返回 409 `STATE_CONFLICT`，客户端重读最新修订号后重试。撤回提交后，迟到的 worker 由撤回终态与取消操作兜住，不再复活版本。 |
 | 幂等键跨资产的**并发**交错 | 覆盖了「同键跨资产各自成立」与「同资产同键重放 / 异体冲突」 | 未构造两个资产同时用同一键并发写入的交错时序；现有断言覆盖该缺陷的复现路径（跨资产串读）。 |
 | Ajv 校验错误的字段定位 | `additionalProperties` 类错误只能定位到 `body` / `payload` | Ajv 的错误对象不给出被拒字段名，契约层无法凭空补出字段路径；需改用 `propertyNames` 之类的自定义关键字才能定位，属契约层设计变更，本轮不做。 |

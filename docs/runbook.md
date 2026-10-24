@@ -193,16 +193,12 @@ Worker 健康以日志为准：启动时打印 `aip worker started`，每轮打�
 | --- | --- | --- | --- |
 | `knowledge_base.create` | `GET /api/v1/datasets?name=<稳定名称>` | 认领该 dataset，继续 | 停留 `unknown_outcome`，转人工 |
 | `document.upload` | `GET /api/v1/datasets/{id}/documents` 按文件名匹配 | 认领该 document，继续 | 停留 `unknown_outcome`，转人工 |
-| `document.parse` | `GET /api/v1/datasets/{id}/documents?id=<docId>` 看 `run` | `run != UNSTART` 说明已在解析 | `run == UNSTART` 说明确实没开始，可安全再发起 |
+| `document.parse` | `GET /api/v1/datasets/{id}/documents?id=<docId>` 看 `run` | `run != UNSTART` 说明已在解析 | `run == UNSTART` 仍无法确认送达，保持 unknown_outcome |
 | `knowledge.withdraw` | `GET /api/v1/datasets/{id}/documents` 看文档是否还在 | 文档已不在则视为撤回完成 | 文档仍在则再删一次 |
 
-> **崩溃窗口与响应丢失的区别**：上表适用于「响应丢失」（写请求的响应没回来）。
-> 崩溃窗口是另一种情形——上游写成功、本地提交之前进程退出，
-> 本地只留下「已尝试」标记（`dataset_create_attempted` / `upload_attempted` /
-> `parse_attempted` / `reindex_attempted`）而没有远端 ID。
-> 这种情况下平台会先只读核对：命中唯一对象就认领，**连续两次核对都没命中**才重发。
-> 若两次核对都未命中但上游其实已经写入（可见性延迟），重发会产生第二个同名对象，
-> 因此发现重复 dataset / 文档时按本节人工认领，不要直接重跑写操作。
+> 崩溃窗口与响应丢失都按结果未知处理。未命中不证明未送达，
+> 重复核对也不会触发重发。`UNSTART` 或旧 `DONE` 也不足以确认本次解析写入的结果。
+> 达到核对次数上限后暂停自动核对，人工确认上游事实后处置；不要直接重跑写操作。
 
 排查用查询：
 
