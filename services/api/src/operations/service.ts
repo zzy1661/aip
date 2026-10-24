@@ -897,9 +897,17 @@ export function createOperationsService(deps: OperationsDeps) {
       // 按远端唯一名只读核对上游，唯一命中才认领，绝不重新上传——重传会造出第二个同名文档。
       const interrupted = progress.stage === 'upload_attempted';
       if (progress.outcomeUnknown || interrupted) {
+        // 只有已经持久化的远端身份才能自动认领。
+        // 没有持久身份的历史操作无法证明旧实现曾经发送过这个名字：
+        // 用新算法推算一个名字再去认领，可能把另一份来源的同名文档
+        // 错认成这次的上传。这类操作保持 unknown，交人工按远端 ID / 来源摘要核对。
+        if (!progress.remoteName) {
+          return deferUnknownWrite(scopeId, operationId, epoch, progress, attempt,
+            'upload intent has no persisted remote identity; manual check required');
+        }
         // 只读核对：它失败不能证明上一次的写请求没送达。
         const documents = await readCheck(() => ragflow.listDocuments(progress.datasetId!));
-        const matches = documents.filter((document) => document.name === remoteName);
+        const matches = documents.filter((document) => document.name === progress.remoteName);
         if (matches.length === 1) {
           await withTransaction(pool, async (client) => {
             const updated = await opsRepo.setOperationRemoteId(
@@ -915,11 +923,11 @@ export function createOperationsService(deps: OperationsDeps) {
               client,
               scopeId,
               operationId,
-              { ...progress, stage: 'uploaded', documentId: matches[0]!.id, remoteName },
+              { ...progress, stage: 'uploaded', documentId: matches[0]!.id },
               epoch,
             );
           });
-          progress = { ...progress, stage: 'uploaded', documentId: matches[0]!.id, remoteName };
+          progress = { ...progress, stage: 'uploaded', documentId: matches[0]!.id };
         } else {
           return deferUnknownWrite(scopeId, operationId, epoch, progress, attempt,
             matches.length > 1 ? 'multiple upstream documents match; manual check required'
