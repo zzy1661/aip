@@ -23,6 +23,7 @@ export const ERROR_CODES = [
   'RAGFLOW_UNAVAILABLE',
   'RAGFLOW_TIMEOUT',
   'ONTO_UNAVAILABLE',
+  'DB_UNAVAILABLE',
   'INTERNAL_ERROR',
 ] as const;
 
@@ -49,6 +50,8 @@ export const ERROR_STATUS: Record<ErrorCode, number> = {
   RAGFLOW_UNAVAILABLE: 503,
   RAGFLOW_TIMEOUT: 504,
   ONTO_UNAVAILABLE: 503,
+  // 数据库层面的瞬时不可用（锁等待超时、语句超时）：可重试，不得落成 500。
+  DB_UNAVAILABLE: 503,
   INTERNAL_ERROR: 500,
 };
 

@@ -12,6 +12,7 @@
   },
   "include": [
     "tests/**/*.ts",
+    "tools/**/*.ts",
     "vitest.shared.ts",
     "vitest.*.config.ts",
     "services/api/src/types/express.d.ts"

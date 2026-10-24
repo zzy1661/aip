@@ -4,6 +4,8 @@ import {
   createKnowledgeBaseRequestSchema,
   isApplicable,
   isConditional,
+  isSemver,
+  documentGrantRequestSchema,
   knowledgeReviewRequestSchema,
   knowledgeWithdrawRequestSchema,
   retrievalRequestSchema,
@@ -154,6 +156,14 @@ export function createKnowledgeService(deps: KnowledgeDeps) {
     input: UploadInput,
     idempotencyKey: string,
   ): Promise<{ statusCode: number; body: unknown }> {
+    // version 同时是数据库主键分量与文件存储路径段，必须先收敛成确定的语义版本：
+    // 空串会命中目录，超长会触发 ENAMETOOLONG。
+    if (!isSemver(input.version)) {
+      throw apiError('INVALID_VERSION', 'version must be exactly MAJOR.MINOR.PATCH', [
+        fieldIssue('version', 'expected MAJOR.MINOR.PATCH, e.g. 1.0.0'),
+      ]);
+    }
+
     // 上传校验全部在调用上游之前完成，非法请求不会产生任何 RAGFlow 调用。
     const validated: ValidatedUpload = validateUpload(
       {
@@ -492,6 +502,201 @@ export function createKnowledgeService(deps: KnowledgeDeps) {
     });
   }
 
+  /**
+   * 文档级授权的管理入口。
+   *
+   * 授权是平台内最重要的安全语义，必须能在服务层被授予与撤销，
+   * 否则「可撤销」只能在仓储函数层验证，运维侧无从操作。
+   */
+  /**
+   * 索引重建。
+   *
+   * 重建产生新的索引修订与新的映射行，旧索引修订与旧映射一律保留：
+   * 旧 evidence 按自己的 index_revision 继续可读，重建不覆盖历史。
+   * 重建期间不改变文档的审核结论，也不重新上传文件。
+   */
+  async function reindex(
+    principal: Principal,
+    knowledgeId: string,
+    version: string,
+    idempotencyKey: string,
+  ): Promise<{ statusCode: number; body: unknown }> {
+    const requestHash = hashObject({
+      operation: 'knowledge_documents.reindex',
+      knowledgeId,
+      version,
+    });
+
+    return withTransaction(pool, async (client) => {
+      const outcome = await runIdempotent(
+        client,
+        {
+          scopeId: principal.scope,
+          subject: principal.subject,
+          operation: 'knowledge_documents.reindex',
+          key: idempotencyKey,
+          requestHash,
+        },
+        async () => {
+          const row = await repo.findKnowledgeRevision(client, principal.scope, knowledgeId, version);
+          if (!row) {
+            throw apiError('NOT_FOUND', 'knowledge version not found');
+          }
+          if (row.status !== 'ready') {
+            throw apiError('INDEX_NOT_READY', 'knowledge version has no usable index', [
+              fieldIssue('version', `knowledge status is ${row.status}`),
+            ]);
+          }
+          const indexMap = await repo.findIndexMapByDocumentForKnowledge(
+            client,
+            principal.scope,
+            knowledgeId,
+            version,
+          );
+          if (!indexMap) {
+            throw apiError('INDEX_NOT_READY', 'knowledge version has no usable index', [
+              fieldIssue('version', 'no index mapping exists for this knowledge version'),
+            ]);
+          }
+          const operationId = await operations.createOperation(
+            client,
+            {
+              kind: 'document.reindex',
+              scopeId: principal.scope,
+              subject: principal.subject,
+              idempotencyKey,
+              request: { knowledgeId, version },
+            },
+            knowledgeId,
+          );
+          await operations.writeProgress(client, principal.scope, operationId, {
+            stage: 'reindex_pending',
+            datasetId: indexMap.dataset_id,
+            documentId: indexMap.document_id,
+            knowledgeId,
+            knowledgeVersion: version,
+          });
+          return {
+            statusCode: 202,
+            body: {
+              data: {
+                operation_id: operationId,
+                knowledge_ref: knowledgeId,
+                version,
+              },
+            },
+          };
+        },
+      );
+      return { statusCode: outcome.response.statusCode, body: outcome.response.body };
+    });
+  }
+
+  async function grantDocumentAccess(
+    principal: Principal,
+    knowledgeId: string,
+    version: string,
+    body: unknown,
+  ): Promise<{ data: unknown }> {
+    const request = validator.assert<{
+      subject: string;
+      can_read?: boolean;
+      can_download?: boolean;
+    }>(documentGrantRequestSchema, body);
+
+    const canRead = request.can_read ?? true;
+    const canDownload = request.can_download ?? false;
+    if (canDownload && !canRead) {
+      throw apiError('CONTRACT_INVALID', 'request failed contract validation', [
+        fieldIssue('can_download', 'download permission requires read permission'),
+      ]);
+    }
+
+    return withTransaction(pool, async (client) => {
+      const row = await repo.findKnowledgeRevision(client, principal.scope, knowledgeId, version);
+      if (!row) {
+        throw apiError('NOT_FOUND', 'knowledge version not found');
+      }
+      const authzRevision = await authz.grantDocument(client, {
+        scopeId: principal.scope,
+        knowledgeId,
+        knowledgeVersion: version,
+        subject: request.subject,
+        canRead,
+        canDownload,
+      });
+      return {
+        data: {
+          knowledge_id: knowledgeId,
+          version,
+          subject: request.subject,
+          can_read: canRead,
+          can_download: canDownload,
+          authz_revision: authzRevision,
+        },
+      };
+    });
+  }
+
+  async function revokeDocumentAccess(
+    principal: Principal,
+    knowledgeId: string,
+    version: string,
+    subject: string,
+  ): Promise<{ data: unknown }> {
+    return withTransaction(pool, async (client) => {
+      const row = await repo.findKnowledgeRevision(client, principal.scope, knowledgeId, version);
+      if (!row) {
+        throw apiError('NOT_FOUND', 'knowledge version not found');
+      }
+      const authzRevision = await authz.revokeDocument(client, {
+        scopeId: principal.scope,
+        knowledgeId,
+        knowledgeVersion: version,
+        subject,
+      });
+      return {
+        data: {
+          knowledge_id: knowledgeId,
+          version,
+          subject,
+          can_read: false,
+          can_download: false,
+          authz_revision: authzRevision,
+        },
+      };
+    });
+  }
+
+  async function listDocumentGrants(
+    principal: Principal,
+    knowledgeId: string,
+    version: string,
+  ): Promise<{ data: unknown }> {
+    const row = await repo.findKnowledgeRevision(pool, principal.scope, knowledgeId, version);
+    if (!row) {
+      throw apiError('NOT_FOUND', 'knowledge version not found');
+    }
+    const grants = await authz.listDocumentGrants(pool, {
+      scopeId: principal.scope,
+      knowledgeId,
+      knowledgeVersion: version,
+    });
+    return {
+      data: {
+        knowledge_id: knowledgeId,
+        version,
+        grants: grants.map((grant) => ({
+          knowledge_id: knowledgeId,
+          version,
+          subject: grant.subject,
+          can_read: grant.can_read,
+          can_download: grant.can_download,
+        })),
+      },
+    };
+  }
+
   async function retrieval(
     principal: Principal,
     body: unknown,
@@ -585,7 +790,6 @@ export function createKnowledgeService(deps: KnowledgeDeps) {
 
     const delivery = await withTransaction(pool, async (client) => {
       const revision = await authz.lockAuthzState(client, principal.scope);
-      const knowledgeIds = [...new Set(chunks.map((chunk) => chunk.document_id))];
       const stillAuthorized = await authz.filterStillAuthorized(
         client,
         principal.scope,
@@ -637,7 +841,6 @@ export function createKnowledgeService(deps: KnowledgeDeps) {
           content: chunk.content,
         });
       }
-      void knowledgeIds;
       return { revision, evidence };
     });
 
@@ -713,6 +916,11 @@ export function createKnowledgeService(deps: KnowledgeDeps) {
       version,
     );
     if (!knowledge) {
+      throw apiError('NOT_FOUND', 'source file not found');
+    }
+    // 撤回是本地终态：撤回后来源文件立即不可下载，
+    // 不等上游删索引完成，也不因为文档级授权还在就放行。
+    if (knowledge.status === 'withdrawn') {
       throw apiError('NOT_FOUND', 'source file not found');
     }
     const allowed = await authz.filterReadable(pool, principal.scope, principal.subject, [
@@ -793,6 +1001,10 @@ export function createKnowledgeService(deps: KnowledgeDeps) {
     getDocument,
     review,
     withdraw,
+    reindex,
+    grantDocumentAccess,
+    revokeDocumentAccess,
+    listDocumentGrants,
     retrieval,
     downloadSource,
     getEvidence,

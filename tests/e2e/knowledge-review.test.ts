@@ -185,6 +185,34 @@ describe('M15 审核闭环', () => {
     expect(response.body.data.valid_from).toBeNull();
   });
 
+  it('被驳回的知识不可检索，且不产生上游请求', async () => {
+    const { kbId, document, contentHash } = await prepare();
+    const review = await harness.request({
+      method: 'POST',
+      path: `/knowledge/${document.knowledgeRef}/versions/${document.version}/review`,
+      token,
+      json: {
+        decision: 'rejected',
+        expected_hash: contentHash,
+        reason: '证据不足',
+      },
+    });
+    expect(review.status).toBe(200);
+
+    const before = harness.ragflow.calls.length;
+    const retrieval = await harness.request({
+      method: 'POST',
+      path: '/retrieval',
+      token,
+      json: { query: 'M15', kb_ids: [kbId] },
+    });
+    expect(retrieval.status).toBe(200);
+    expect(retrieval.body.data.status).toBe('no_match');
+    expect(retrieval.body.data.evidence).toHaveLength(0);
+    const upstreamCalls = harness.ragflow.calls.slice(before);
+    expect(upstreamCalls.filter((call) => call.path === '/api/v1/retrieval')).toHaveLength(0);
+  });
+
   it('有效期区间非法时拒绝审核', async () => {
     const { document, contentHash } = await prepare();
     const response = await harness.request({

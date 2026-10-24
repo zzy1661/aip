@@ -10,13 +10,14 @@ import {
 } from '@aip/contracts';
 import { apiError, fieldIssue } from '../http/errors.js';
 import { isSemver } from '@aip/contracts';
+import {
+  isAddressLikeValue,
+  isForbiddenConfigKey,
+  isSecretLikeValue,
+} from './config-policy.js';
 
 /** 数值契约必须精确绑定概念与单位，缺失即拒绝，不做降级。 */
 const NUMERIC_DATA_TYPES = new Set(['NUMBER']);
-
-const FORBIDDEN_CONFIG_KEY = /(token|secret|password|passwd|credential|api_?key|access_?key|endpoint|command|cmd|exec|plugin|script|hook|path|dir)/i;
-
-const URL_LIKE = /^[a-z][a-z0-9+.-]*:\/\//i;
 
 /** 资产主键是 uuid 列；非法格式必须在边界被拒绝，否则会变成数据库层的 500。 */
 const UUID_LIKE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -183,15 +184,20 @@ export function validateAgentPayload(
 function assertNoForbiddenConfig(config: Record<string, unknown>, path = 'payload.config'): void {
   for (const [key, value] of Object.entries(config)) {
     const keyPath = `${path}.${key}`;
-    if (FORBIDDEN_CONFIG_KEY.test(key)) {
+    if (isForbiddenConfigKey(key)) {
       throw apiError('CONTRACT_INVALID', 'agent config contains a forbidden entry', [
         fieldIssue(keyPath, `configuration key ${key} is not allowed`),
       ]);
     }
     if (typeof value === 'string') {
-      if (URL_LIKE.test(value)) {
+      if (isAddressLikeValue(value)) {
         throw apiError('CONTRACT_INVALID', 'agent config must not contain endpoints', [
           fieldIssue(keyPath, 'endpoint-like configuration values are not allowed'),
+        ]);
+      }
+      if (isSecretLikeValue(value)) {
+        throw apiError('CONTRACT_INVALID', 'agent config must not contain credentials', [
+          fieldIssue(keyPath, 'credential-like configuration values are not allowed'),
         ]);
       }
     } else if (value && typeof value === 'object') {

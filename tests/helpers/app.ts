@@ -1,4 +1,5 @@
 import http from 'node:http';
+import type { Express } from 'express';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -25,6 +26,9 @@ import type { ConceptValidator, ConceptValidationOutcome } from '@aip/api';
 import { createTestDatabase, type TestDatabase } from './db.js';
 import { createTestVerifier, mintToken } from './auth.js';
 import { startFakeRagFlow, type FakeRagFlow } from './ragflow.js';
+import { appendTraceRecord, sha256Of } from '../../tools/report/context.js';
+import { expect } from 'vitest';
+import { decodeJwt } from 'jose';
 
 export const TEST_PROJECT_ID = 'aip-test-project';
 
@@ -65,6 +69,12 @@ export interface HarnessOptions {
   parserHash?: string;
   /** 记录在知识版本上的嵌入模型修订号。 */
   embeddingRevision?: string;
+  /** 操作租约时长；用于验证 epoch 栅栏与并发推进。 */
+  operationLeaseMs?: number;
+  /** 结果未知后的冷静期；设为 0 可让核对轮次立即可领取。 */
+  unknownOutcomeDeferMs?: number;
+  /** 测试库连接串；真实集成层用它指向独立库，不污染默认测试库。 */
+  databaseUrl?: string;
 }
 
 export interface RequestOptions {
@@ -91,6 +101,8 @@ export interface Harness {
   projectId: string;
   baseUrl: string;
   apiRoot: string;
+  /** 暴露 Express 实例，供 OpenAPI 与实际路由表做一致性断言。 */
+  app: Express;
   pool: Pool;
   db: TestDatabase;
   ragflow: FakeRagFlow;
@@ -98,6 +110,8 @@ export interface Harness {
   operations: OperationsService;
   registry: RegistryService;
   knowledge: KnowledgeService;
+  /** 捕获到的服务日志：用于「日志里不得出现密钥」这类断言。 */
+  logs: Array<{ payload: unknown; message: string }>;
   token(options?: {
     subject?: string;
     permissions?: readonly string[];
@@ -110,6 +124,64 @@ export interface Harness {
   /** 跑一次 worker 推进，把待处理操作推进到终态。 */
   advanceAll(): Promise<void>;
   close(): Promise<void>;
+}
+
+const REPORT_MODE = process.env.AIP_REPORT_MODE ?? 'unknown';
+
+/**
+ * 主体角色标签。
+ *
+ * 报告里的「主体角色」字段：按权限集粗分角色，便于复核时确认用例覆盖了哪类主体。
+ */
+function roleOf(permissions: string[]): string {
+  if (permissions.includes('knowledge:manage') || permissions.includes('asset:manage')) {
+    return 'manager';
+  }
+  if (permissions.includes('knowledge:review')) return 'reviewer';
+  if (permissions.includes('knowledge:write') || permissions.includes('asset:write')) return 'writer';
+  if (permissions.length === 0) return 'no-permission';
+  return 'reader';
+}
+
+/**
+ * 记录一次请求的运行期事实：主体角色、trace_id 与请求样例哈希。
+ *
+ * reporter 跑在主进程，看不到 worker 里的令牌与响应头，
+ * 这些事实只能由发起请求的进程写出来。
+ */
+function recordRequestFact(
+  options: RequestOptions,
+  response: { status: number; headers: Headers },
+  body: unknown,
+): void {
+  const state = expect.getState();
+  let subject = 'anonymous';
+  let permissions: string[] = [];
+  if (options.token) {
+    try {
+      const claims = decodeJwt(options.token);
+      if (typeof claims.sub === 'string') subject = claims.sub;
+      if (Array.isArray(claims.permissions)) {
+        permissions = claims.permissions.filter(
+          (entry): entry is string => typeof entry === 'string',
+        );
+      }
+    } catch {
+      // 令牌不可解析时按匿名主体记录，不影响用例结论。
+    }
+  }
+  appendTraceRecord(REPORT_MODE, {
+    kind: 'request',
+    case: state.currentTestName ?? '',
+    test_path: state.testPath ?? '',
+    method: options.method ?? 'GET',
+    path: options.path,
+    status: response.status,
+    trace_id: response.headers.get('x-trace-id') ?? '',
+    subject_role: `${subject}/${roleOf(permissions)}`,
+    permissions,
+    sample_hash: sha256Of(typeof body === 'string' ? body : JSON.stringify(body ?? null)),
+  });
 }
 
 function buildMultipart(
@@ -143,7 +215,7 @@ function buildMultipart(
 
 export async function createHarness(options: HarnessOptions = {}): Promise<Harness> {
   const projectId = options.projectId ?? TEST_PROJECT_ID;
-  const db = await createTestDatabase(options.label ?? 'case');
+  const db = await createTestDatabase(options.label ?? 'case', options.databaseUrl);
   const fileRoot = await mkdtemp(join(tmpdir(), 'aip-test-files-'));
   const ragflow = await startFakeRagFlow();
 
@@ -177,6 +249,8 @@ export async function createHarness(options: HarnessOptions = {}): Promise<Harne
     ragflow: adapter,
     files,
     parseDeadlineMs: options.parseDeadlineMs ?? 60_000,
+    leaseMs: options.operationLeaseMs ?? 40_000,
+    unknownOutcomeDeferMs: options.unknownOutcomeDeferMs,
     parserHash: options.parserHash ?? 'test-parser-sha',
     embeddingRevision: options.embeddingRevision ?? 'test-embedding-revision',
   });
@@ -203,6 +277,8 @@ export async function createHarness(options: HarnessOptions = {}): Promise<Harne
     embeddingRevision: options.embeddingRevision ?? 'test-embedding-revision',
   });
 
+  const logs: Array<{ payload: unknown; message: string }> = [];
+
   const app = createApp({
     projectId,
     verifier: createTestVerifier(options.verifySecret),
@@ -211,6 +287,7 @@ export async function createHarness(options: HarnessOptions = {}): Promise<Harne
     knowledge,
     logger: {
       error(payload, message) {
+        logs.push({ payload, message });
         console.error(`[harness] ${message}`, payload);
       },
     },
@@ -253,6 +330,7 @@ export async function createHarness(options: HarnessOptions = {}): Promise<Harne
     } catch {
       parsed = null;
     }
+    recordRequestFact(requestOptions, response, body);
     return { status: response.status, headers: response.headers, text, body: parsed };
   }
 
@@ -260,6 +338,7 @@ export async function createHarness(options: HarnessOptions = {}): Promise<Harne
     projectId,
     baseUrl,
     apiRoot,
+    app,
     pool: db.pool,
     db,
     ragflow,
@@ -267,6 +346,8 @@ export async function createHarness(options: HarnessOptions = {}): Promise<Harne
     operations,
     registry,
     knowledge,
+    /** 捕获到的服务日志：用于「日志里不得出现密钥」这类断言。 */
+    logs,
     async token(tokenOptions = {}) {
       return mintToken({
         subject: tokenOptions.subject ?? 'user-1',

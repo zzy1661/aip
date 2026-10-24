@@ -129,34 +129,51 @@ describe('M10 RAGFlow dataset 契约', () => {
     expect(detail.body.data.status).not.toBe('ready');
   });
 
-  it('按名称核对零命中时上游返回 108，按未命中处理并继续创建', async () => {
-    harness.ragflow.reset();
-
-    const created = await harness.request({
-      method: 'POST',
-      path: '/knowledge-bases',
-      token,
-      idempotencyKey: 'm10-create-name-lookup-108',
-      json: { name: 'M10 名称核对', description: '' },
-    });
-    expect(created.status).toBe(202);
-
-    await harness.advanceAll();
-
-    // 上游在按名称过滤且零命中时返回 code=108（PERMISSION_ERROR），
-    // 适配器必须把它当成「未命中」而不是业务失败。
-    const nameLookups = harness.ragflow.calls.filter(
-      (call) => call.method === 'GET' && call.path === '/api/v1/datasets',
+  it('核对名称时上游零命中返回 108，按未命中处理且操作保持 unknown_outcome', async () => {
+    // 单独一个 harness：需要把「结果未知」的冷静期压到 0，才能在同一轮推进里触发只读核对。
+    const local = await createHarness({ label: 'm10-name-lookup', unknownOutcomeDeferMs: 0 });
+    const localToken = await local.token({ permissions: ALL_PERMISSIONS });
+    // 创建响应丢失：操作转入 unknown_outcome，此后只允许只读核对。
+    local.ragflow.dropNext(
+      (call) => call.method === 'POST' && call.path === '/api/v1/datasets',
     );
-    expect(nameLookups.length).toBeGreaterThan(0);
-    expect(nameLookups[0]!.query.name).toMatch(/^aip-/);
 
-    const detail = await harness.request({
-      method: 'GET',
-      path: `/knowledge-bases/${created.body.data.kb_id}`,
-      token,
-    });
-    expect(detail.body.data.status).toBe('ready');
+    try {
+      const created = await local.request({
+        method: 'POST',
+        path: '/knowledge-bases',
+        token: localToken,
+        idempotencyKey: 'm10-create-name-lookup-108',
+        json: { name: 'M10 名称核对', description: '' },
+      });
+      expect(created.status).toBe(202);
+
+      await local.advanceAll();
+
+      // 上游在按名称过滤且零命中时返回 code=108（PERMISSION_ERROR），
+      // 适配器必须把它当成「未命中」，不能当成业务失败。
+      const nameLookups = local.ragflow.calls.filter(
+        (call) => call.method === 'GET' && call.path === '/api/v1/datasets',
+      );
+      expect(nameLookups.length).toBeGreaterThan(0);
+      expect(nameLookups[0]!.query.name).toMatch(/^aip-/);
+
+      const operation = await local.request({
+        method: 'GET',
+        path: `/operations/${created.body.data.operation_id}`,
+        token: localToken,
+      });
+      expect(operation.status).toBe(200);
+      expect(operation.body.data.state).toBe('unknown_outcome');
+
+      // 核对是只读的：不得因为核对结果再发一次创建请求。
+      const datasetPosts = local.ragflow.calls.filter(
+        (call) => call.method === 'POST' && call.path === '/api/v1/datasets',
+      );
+      expect(datasetPosts).toHaveLength(1);
+    } finally {
+      await local.close();
+    }
   });
 
   it('创建响应丢失时登记 unknown_outcome，且不再发第二次 POST', async () => {

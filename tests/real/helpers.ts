@@ -145,6 +145,8 @@ export async function createRealHarness(env: RealEnv): Promise<RealHarness> {
     parserConfig: env.parserConfig,
     parserHash: env.sourceSha,
     embeddingRevision: env.embeddingRevision,
+    // 真实联调必须落在独立库上：AIP_REAL_DATABASE_URL 未设置时退回默认测试库。
+    databaseUrl: env.databaseUrl,
   });
 
   return { ...harness, realCallCount: count };

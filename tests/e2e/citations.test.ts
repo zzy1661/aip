@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { knowledgeAuthorization, withTransaction } from '@aip/api';
 import { createHarness, type Harness } from '../helpers/app.js';
@@ -123,7 +124,9 @@ describe('M21 来源引用', () => {
       token,
     });
     expect(response.status).toBe(200);
-    expect(response.headers.get('x-content-sha256')).toMatch(/^[0-9a-f]{64}$/);
+    // 哈希必须与上传原文的实际 sha256 一致，而不是只验证「是个 64 位十六进制」。
+    const expected = createHash('sha256').update(document.content, 'utf8').digest('hex');
+    expect(response.headers.get('x-content-sha256')).toBe(expected);
     expect(response.text).toContain('M21-CITE');
   });
 

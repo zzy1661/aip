@@ -9,7 +9,7 @@
   },
   "packageManager": "pnpm@10.28.2",
   "scripts": {
-    "typecheck": "pnpm -r --filter @aip/contracts --filter @aip/api --filter @aip/worker run typecheck && tsc -p tsconfig.tests.json --noEmit",
+    "typecheck": "pnpm --filter @aip/contracts build && pnpm -r --filter @aip/contracts --filter @aip/api --filter @aip/worker run typecheck && tsc -p tsconfig.tests.json --noEmit",
     "typecheck:tests": "tsc -p tsconfig.tests.json --noEmit",
     "build": "pnpm -r --filter @aip/contracts --filter @aip/api --filter @aip/worker run build",
     "test:unit": "vitest run --config vitest.unit.config.ts",
@@ -17,6 +17,7 @@
     "test:contract": "vitest run --config vitest.contract.config.ts",
     "test:e2e": "vitest run --config vitest.e2e.config.ts",
     "test:ragflow:real": "vitest run --config vitest.real.config.ts",
+    "test:ragflow:real:guard": "node tools/real-guard.mjs",
     "test": "pnpm test:unit && pnpm test:db && pnpm test:contract && pnpm test:e2e",
     "migrate": "pnpm --filter @aip/api run migrate",
     "grant:document": "pnpm --filter @aip/api run grant:document"

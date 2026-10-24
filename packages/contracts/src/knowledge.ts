@@ -115,6 +115,30 @@ export interface RetrievalResponse {
   evidence: EvidenceItem[];
 }
 
+/**
+ * 文档级授权的对外视图。
+ *
+ * 授权是文档级而不是项目级的：主体只能读到被显式授予的知识版本。
+ */
+export interface DocumentGrantView {
+  knowledge_id: string;
+  version: string;
+  subject: string;
+  can_read: boolean;
+  can_download: boolean;
+}
+
+export const documentGrantRequestSchema = {
+  type: 'object',
+  additionalProperties: false,
+  required: ['subject'],
+  properties: {
+    subject: { type: 'string', minLength: 1, maxLength: 128 },
+    can_read: { type: 'boolean' },
+    can_download: { type: 'boolean' },
+  },
+} as const;
+
 export interface OperationView {
   operation_id: string;
   kind: string;
@@ -199,8 +223,15 @@ export const retrievalRequestSchema = {
   required: ['query', 'kb_ids'],
   properties: {
     query: { type: 'string', minLength: 1, maxLength: 4096 },
-    kb_ids: { type: 'array', minItems: 1, maxItems: 100, items: { type: 'string', minLength: 1 } },
-    knowledge_refs: { type: 'array', maxItems: 200, items: { type: 'string', minLength: 1 } },
+    // kb_ids / knowledge_refs 会直接进入 uuid 列与 uuid[] 强制转换，
+    // 非法格式必须在边界被拒绝，否则会退化成数据库层的 500。
+    kb_ids: {
+      type: 'array',
+      minItems: 1,
+      maxItems: 100,
+      items: { type: 'string', format: 'uuid' },
+    },
+    knowledge_refs: { type: 'array', maxItems: 200, items: { type: 'string', format: 'uuid' } },
     context: { type: 'object' },
     top_n: { type: 'integer', minimum: 1, maximum: RETRIEVAL_TOP_N_MAX },
   },

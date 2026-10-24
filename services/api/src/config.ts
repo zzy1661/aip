@@ -48,6 +48,13 @@ export interface Config {
     uploadMaxBytes: number;
     parseDeadlineMs: number;
     retrievalMaxDocuments: number;
+    /**
+     * 操作租约时长。
+     *
+     * 必须覆盖单轮推进的最坏耗时（上传超时 + 只读总预算 + 余量），
+     * 否则处理途中租约到期会被另一个 worker 重新领取，同一操作被并发推进。
+     */
+    operationLeaseMs: number;
   };
   onto: {
     baseUrl: string | null;
@@ -132,6 +139,21 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     }
   }
 
+  const connectTimeoutMs = intEnv(env, 'RAGFLOW_CONNECT_TIMEOUT_MS', 3000);
+  const readTimeoutMs = intEnv(env, 'RAGFLOW_READ_TIMEOUT_MS', 10000);
+  const uploadTimeoutMs = intEnv(env, 'RAGFLOW_UPLOAD_TIMEOUT_MS', 60000);
+  const readBudgetMs = intEnv(env, 'RAGFLOW_READ_BUDGET_MS', 30000);
+  const maxReadAttempts = intEnv(env, 'RAGFLOW_READ_MAX_ATTEMPTS', 3);
+
+  // 单轮推进的最坏耗时：一次上传 + 一次只读核对，再留 30 秒余量。
+  const minimumLeaseMs = uploadTimeoutMs + readBudgetMs + 30_000;
+  const operationLeaseMs = intEnv(env, 'AIP_OPERATION_LEASE_MS', minimumLeaseMs);
+  if (operationLeaseMs <= minimumLeaseMs - 30_000) {
+    throw new ConfigError(
+      `AIP_OPERATION_LEASE_MS must exceed the worst-case round duration (${minimumLeaseMs}ms)`,
+    );
+  }
+
   return {
     nodeEnv,
     isProduction,
@@ -152,11 +174,11 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
       embeddingModel: optionalEnv(env, 'RAGFLOW_EMBEDDING_MODEL') ?? '',
       embeddingRevision: optionalEnv(env, 'RAGFLOW_EMBEDDING_REVISION') ?? '',
       parserConfig,
-      connectTimeoutMs: intEnv(env, 'RAGFLOW_CONNECT_TIMEOUT_MS', 3000),
-      readTimeoutMs: intEnv(env, 'RAGFLOW_READ_TIMEOUT_MS', 10000),
-      uploadTimeoutMs: intEnv(env, 'RAGFLOW_UPLOAD_TIMEOUT_MS', 60000),
-      readBudgetMs: intEnv(env, 'RAGFLOW_READ_BUDGET_MS', 30000),
-      maxReadAttempts: intEnv(env, 'RAGFLOW_READ_MAX_ATTEMPTS', 3),
+      connectTimeoutMs,
+      readTimeoutMs,
+      uploadTimeoutMs,
+      readBudgetMs,
+      maxReadAttempts,
       chunkMethod: optionalEnv(env, 'RAGFLOW_CHUNK_METHOD') ?? 'naive',
       imageDigest: optionalEnv(env, 'RAGFLOW_IMAGE_DIGEST'),
       sourceSha: optionalEnv(env, 'RAGFLOW_SOURCE_SHA'),
@@ -170,6 +192,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
       uploadMaxBytes: intEnv(env, 'AIP_UPLOAD_MAX_BYTES', UPLOAD_MAX_BYTES),
       parseDeadlineMs: intEnv(env, 'AIP_PARSE_DEADLINE_MS', 1200000),
       retrievalMaxDocuments: intEnv(env, 'AIP_RETRIEVAL_MAX_DOCUMENTS', 200),
+      operationLeaseMs,
     },
     onto: {
       baseUrl: optionalEnv(env, 'ONTO_BASE_URL'),

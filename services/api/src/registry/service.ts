@@ -55,15 +55,35 @@ function mapUniqueViolation(error: unknown, fieldPath: string): never {
 }
 
 /**
- * 注册状态机由数据库触发器兜底（registered -> deprecated -> revoked，revoked 终态）。
- * 非法迁移必须表现为 409 冲突，而不是 500。
+ * 触发器抛出的违规按语义细分，而不是一律当成状态冲突。
+ *
+ * `23001`（restrict_violation）同时被「版本内容不可变」与「绑定两端类型」两个触发器使用，
+ * 只看 SQLSTATE 会把绑定类型错误报成状态冲突，甚至落成 500。
  */
-function mapIllegalStatusTransition(error: unknown, fieldPath: string): never {
+function mapTriggerViolation(error: unknown, fieldPath: string): never {
   const code = (error as { code?: unknown }).code;
-  if (code === '23001') {
-    throw apiError('STATE_CONFLICT', 'the requested registration status transition is not allowed', [
-      fieldIssue(fieldPath, 'revoked is terminal and statuses only move forward'),
-    ]);
+  const message = (error as { message?: unknown }).message;
+  if (code === '23001' && typeof message === 'string') {
+    if (message.startsWith('asset_revision content columns are immutable')) {
+      throw apiError('STATE_CONFLICT', 'asset revision content is immutable', [
+        fieldIssue(fieldPath, 'create a new version instead of editing an existing one'),
+      ]);
+    }
+    if (message.startsWith('asset_revision rows are immutable')) {
+      throw apiError('STATE_CONFLICT', 'asset revision rows are immutable', [
+        fieldIssue(fieldPath, 'rows cannot be deleted'),
+      ]);
+    }
+    if (message.startsWith('binding endpoint must reference')) {
+      throw apiError('CONTRACT_INVALID', 'skill binding endpoints have the wrong asset type', [
+        fieldIssue(fieldPath, 'an Agent version can only bind a Skill version'),
+      ]);
+    }
+    if (message.startsWith('illegal registration_status transition')) {
+      throw apiError('STATE_CONFLICT', 'the requested registration status transition is not allowed', [
+        fieldIssue(fieldPath, 'revoked is terminal and statuses only move forward'),
+      ]);
+    }
   }
   throw error;
 }
@@ -89,13 +109,15 @@ export function createRegistryService(deps: RegistryDeps) {
     }
   }
 
-  async function resolveSkillRefs(
-    client: PoolClient,
-    principal: Principal,
-    payload: AgentPayload,
-  ): Promise<void> {
-    // 绑定既要求 asset:bind（变更绑定关系的能力），也要求 asset:read（读取被绑定 Skill 的能力）。
-    // 服务端强制校验，页面权限表只是提示，不能作为唯一防线。
+  /**
+   * 绑定权限检查。
+   *
+   * 绑定既要求 asset:bind（变更绑定关系的能力），也要求 asset:read（读取被绑定 Skill 的能力）。
+   * 服务端强制校验，页面权限表只是提示，不能作为唯一防线。
+   *
+   * 单独成函数是为了让它在任何写库动作之前执行：权限不足不应该先写资产再回滚。
+   */
+  function assertBindingPermissions(principal: Principal): void {
     for (const permission of ['asset:bind', 'asset:read'] as const) {
       if (!principal.permissions.includes(permission)) {
         throw apiError('FORBIDDEN', `binding skills requires the ${permission} permission`, [
@@ -103,14 +125,25 @@ export function createRegistryService(deps: RegistryDeps) {
         ]);
       }
     }
+  }
+
+  async function resolveSkillRefs(
+    client: PoolClient,
+    principal: Principal,
+    payload: AgentPayload,
+  ): Promise<void> {
+    // 这里只做需要行锁的数据库核对；权限判断已在写库之前完成。
+    assertBindingPermissions(principal);
 
     // 按稳定顺序加行锁，避免多个 Agent 并发绑定同一批 Skill 时互相死锁。
+    // 固定字节序比较：localeCompare 受运行环境 locale/ICU 影响，
+    // 不同实例的加锁顺序可能不一致。
     const ordered = payload.skill_refs
       .map((ref, index) => ({ ref, index }))
       .sort((a, b) =>
         a.ref.asset_id === b.ref.asset_id
-          ? a.ref.version.localeCompare(b.ref.version)
-          : a.ref.asset_id.localeCompare(b.ref.asset_id),
+          ? compareBytes(a.ref.version, b.ref.version)
+          : compareBytes(a.ref.asset_id, b.ref.asset_id),
       );
 
     for (const { ref, index } of ordered) {
@@ -143,11 +176,12 @@ export function createRegistryService(deps: RegistryDeps) {
     operation: string,
     resourceRef: string,
     result: string,
+    detail?: Record<string, unknown>,
   ): Promise<void> {
     await client.query(
       `INSERT INTO audit_event
-         (scope_id, id, subject, actor_source, trace_id, operation, resource_ref, result)
-       VALUES ($1, $2, $3, 'principal', $4, $5, $6, $7)`,
+         (scope_id, id, subject, actor_source, trace_id, operation, resource_ref, result, detail)
+       VALUES ($1, $2, $3, 'principal', $4, $5, $6, $7, $8::jsonb)`,
       [
         principal.scope,
         newId(),
@@ -156,6 +190,7 @@ export function createRegistryService(deps: RegistryDeps) {
         operation,
         resourceRef,
         result,
+        JSON.stringify(detail ?? {}),
       ],
     );
   }
@@ -183,6 +218,8 @@ export function createRegistryService(deps: RegistryDeps) {
       await validateSkillConcepts(payload as SkillPayload);
     } else {
       validateAgentPayload(payload as AgentPayload, principal.permissions);
+      // 绑定权限在任何写库动作之前判定。
+      assertBindingPermissions(principal);
     }
 
     const contentHash = hashObject({
@@ -266,7 +303,7 @@ export function createRegistryService(deps: RegistryDeps) {
         body: outcome.response.body,
         replayed: outcome.replayed,
       };
-    }).catch((error: unknown) => mapUniqueViolation(error, 'slug'));
+    }).catch((error: unknown) => mapTriggerViolation(mapUniqueViolation(error, 'slug'), 'slug'));
   }
 
   async function createVersion(
@@ -283,38 +320,49 @@ export function createRegistryService(deps: RegistryDeps) {
       payload: unknown;
     }>(newAssetVersionRequestSchema, body);
 
-    const requestHash = hashObject({ operation: 'assets.new_version', request });
+    const requestHash = hashObject({ operation: 'assets.new_version', assetId, request });
+
+    // 目标资产类型必须在事务外先读到：本体校验是网络调用，
+    // 不能持有数据库事务跨越它，否则慢本体会同时占用连接与锁，并撞上语句超时。
+    const parentPreview = await repo.findAsset(pool, principal.scope, assetId);
+    if (!parentPreview) {
+      throw apiError('NOT_FOUND', 'asset not found');
+    }
+    const isSkill = parentPreview.type === 'Skill';
+    const payload = validator.assert<SkillPayload | AgentPayload>(
+      isSkill ? skillPayloadSchema : agentPayloadSchema,
+      request.payload,
+      'payload',
+    );
+    if (isSkill) {
+      validateSkillPayload(payload as SkillPayload);
+      await validateSkillConcepts(payload as SkillPayload);
+    } else {
+      validateAgentPayload(payload as AgentPayload, principal.permissions);
+      // 绑定权限在任何写库动作之前判定。
+      assertBindingPermissions(principal);
+    }
+    const contentHash = hashObject({
+      type: parentPreview.type,
+      title: request.title,
+      description: request.description,
+      payload,
+    });
 
     return withTransaction(pool, async (client) => {
       const parent = await repo.findAsset(client, principal.scope, assetId);
       if (!parent) {
         throw apiError('NOT_FOUND', 'asset not found');
       }
-      const isSkill = parent.type === 'Skill';
-      const payload = validator.assert<SkillPayload | AgentPayload>(
-        isSkill ? skillPayloadSchema : agentPayloadSchema,
-        request.payload,
-        'payload',
-      );
-      if (isSkill) {
-        validateSkillPayload(payload as SkillPayload);
-        await validateSkillConcepts(payload as SkillPayload);
-      } else {
-        validateAgentPayload(payload as AgentPayload, principal.permissions);
-      }
-      const contentHash = hashObject({
-        type: parent.type,
-        title: request.title,
-        description: request.description,
-        payload,
-      });
 
       const outcome = await runIdempotent(
         client,
         {
           scopeId: principal.scope,
           subject: principal.subject,
-          operation: 'assets.new_version',
+          // 幂等身份绑定目标资产：同一个键用在不同资产上必须各自成立，
+          // 否则第二次请求会回放第一次的响应，把版本写到了错误的资产上。
+          operation: `assets.new_version:${assetId}`,
           key: idempotencyKey,
           requestHash,
         },
@@ -376,7 +424,7 @@ export function createRegistryService(deps: RegistryDeps) {
         body: outcome.response.body,
         replayed: outcome.replayed,
       };
-    }).catch((error: unknown) => mapUniqueViolation(error, 'version'));
+    }).catch((error: unknown) => mapTriggerViolation(mapUniqueViolation(error, 'version'), 'version'));
   }
 
   async function list(
@@ -422,6 +470,7 @@ export function createRegistryService(deps: RegistryDeps) {
         skill_id: binding.skill_id,
         skill_version: binding.skill_version,
         skill_slug: binding.skill_slug,
+        skill_content_hash: binding.skill_content_hash,
         binding_valid: binding.skill_status === 'registered',
       })),
     );
@@ -466,6 +515,12 @@ export function createRegistryService(deps: RegistryDeps) {
         'assets.status',
         `${principal.scope}/${assetId}@${version}`,
         request.status,
+        {
+          reason: request.reason,
+          from_status: existing.registration_status,
+          to_status: request.status,
+          state_revision: updated.state_revision,
+        },
       );
       return {
         data: {
@@ -475,7 +530,7 @@ export function createRegistryService(deps: RegistryDeps) {
           state_revision: updated.state_revision,
         },
       };
-    }).catch((error: unknown) => mapIllegalStatusTransition(error, 'status'));
+    }).catch((error: unknown) => mapTriggerViolation(error, 'status'));
   }
 
   /**
@@ -567,6 +622,13 @@ function toIssues(
     ? `${apiErr.code ? `${apiErr.code}: ` : ''}${apiErr.message}`
     : fallbackReason;
   return [{ field_path: 'payload', reason }];
+}
+
+/** 按 UTF-8 字节序比较两个字符串，与运行环境的 locale 无关。 */
+export function compareBytes(left: string, right: string): number {
+  const a = Buffer.from(left, 'utf8');
+  const b = Buffer.from(right, 'utf8');
+  return Buffer.compare(a, b);
 }
 
 export function encodeCursor(cursor: { assetId: string; version: string }): string {

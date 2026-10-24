@@ -105,8 +105,9 @@ function assertPdf(content: Buffer): void {
       fieldIssue('file', 'pdf magic bytes are missing'),
     ]);
   }
-  const tail = content.subarray(Math.max(0, content.length - 4096)).toString('latin1');
-  if (tail.includes('/Encrypt')) {
+  // 加密字典标记可能距文件尾很远（尾部还有交叉引用表与增量更新段），
+  // 只扫尾部 4 KiB 会漏检，因此全文件扫描。
+  if (content.indexOf('/Encrypt', 0, 'latin1') !== -1) {
     throw apiError('CONTRACT_INVALID', 'encrypted pdf files are not supported', [
       fieldIssue('file', 'encrypted pdf is not supported'),
     ]);

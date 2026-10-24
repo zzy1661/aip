@@ -1,5 +1,6 @@
 import type { QueryClient } from '../db/pool.js';
 import type { AssetDetail, AssetSummary, RegistrationStatus, SkillRef } from '@aip/contracts';
+import { redactSecretValues } from './config-policy.js';
 
 export interface AssetRow {
   asset_id: string;
@@ -169,14 +170,15 @@ export async function listAssets(
   }
   if (filter.cursor) {
     values.push(filter.cursor.assetId, filter.cursor.version);
+    // 版本号按 semver 序比较：文本序下 1.0.10 < 1.0.9，分页会漏版本。
     conditions.push(
-      `(r.asset_id, r.version) > ($${values.length - 1}::uuid, $${values.length})`,
+      `(r.asset_id, string_to_array(r.version, '.')::int[]) > ($${values.length - 1}::uuid, string_to_array($${values.length}, '.')::int[])`,
     );
   }
   values.push(filter.limit + 1);
   const { rows } = await client.query<AssetRow>(
     `${ASSET_SELECT} WHERE ${conditions.join(' AND ')}
-      ORDER BY r.asset_id, r.version
+      ORDER BY r.asset_id, string_to_array(r.version, '.')::int[]
       LIMIT $${values.length}`,
     values,
   );
@@ -223,6 +225,7 @@ export interface BindingRow {
   skill_version: string;
   skill_slug: string | null;
   skill_status: RegistrationStatus | null;
+  skill_content_hash: string | null;
 }
 
 export async function listBindings(
@@ -233,7 +236,8 @@ export async function listBindings(
 ): Promise<BindingRow[]> {
   const { rows } = await client.query<BindingRow>(
     `SELECT b.skill_id, b.skill_version, a.slug AS skill_slug,
-            r.registration_status AS skill_status
+            r.registration_status AS skill_status,
+            r.content_hash AS skill_content_hash
        FROM agent_skill_binding b
        LEFT JOIN asset_revision r
          ON r.scope_id = b.scope_id AND r.asset_id = b.skill_id AND r.version = b.skill_version
@@ -243,19 +247,6 @@ export async function listBindings(
     [scopeId, agentId, agentVersion],
   );
   return rows;
-}
-
-export async function deleteBindings(
-  client: QueryClient,
-  scopeId: string,
-  agentId: string,
-  agentVersion: string,
-): Promise<void> {
-  await client.query(
-    `DELETE FROM agent_skill_binding
-      WHERE scope_id = $1 AND agent_id = $2 AND agent_version = $3`,
-    [scopeId, agentId, agentVersion],
-  );
 }
 
 export function toSummary(row: AssetRow): AssetSummary {
@@ -280,8 +271,25 @@ export function toDetail(
 ): AssetDetail {
   return {
     ...toSummary(row),
-    payload: row.payload as AssetDetail['payload'],
+    payload: redactPayloadSecrets(row.payload) as AssetDetail['payload'],
     schema_version: row.schema_version,
     bindings,
   };
+}
+
+/**
+ * 详情接口的兜底脱敏。
+ *
+ * 写入路径已经拒绝承载密钥的键与密钥形似值；这里再挡一层，
+ * 保证即使有绕过写入路径的行，密钥也不会被原样读回。
+ */
+function redactPayloadSecrets(payload: unknown): unknown {
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+    return payload;
+  }
+  const record = payload as Record<string, unknown>;
+  if (!('config' in record)) {
+    return payload;
+  }
+  return { ...record, config: redactSecretValues(record.config) };
 }

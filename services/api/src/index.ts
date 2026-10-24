@@ -5,6 +5,7 @@ export { withTransaction } from './db/uow.js';
 export { migrate as runMigrations, resolveMigrationsDir } from './db/migrate.js';
 export { Validator } from './http/validate.js';
 export { ApiError, apiError, fieldIssue, toErrorBody } from './http/errors.js';
+export { toDatabaseApiError } from './http/database-errors.js';
 export { traceMiddleware, TRACE_HEADER } from './http/trace.js';
 export { createTokenVerifier, type TokenVerifier } from './auth/verify.js';
 export { createAuthMiddleware, requirePermissionMiddleware } from './auth/middleware.js';

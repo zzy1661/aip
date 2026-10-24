@@ -47,13 +47,15 @@ export interface TokenOptions {
   audience?: string;
   /** 覆盖签发者，用于伪造 token 的负例。 */
   signedWith?: string;
+  /** 直接覆盖原始 scope 声明，用于多 scope 等非法形态的负例。 */
+  scopeClaim?: unknown;
 }
 
 export async function mintToken(options: TokenOptions): Promise<string> {
   const key = new TextEncoder().encode(options.signedWith ?? TEST_HS256_SECRET);
   const expiresIn = options.expiresInSeconds ?? 300;
   return new SignJWT({
-    scope: options.scope,
+    scope: options.scopeClaim ?? options.scope,
     permissions: options.permissions,
   })
     .setProtectedHeader({ alg: 'HS256' })

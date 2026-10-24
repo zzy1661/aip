@@ -118,6 +118,25 @@ export async function revokeDocument(
   return bumpAuthzRevision(client, input.scopeId);
 }
 
+/** 某个知识版本的全部文档级授权。 */
+export async function listDocumentGrants(
+  client: QueryClient,
+  input: { scopeId: string; knowledgeId: string; knowledgeVersion: string },
+): Promise<Array<{ subject: string; can_read: boolean; can_download: boolean }>> {
+  const { rows } = await client.query<{
+    subject: string;
+    can_read: boolean;
+    can_download: boolean;
+  }>(
+    `SELECT subject, can_read, can_download
+       FROM document_grant
+      WHERE scope_id = $1 AND knowledge_id = $2 AND knowledge_version = $3
+      ORDER BY subject`,
+    [input.scopeId, input.knowledgeId, input.knowledgeVersion],
+  );
+  return rows;
+}
+
 /** 检索白名单：主体有权 + 审核通过 + 未撤回 + 索引就绪 + 适用条件匹配。 */
 export async function listAuthorizedDocuments(
   client: QueryClient,
