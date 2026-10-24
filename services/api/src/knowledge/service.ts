@@ -55,6 +55,14 @@ export interface UploadInput {
   appliesTo: Record<string, unknown>;
 }
 
+/** 来源文件的交付内容：正文已经完整读入内存，交付时不再做文件 I/O。 */
+export interface SourceFileDownload {
+  content: Buffer;
+  name: string;
+  mime: string;
+  sha256: string;
+}
+
 export function createKnowledgeService(deps: KnowledgeDeps) {
   const { pool, validator, ragflow, operations, files } = deps;
 
@@ -718,10 +726,18 @@ export function createKnowledgeService(deps: KnowledgeDeps) {
     };
   }
 
+  /**
+   * 检索。
+   *
+   * 交付的线性化点与下载一致：证据正文在末次授权判定的事务内入队。
+   * 上游检索发生在事务之外（上游等待期间不持锁），
+   * 但「授权仍然成立」与「证据正文发出」被同一个授权行锁串起来。
+   */
   async function retrieval(
     principal: Principal,
     body: unknown,
-  ): Promise<RetrievalResponse> {
+    deliver: (response: RetrievalResponse) => void,
+  ): Promise<void> {
     const request = validator.assert<{
       query: string;
       kb_ids: string[];
@@ -744,7 +760,8 @@ export function createKnowledgeService(deps: KnowledgeDeps) {
 
     // 空授权集合：本次检索不产生任何外部 HTTP 请求。
     if (authorized.length === 0) {
-      return { status: 'no_match', evidence: [] };
+      deliver({ status: 'no_match', evidence: [] });
+      return;
     }
 
     // 适用条件过滤：条件不适用的知识不得进入白名单，也不得触发上游调用。
@@ -757,10 +774,11 @@ export function createKnowledgeService(deps: KnowledgeDeps) {
     );
     if (applicable.length === 0) {
       // 只有条件知识且上下文不足时返回 needs_context，同样不产生上游请求。
-      return {
+      deliver({
         status: awaitingContext.length > 0 ? 'needs_context' : 'no_match',
         evidence: [],
-      };
+      });
+      return;
     }
 
     if (applicable.length > deps.limits.retrievalMaxDocuments) {
@@ -809,7 +827,7 @@ export function createKnowledgeService(deps: KnowledgeDeps) {
       }
     }
 
-    const delivery = await withTransaction(pool, async (client) => {
+    await withTransaction(pool, async (client) => {
       const revision = await authz.lockAuthzState(client, principal.scope);
       const stillAuthorized = await authz.filterStillAuthorized(
         client,
@@ -862,12 +880,12 @@ export function createKnowledgeService(deps: KnowledgeDeps) {
           content: chunk.content,
         });
       }
+      // 交付入队与末次授权判定在同一个授权行锁内完成：
+      // 撤权要么在判定之前被看见，要么阻塞到证据正文发出之后。
+      const status: RetrievalStatus = evidence.length > 0 ? 'authorized_evidence' : 'no_match';
+      deliver({ status, evidence });
       return { revision, evidence };
     });
-
-    const status: RetrievalStatus =
-      delivery.evidence.length > 0 ? 'authorized_evidence' : 'no_match';
-    return { status, evidence: delivery.evidence };
   }
 
   async function resolveKnowledgeIds(
@@ -921,11 +939,22 @@ export function createKnowledgeService(deps: KnowledgeDeps) {
     }
   }
 
+  /**
+   * 下载来源文件。
+   *
+   * 交付的线性化点：受控交付回调在末次授权判定的事务内被调用。
+   * 授权行锁在整个判定与交付入队期间保持，因此
+   * - 撤权/撤回在判定之前提交 → 判定看见它 → 不交付；
+   * - 撤权/撤回在判定之后开始 → 它阻塞在授权行锁上，直到交付入队完成 → 交付在前。
+   *
+   * 文件读取在事务之外：跨文件 I/O 持锁会把撤权请求长时间堵住。
+   */
   async function downloadSource(
     principal: Principal,
     fileId: string,
     version: string,
-  ): Promise<{ content: Buffer; name: string; mime: string; sha256: string }> {
+    deliver: (file: SourceFileDownload) => void,
+  ): Promise<void> {
     const source = await repo.findSourceFileRevision(pool, principal.scope, fileId, version);
     if (!source) {
       throw apiError('NOT_FOUND', 'source file not found');
@@ -964,20 +993,61 @@ export function createKnowledgeService(deps: KnowledgeDeps) {
     // 因此正文准备好之后、在交付之前必须再做一次末次授权判定。
     const content = await files.read(source.storage_key);
     await assertDeliveryStillAllowed(principal, knowledge.knowledge_id, knowledge.version);
-    return {
-      content,
-      name: source.name,
-      mime: source.mime,
-      sha256: source.sha256,
-    };
+    // 交付判定：末次鉴权与响应入队在同一个授权行锁内完成。
+    // 事务提交与响应发送之间不再留窗口：撤权要么在判定前被看见，
+    // 要么阻塞到交付入队之后才提交。
+    await withTransaction(pool, async (client) => {
+      await authz.lockAuthzState(client, principal.scope);
+      await assertDownloadAllowed(client, principal, knowledge.knowledge_id, knowledge.version);
+      deliver({
+        content,
+        name: source.name,
+        mime: source.mime,
+        sha256: source.sha256,
+      });
+    });
   }
 
   /**
-   * 交付前的末次授权判定。
+   * 下载授权判定。
+   *
+   * 重新确认三件事：知识版本没被撤回、主体仍然可读、仍然有下载授权。
+   * 任何一项在判定之前发生变化都不放行。
+   */
+  async function assertDownloadAllowed(
+    client: PoolClient,
+    principal: Principal,
+    knowledgeId: string,
+    version: string,
+  ): Promise<void> {
+    const current = await repo.findKnowledgeRevision(client, principal.scope, knowledgeId, version);
+    if (!current || current.status === 'withdrawn') {
+      throw apiError('NOT_FOUND', 'source file not found');
+    }
+    const stillReadable = await authz.filterReadable(client, principal.scope, principal.subject, [
+      knowledgeId,
+    ]);
+    if (!stillReadable.has(knowledgeId)) {
+      throw apiError('NOT_FOUND', 'source file not found');
+    }
+    const stillDownloadable = await authz.hasDownloadGrant(
+      client,
+      principal.scope,
+      principal.subject,
+      knowledgeId,
+      version,
+    );
+    if (!stillDownloadable) {
+      throw apiError('FORBIDDEN', 'download is not granted for this document');
+    }
+  }
+
+  /**
+   * 读取窗口的授权判定。
    *
    * 文件读取不持锁：授权行锁只覆盖这一小段判定，跨文件 I/O 持锁会把
-   * 撤权请求长时间堵住。这里重新确认三件事：知识版本没被撤回、
-   * 主体仍然可读、仍然有下载授权。任何一项在读取期间发生变化都不放行。
+   * 撤权请求长时间堵住。这里在读完文件之后先判一次，
+   * 读取期间发生的撤权/撤回在这里就被拒绝，不必进入交付事务。
    */
   async function assertDeliveryStillAllowed(
     principal: Principal,
@@ -986,52 +1056,49 @@ export function createKnowledgeService(deps: KnowledgeDeps) {
   ): Promise<void> {
     await withTransaction(pool, async (client) => {
       await authz.lockAuthzState(client, principal.scope);
-      const current = await repo.findKnowledgeRevision(client, principal.scope, knowledgeId, version);
-      if (!current || current.status === 'withdrawn') {
-        throw apiError('NOT_FOUND', 'source file not found');
-      }
-      const stillReadable = await authz.filterReadable(client, principal.scope, principal.subject, [
-        knowledgeId,
-      ]);
-      if (!stillReadable.has(knowledgeId)) {
-        throw apiError('NOT_FOUND', 'source file not found');
-      }
-      const stillDownloadable = await authz.hasDownloadGrant(
-        client,
-        principal.scope,
-        principal.subject,
-        knowledgeId,
-        version,
-      );
-      if (!stillDownloadable) {
-        throw apiError('FORBIDDEN', 'download is not granted for this document');
-      }
+      await assertDownloadAllowed(client, principal, knowledgeId, version);
     });
   }
 
-  async function getEvidence(principal: Principal, evidenceId: string): Promise<unknown> {
-    const row = await repo.findEvidence(pool, principal.scope, evidenceId);
-    if (!row) {
-      throw apiError('NOT_FOUND', 'evidence not found');
-    }
-    const allowed = await authz.filterStillAuthorized(pool, principal.scope, principal.subject, [
-      row.knowledge_ref,
-    ]);
-    if (!allowed.has(row.knowledge_ref)) {
-      throw apiError('NOT_FOUND', 'evidence not found');
-    }
-    return {
-      evidence_id: row.id,
-      knowledge_ref: row.knowledge_ref,
-      knowledge_version: row.knowledge_version,
-      index_revision: row.index_revision,
-      source_file_revision: row.source_file_revision,
-      chunk_id: row.chunk_id,
-      chunk_hash: row.chunk_hash,
-      locator: row.locator,
-      content: row.content,
-      score: row.score,
-    };
+  /**
+   * 读取单条证据。
+   *
+   * 交付的线性化点与下载、检索一致：证据正文在末次授权判定的事务内入队，
+   * 撤权与正文发出被同一个授权行锁串起来。
+   */
+  async function getEvidence(
+    principal: Principal,
+    evidenceId: string,
+    deliver: (evidence: unknown) => void,
+  ): Promise<void> {
+    await withTransaction(pool, async (client) => {
+      await authz.lockAuthzState(client, principal.scope);
+      const row = await repo.findEvidence(client, principal.scope, evidenceId);
+      if (!row) {
+        throw apiError('NOT_FOUND', 'evidence not found');
+      }
+      const allowed = await authz.filterStillAuthorized(
+        client,
+        principal.scope,
+        principal.subject,
+        [row.knowledge_ref],
+      );
+      if (!allowed.has(row.knowledge_ref)) {
+        throw apiError('NOT_FOUND', 'evidence not found');
+      }
+      deliver({
+        evidence_id: row.id,
+        knowledge_ref: row.knowledge_ref,
+        knowledge_version: row.knowledge_version,
+        index_revision: row.index_revision,
+        source_file_revision: row.source_file_revision,
+        chunk_id: row.chunk_id,
+        chunk_hash: row.chunk_hash,
+        locator: row.locator,
+        content: row.content,
+        score: row.score,
+      });
+    });
   }
 
   async function getOperation(principal: Principal, operationId: string): Promise<unknown> {

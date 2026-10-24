@@ -188,8 +188,11 @@ export function createKnowledgeRouter(service: KnowledgeService): Router {
     '/retrieval',
     requirePermissionMiddleware('knowledge:read'),
     async (req, res) => {
-      const result = await service.retrieval(req.principal, req.body);
-      res.status(200).json({ data: result, trace_id: req.traceId });
+      // 交付回调在末次授权判定的事务内被调用：
+      // 证据正文发出与授权判定在同一个序列化边界内。
+      await service.retrieval(req.principal, req.body, (data) => {
+        res.status(200).json({ data, trace_id: req.traceId });
+      });
     },
   );
 
@@ -197,8 +200,9 @@ export function createKnowledgeRouter(service: KnowledgeService): Router {
     '/evidence/:evidenceId',
     requirePermissionMiddleware('source:read'),
     async (req, res) => {
-      const evidence = await service.getEvidence(req.principal, uuidPathParam(req, 'evidenceId'));
-      res.status(200).json({ data: evidence, trace_id: req.traceId });
+      await service.getEvidence(req.principal, uuidPathParam(req, 'evidenceId'), (data) => {
+        res.status(200).json({ data, trace_id: req.traceId });
+      });
     },
   );
 
@@ -206,15 +210,19 @@ export function createKnowledgeRouter(service: KnowledgeService): Router {
     '/sources/:fileId/versions/:version/download',
     requirePermissionMiddleware('source:read'),
     async (req, res) => {
-      const file = await service.downloadSource(
+      // 正文已经完整读入内存，交付回调只做响应入队：
+      // 它在末次授权判定的事务内被调用，不跨文件 I/O 持锁。
+      await service.downloadSource(
         req.principal,
         uuidPathParam(req, 'fileId'),
         pathParam(req, 'version'),
+        (file) => {
+          res.setHeader('content-type', file.mime);
+          res.setHeader('content-disposition', `attachment; filename="${encodeURIComponent(file.name)}"`);
+          res.setHeader('x-content-sha256', file.sha256);
+          res.status(200).send(file.content);
+        },
       );
-      res.setHeader('content-type', file.mime);
-      res.setHeader('content-disposition', `attachment; filename="${encodeURIComponent(file.name)}"`);
-      res.setHeader('x-content-sha256', file.sha256);
-      res.status(200).send(file.content);
     },
   );
 
