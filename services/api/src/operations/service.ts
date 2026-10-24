@@ -107,6 +107,19 @@ const DEFAULT_RETRY_BACKOFF_MS = 5_000;
 const DEFAULT_RETRY_BACKOFF_MAX_MS = 300_000;
 
 /**
+ * 发送意图阶段 -> 上一个阶段。
+ *
+ * 外部写请求发出之前先把「发送意图」写进操作进度；只有确认请求没有送达
+ * （连接阶段失败）时，才把阶段退回上一个，让下一轮可以安全重发。
+ */
+const SEND_INTENT_PREVIOUS_STAGE: Record<string, string> = {
+  dataset_create_attempted: 'dataset_pending',
+  upload_attempted: 'upload_pending',
+  parse_attempted: 'uploaded',
+  reindex_attempted: 'reindex_pending',
+};
+
+/**
  * 本轮推进已被更新的 epoch 取代。
  *
  * 抛出它意味着「另一个 worker 已经接手这个操作」：本轮不得再写任何状态，
@@ -125,6 +138,12 @@ interface FailureDecision {
   message: string;
   /** 资源状态回落；null 表示保持现状（瞬时故障不应把资源判死）。 */
   resourceStatus: 'failed' | 'unknown_outcome' | null;
+  /**
+   * 请求是否确定没有送达上游。
+   *
+   * 只有这一种失败允许重发同一个写请求：连接都没建立，请求一定没到上游。
+   */
+  notDelivered: boolean;
 }
 
 /**
@@ -144,6 +163,7 @@ function classifyFailure(error: unknown): FailureDecision {
       state: 'failed',
       message: `upstream business failure code=${error.upstreamCode}`,
       resourceStatus: 'failed',
+      notDelivered: false,
     };
   }
   if (error instanceof RagFlowProtocolError) {
@@ -151,6 +171,7 @@ function classifyFailure(error: unknown): FailureDecision {
       state: 'failed',
       message: 'upstream response did not match the fixed contract',
       resourceStatus: 'failed',
+      notDelivered: false,
     };
   }
   if (error instanceof RagFlowUnavailableError) {
@@ -159,6 +180,7 @@ function classifyFailure(error: unknown): FailureDecision {
         state: 'failed',
         message: 'upstream rejected the platform credential',
         resourceStatus: 'failed',
+        notDelivered: false,
       };
     }
     if (error.kind === 'not_delivered') {
@@ -167,6 +189,7 @@ function classifyFailure(error: unknown): FailureDecision {
         state: 'in_progress',
         message: `upstream is temporarily unavailable: ${error.reason}`,
         resourceStatus: null,
+        notDelivered: true,
       };
     }
     if (error.kind === 'delivered_unknown') {
@@ -176,12 +199,14 @@ function classifyFailure(error: unknown): FailureDecision {
           state: 'unknown_outcome',
           message: 'upstream write response was not confirmed',
           resourceStatus: 'unknown_outcome',
+          notDelivered: false,
         };
       }
       return {
         state: 'in_progress',
         message: `upstream is temporarily unavailable: ${error.reason}`,
         resourceStatus: null,
+        notDelivered: false,
       };
     }
     if (error.writeAttempt) {
@@ -190,15 +215,22 @@ function classifyFailure(error: unknown): FailureDecision {
         state: 'failed',
         message: `upstream rejected the write: ${error.reason}`,
         resourceStatus: 'failed',
+        notDelivered: false,
       };
     }
     return {
       state: 'in_progress',
       message: `upstream is temporarily unavailable: ${error.reason}`,
       resourceStatus: null,
+      notDelivered: false,
     };
   }
-  return { state: 'failed', message: 'unexpected upstream failure', resourceStatus: 'failed' };
+  return {
+    state: 'failed',
+    message: 'unexpected upstream failure',
+    resourceStatus: 'failed',
+    notDelivered: false,
+  };
 }
 
 export function createOperationsService(deps: OperationsDeps) {
@@ -211,6 +243,36 @@ export function createOperationsService(deps: OperationsDeps) {
   const leaseMs = deps.leaseMs ?? DEFAULT_LEASE_MS;
   const retryBackoffMs = deps.retryBackoffMs ?? DEFAULT_RETRY_BACKOFF_MS;
   const retryBackoffMaxMs = deps.retryBackoffMaxMs ?? DEFAULT_RETRY_BACKOFF_MAX_MS;
+
+  /**
+   * 撤回是终态：已撤回的知识版本不能再被任何流程推进。
+   *
+   * 判断必须以数据库里的事实为准，不能靠调用方手里的进度快照：
+   * 迟到的 worker 手上只有自己那份快照，看不到之后发生的撤回。
+   */
+  async function isWithdrawn(
+    scopeId: string,
+    knowledgeId: string | undefined,
+    version: string | undefined,
+  ): Promise<boolean> {
+    if (!knowledgeId || !version) return false;
+    const status = await withTransaction(pool, (client) =>
+      knowledgeRepo.findKnowledgeStatus(client, scopeId, knowledgeId, version),
+    );
+    return status === 'withdrawn';
+  }
+
+  /**
+   * 清掉发送意图。
+   *
+   * 只有确认请求没有送达上游（连接阶段失败）时才允许这样做：
+   * 阶段退回上一个之后，下一轮推进可以重新发送同一个写请求。
+   */
+  function clearSendIntent(progress: OperationProgress): OperationProgress {
+    const previous = SEND_INTENT_PREVIOUS_STAGE[progress.stage];
+    if (previous === undefined) return progress;
+    return { ...progress, stage: previous };
+  }
 
   async function createOperation(
     client: PoolClient,
@@ -348,7 +410,8 @@ export function createOperationsService(deps: OperationsDeps) {
       await knowledgeRepo.updateKnowledgeBase(client, scopeId, progress.kbId, { status });
     }
     if (progress.knowledgeId && progress.knowledgeVersion) {
-      await knowledgeRepo.updateKnowledgeState(
+      // 撤回是终态：已撤回的版本不再回落状态，否则失败分支会把撤回改写掉。
+      await knowledgeRepo.updateKnowledgeStateUnlessWithdrawn(
         client,
         scopeId,
         progress.knowledgeId,
@@ -391,13 +454,13 @@ export function createOperationsService(deps: OperationsDeps) {
     try {
       switch (claimed.kind) {
         case 'knowledge_base.create':
-          return await advanceKnowledgeBaseCreate(scopeId, operationId, epoch, progress);
+          return await advanceKnowledgeBaseCreate(scopeId, operationId, epoch, progress, claimed.attempt);
         case 'document.upload':
-          return await advanceDocumentUpload(scopeId, operationId, epoch, progress);
+          return await advanceDocumentUpload(scopeId, operationId, epoch, progress, claimed.attempt);
         case 'document.parse':
           return await advanceDocumentParse(scopeId, operationId, epoch, progress);
         case 'document.reindex':
-          return await advanceDocumentReindex(scopeId, operationId, epoch, progress);
+          return await advanceDocumentReindex(scopeId, operationId, epoch, progress, claimed.attempt);
         case 'knowledge.withdraw':
           return await advanceKnowledgeWithdraw(scopeId, operationId, epoch, progress);
         default:
@@ -447,6 +510,11 @@ export function createOperationsService(deps: OperationsDeps) {
     const failure = classifyFailure(error);
     try {
       await withTransaction(pool, async (client) => {
+        // 资源状态先落、操作状态后落：与撤回事务保持同一把行锁顺序
+        // （知识版本 → 操作），否则两边的行锁会互相等待。
+        if (failure.resourceStatus) {
+          await rollbackResourceStatus(client, scopeId, progress, failure.resourceStatus);
+        }
         if (failure.state === 'unknown_outcome') {
           // 先落「结果未知」标记：它禁止后续推进重发同一个写请求。
           await writeProgress(
@@ -471,6 +539,16 @@ export function createOperationsService(deps: OperationsDeps) {
           );
           if (!deferred) throw new StaleEpochError(operationId);
         } else if (failure.state === 'in_progress') {
+          if (failure.notDelivered) {
+            // 请求确定没有送达上游：清掉发送意图，下一轮可以安全重发。
+            await writeProgress(
+              client,
+              scopeId,
+              operationId,
+              clearSendIntent(progress),
+              epoch,
+            );
+          }
           await retryOperation(
             client,
             scopeId,
@@ -489,9 +567,6 @@ export function createOperationsService(deps: OperationsDeps) {
             failure.message,
           );
         }
-        if (failure.resourceStatus) {
-          await rollbackResourceStatus(client, scopeId, progress, failure.resourceStatus);
-        }
       });
     } catch (writeError) {
       if (writeError instanceof StaleEpochError) {
@@ -509,11 +584,31 @@ export function createOperationsService(deps: OperationsDeps) {
     };
   }
 
+  /** A missing listing or idle state never proves that a write was not delivered. */
+  async function deferUnknownWrite(
+    scopeId: string, operationId: string, epoch: number,
+    progress: OperationProgress, attempt: number, message: string,
+  ): Promise<OperationResult> {
+    const capped = attempt >= unknownOutcomeMaxAttempts;
+    const lastError = capped ? `${message}; automatic verification stopped, manual review required` : message;
+    await withTransaction(pool, async (client) => {
+      await rollbackResourceStatus(client, scopeId, progress, 'unknown_outcome');
+      await writeProgress(client, scopeId, operationId, { ...progress, outcomeUnknown: true }, epoch);
+      const updated = await opsRepo.deferOperation(client, scopeId, operationId,
+        capped ? MANUAL_REVIEW_PARK_MS : unknownOutcomeDelay(attempt), lastError, epoch);
+      if (!updated) throw new StaleEpochError(operationId);
+    });
+    return { operationId, state: 'unknown_outcome',
+      resourceId: progress.knowledgeId ?? progress.kbId ?? null,
+      remoteId: progress.documentId ?? progress.datasetId ?? null, lastError };
+  }
+
   async function advanceKnowledgeBaseCreate(
     scopeId: string,
     operationId: string,
     epoch: number,
     progress: OperationProgress,
+    attempt: number,
   ): Promise<OperationResult> {
     if (progress.datasetId) {
       await withTransaction(pool, (client) =>
@@ -522,8 +617,10 @@ export function createOperationsService(deps: OperationsDeps) {
       return { operationId, state: 'succeeded', resourceId: progress.kbId ?? null, remoteId: progress.datasetId, lastError: null };
     }
 
-    // 结果未知时只做只读核对：创建请求可能已经在上游生效，重发会造出重复数据集。
-    if (progress.outcomeUnknown) {
+    // 发送意图已经落库但本地没有远端 ID：上一次写入的结果不可知，
+    // 只能只读核对，禁止直接重发——重发会造出第二个同名数据集。
+    const interrupted = progress.stage === 'dataset_create_attempted';
+    if (progress.outcomeUnknown || interrupted) {
       const existing = await ragflow.listDatasetsByName(progress.datasetName!);
       if (existing.length === 1) {
         await withTransaction(pool, async (client) => {
@@ -551,22 +648,9 @@ export function createOperationsService(deps: OperationsDeps) {
         });
         return { operationId, state: 'succeeded', resourceId: progress.kbId ?? null, remoteId: existing[0]!.id, lastError: null };
       }
-      const message =
-        existing.length > 1
-          ? 'multiple upstream datasets match the stable name; manual check required'
-          : 'upstream dataset creation outcome is unknown; manual check required';
-      await withTransaction(pool, async (client) => {
-        const deferred = await opsRepo.deferOperation(
-          client,
-          scopeId,
-          operationId,
-          unknownOutcomeDelay(1),
-          message,
-          epoch,
-        );
-        if (!deferred) throw new StaleEpochError(operationId);
-      });
-      return { operationId, state: 'unknown_outcome', resourceId: progress.kbId ?? null, remoteId: null, lastError: message };
+      return deferUnknownWrite(scopeId, operationId, epoch, progress, attempt,
+        existing.length > 1 ? 'multiple upstream datasets match; manual check required'
+          : 'upstream dataset creation outcome is unknown; manual check required');
     }
 
     // 请求确定没有送达上游时重发是安全的；这里只记录尝试痕迹。
@@ -614,9 +698,24 @@ export function createOperationsService(deps: OperationsDeps) {
     operationId: string,
     epoch: number,
     progress: OperationProgress,
+    attempt: number,
   ): Promise<OperationResult> {
     if (!progress.datasetId) {
       throw new Error('document upload operation has no dataset id');
+    }
+    // 撤回是终态：已撤回的知识版本不再上传，也不再推进解析。
+    if (await isWithdrawn(scopeId, progress.knowledgeId, progress.knowledgeVersion)) {
+      const message = 'knowledge version was withdrawn before the upload completed';
+      await withTransaction(pool, (client) =>
+        fenceOperationState(client, scopeId, operationId, epoch, 'cancelled', message),
+      );
+      return {
+        operationId,
+        state: 'cancelled',
+        resourceId: progress.knowledgeId ?? null,
+        remoteId: null,
+        lastError: message,
+      };
     }
     if (progress.stage === 'parse_started' && progress.documentId) {
       await withTransaction(pool, (client) =>
@@ -640,54 +739,40 @@ export function createOperationsService(deps: OperationsDeps) {
         return { operationId, state: 'failed', resourceId: progress.knowledgeId ?? null, remoteId: null, lastError: message };
       }
 
-      if (progress.outcomeUnknown) {
-        // 上传结果未知：按文件名只读核对上游，唯一命中才认领，绝不重新上传。
+      // 发送意图已落库但本地没有远端文档 ID：上一次上传的结果不可知。
+      // 按文件名只读核对上游，唯一命中才认领，绝不重新上传——重传会造出第二个同名文档。
+      const interrupted = progress.stage === 'upload_attempted';
+      if (progress.outcomeUnknown || interrupted) {
         const documents = await ragflow.listDocuments(progress.datasetId!);
         const matches = documents.filter((document) => document.name === source.name);
-        if (matches.length !== 1) {
-          const message =
-            matches.length === 0
-              ? 'upstream upload outcome is unknown; manual check required'
-              : 'multiple upstream documents match the file name; manual check required';
+        if (matches.length === 1) {
           await withTransaction(pool, async (client) => {
-            const deferred = await opsRepo.deferOperation(
+            const updated = await opsRepo.setOperationRemoteId(
               client,
               scopeId,
               operationId,
-              unknownOutcomeDelay(1),
-              message,
+              matches[0]!.id,
+              'in_progress',
               epoch,
             );
-            if (!deferred) throw new StaleEpochError(operationId);
+            if (!updated) throw new StaleEpochError(operationId);
+            await writeProgress(
+              client,
+              scopeId,
+              operationId,
+              { ...progress, stage: 'uploaded', documentId: matches[0]!.id },
+              epoch,
+            );
           });
-          return {
-            operationId,
-            state: 'unknown_outcome',
-            resourceId: progress.knowledgeId ?? null,
-            remoteId: null,
-            lastError: message,
-          };
+          progress = { ...progress, stage: 'uploaded', documentId: matches[0]!.id };
+        } else {
+          return deferUnknownWrite(scopeId, operationId, epoch, progress, attempt,
+            matches.length > 1 ? 'multiple upstream documents match; manual check required'
+              : 'upstream upload outcome is unknown; manual check required');
         }
-        await withTransaction(pool, async (client) => {
-          const updated = await opsRepo.setOperationRemoteId(
-            client,
-            scopeId,
-            operationId,
-            matches[0]!.id,
-            'in_progress',
-            epoch,
-          );
-          if (!updated) throw new StaleEpochError(operationId);
-          await writeProgress(
-            client,
-            scopeId,
-            operationId,
-            { ...progress, stage: 'uploaded', documentId: matches[0]!.id },
-            epoch,
-          );
-        });
-        progress = { ...progress, stage: 'uploaded', documentId: matches[0]!.id };
-      } else {
+      }
+
+      if (!progress.documentId) {
         const content = await files.read(source.storage_key);
         await withTransaction(pool, (client) =>
           writeProgress(
@@ -726,21 +811,27 @@ export function createOperationsService(deps: OperationsDeps) {
       }
     }
 
-    if (progress.outcomeUnknown) {
-      // 解析启动请求的结果未知：先只读确认上游是否已经在解析，避免重复触发解析。
+    // 触发解析同样是一个写请求：发送意图先落库，
+    // 恢复时只读确认上游状态，无法确认送达结果则暂停等待人工核查。
+    const parseStartInterrupted = progress.stage === 'parse_attempted';
+    if (progress.outcomeUnknown || parseStartInterrupted) {
       const status = await ragflow.getDocumentStatus({
         datasetId: progress.datasetId!,
         documentId: progress.documentId!,
       });
       if (status.run === 'UNSTART') {
-        await ragflow.startParse({
-          datasetId: progress.datasetId!,
-          documentIds: [progress.documentId!],
-        });
+        return deferUnknownWrite(scopeId, operationId, epoch, progress, attempt,
+          'upstream parse start outcome is unknown; manual check required');
       }
     } else {
       await withTransaction(pool, (client) =>
-        writeProgress(client, scopeId, operationId, { ...progress, stage: 'parse_attempted' }, epoch),
+        writeProgress(
+          client,
+          scopeId,
+          operationId,
+          { ...progress, stage: 'parse_attempted' },
+          epoch,
+        ),
       );
       await ragflow.startParse({
         datasetId: progress.datasetId!,
@@ -748,7 +839,26 @@ export function createOperationsService(deps: OperationsDeps) {
       });
     }
     // 解析是独立的长时操作，登记为单独的操作项由 worker 轮询。
-    await withTransaction(pool, async (client) => {
+    const withdrawn = await withTransaction(pool, async (client) => {
+      // 撤回是终态：条件更新命中 0 行说明版本已被撤回，不再推进。
+      const updated = await knowledgeRepo.updateKnowledgeStateUnlessWithdrawn(
+        client,
+        scopeId,
+        progress.knowledgeId!,
+        progress.knowledgeVersion!,
+        { status: 'parsing' },
+      );
+      if (!updated) {
+        await fenceOperationState(
+          client,
+          scopeId,
+          operationId,
+          epoch,
+          'cancelled',
+          'knowledge version was withdrawn before the upload completed',
+        );
+        return true;
+      }
       await fenceOperationState(client, scopeId, operationId, epoch, 'succeeded', null);
       const parseOperationId = await createOperation(
         client,
@@ -767,15 +877,56 @@ export function createOperationsService(deps: OperationsDeps) {
         parseOperationId,
         { ...progress, stage: 'parse_polling' },
       );
-      await knowledgeRepo.updateKnowledgeState(
+      await writeProgress(
+        client,
+        scopeId,
+        operationId,
+        { ...progress, stage: 'parse_started' },
+        epoch,
+      );
+      return false;
+    });
+    if (withdrawn) {
+      return {
+        operationId,
+        state: 'cancelled',
+        resourceId: progress.knowledgeId ?? null,
+        remoteId: progress.documentId ?? null,
+        lastError: 'knowledge version was withdrawn before the upload completed',
+      };
+    }
+    return { operationId, state: 'succeeded', resourceId: progress.knowledgeId ?? null, remoteId: progress.documentId ?? null, lastError: null };
+  }
+
+  /**
+   * 失败/空结果分支：先落资源状态再落操作终态。
+   *
+   * 行锁顺序与撤回事务一致（知识版本 → 操作），避免互相等待。
+   * 资源状态写不进去说明版本已撤回：操作记为 cancelled，而不是 failed。
+   */
+  async function settleWithResourceStatus(
+    scopeId: string,
+    operationId: string,
+    epoch: number,
+    progress: OperationProgress,
+    resourceStatus: 'failed' | 'empty',
+    operationState: 'failed' | 'succeeded',
+    message: string,
+  ): Promise<{ state: 'failed' | 'succeeded' | 'cancelled'; lastError: string }> {
+    return withTransaction(pool, async (client) => {
+      const updated = await knowledgeRepo.updateKnowledgeStateUnlessWithdrawn(
         client,
         scopeId,
         progress.knowledgeId!,
         progress.knowledgeVersion!,
-        { status: 'parsing' },
+        { status: resourceStatus },
       );
+      const withdrawn = updated === null;
+      const finalState = withdrawn ? 'cancelled' : operationState;
+      const finalError = withdrawn ? 'knowledge version was withdrawn' : message;
+      await fenceOperationState(client, scopeId, operationId, epoch, finalState, finalError);
+      return { state: finalState, lastError: finalError };
     });
-    return { operationId, state: 'succeeded', resourceId: progress.knowledgeId ?? null, remoteId: progress.documentId ?? null, lastError: null };
   }
 
   async function advanceDocumentParse(
@@ -788,28 +939,43 @@ export function createOperationsService(deps: OperationsDeps) {
       throw new Error('parse operation is missing the remote document identity');
     }
 
+    // 撤回是终态：已撤回的知识版本不再推进解析。
+    // 迟到的解析完成不能把它改回 ready——否则撤回的知识会复活，来源文件重新可下载。
+    if (await isWithdrawn(scopeId, progress.knowledgeId, progress.knowledgeVersion)) {
+      const message = 'knowledge version was withdrawn before the parse completed';
+      await withTransaction(pool, (client) =>
+        fenceOperationState(client, scopeId, operationId, epoch, 'cancelled', message),
+      );
+      return {
+        operationId,
+        state: 'cancelled',
+        resourceId: progress.knowledgeId ?? null,
+        remoteId: progress.documentId,
+        lastError: message,
+      };
+    }
+
     // 解析有截止时间：超过截止仍未完成就进入终态失败，停止自动轮询，
     // 并把知识版本置为 failed，让用户看到明确状态而不是一直「解析中」。
     if (progress.createdAt) {
       const elapsed = Date.now() - progress.createdAt.getTime();
       if (elapsed > deps.parseDeadlineMs) {
         const message = `parse deadline exceeded after ${Math.round(elapsed / 1000)}s`;
-        await withTransaction(pool, async (client) => {
-          await fenceOperationState(client, scopeId, operationId, epoch, 'failed', message);
-          await knowledgeRepo.updateKnowledgeState(
-            client,
-            scopeId,
-            progress.knowledgeId!,
-            progress.knowledgeVersion!,
-            { status: 'failed' },
-          );
-        });
+        const settled = await settleWithResourceStatus(
+          scopeId,
+          operationId,
+          epoch,
+          progress,
+          'failed',
+          'failed',
+          message,
+        );
         return {
           operationId,
-          state: 'failed',
+          state: settled.state,
           resourceId: progress.knowledgeId ?? null,
           remoteId: progress.documentId,
-          lastError: message,
+          lastError: settled.lastError,
         };
       }
     }
@@ -823,25 +989,45 @@ export function createOperationsService(deps: OperationsDeps) {
       const chunkCount = status.chunk_count ?? 0;
       const progressComplete = status.progress !== null && status.progress >= 1;
       if (progressComplete && chunkCount > 0) {
-        await withTransaction(pool, async (client) => {
-          await fenceOperationState(client, scopeId, operationId, epoch, 'succeeded', null);
-          await markKnowledgeReady(client, scopeId, progress, chunkCount);
+        const ready = await withTransaction(pool, async (client) => {
+          // 先落资源状态再落操作终态：与撤回事务保持同一把行锁顺序。
+          const applied = await markKnowledgeReady(client, scopeId, progress, chunkCount);
+          await fenceOperationState(
+            client,
+            scopeId,
+            operationId,
+            epoch,
+            applied ? 'succeeded' : 'cancelled',
+            applied ? null : 'knowledge version was withdrawn before the parse completed',
+          );
+          return applied;
         });
-        return { operationId, state: 'succeeded', resourceId: progress.knowledgeId ?? null, remoteId: progress.documentId, lastError: null };
+        return {
+          operationId,
+          state: ready ? 'succeeded' : 'cancelled',
+          resourceId: progress.knowledgeId ?? null,
+          remoteId: progress.documentId,
+          lastError: ready ? null : 'knowledge version was withdrawn before the parse completed',
+        };
       }
       if (chunkCount === 0) {
         const message = 'upstream reported DONE with zero chunks';
-        await withTransaction(pool, async (client) => {
-          await fenceOperationState(client, scopeId, operationId, epoch, 'succeeded', message);
-          await knowledgeRepo.updateKnowledgeState(
-            client,
-            scopeId,
-            progress.knowledgeId!,
-            progress.knowledgeVersion!,
-            { status: 'empty' },
-          );
-        });
-        return { operationId, state: 'succeeded', resourceId: progress.knowledgeId ?? null, remoteId: progress.documentId, lastError: message };
+        const settled = await settleWithResourceStatus(
+          scopeId,
+          operationId,
+          epoch,
+          progress,
+          'empty',
+          'succeeded',
+          message,
+        );
+        return {
+          operationId,
+          state: settled.state,
+          resourceId: progress.knowledgeId ?? null,
+          remoteId: progress.documentId,
+          lastError: settled.lastError,
+        };
       }
       const message = 'upstream reported DONE before progress completed';
       await withTransaction(pool, (client) =>
@@ -852,33 +1038,41 @@ export function createOperationsService(deps: OperationsDeps) {
 
     if (status.run === 'FAIL') {
       // 只保留错误分类，不回显上游原文：progress_msg 可能带出上游内部细节。
-      const message = 'parse failed upstream';
-      await withTransaction(pool, async (client) => {
-        await fenceOperationState(client, scopeId, operationId, epoch, 'failed', message);
-        await knowledgeRepo.updateKnowledgeState(
-          client,
-          scopeId,
-          progress.knowledgeId!,
-          progress.knowledgeVersion!,
-          { status: 'failed' },
-        );
-      });
-      return { operationId, state: 'failed', resourceId: progress.knowledgeId ?? null, remoteId: progress.documentId, lastError: message };
+      const settled = await settleWithResourceStatus(
+        scopeId,
+        operationId,
+        epoch,
+        progress,
+        'failed',
+        'failed',
+        'parse failed upstream',
+      );
+      return {
+        operationId,
+        state: settled.state,
+        resourceId: progress.knowledgeId ?? null,
+        remoteId: progress.documentId,
+        lastError: settled.lastError,
+      };
     }
 
     if (status.run === 'CANCEL') {
-      const message = 'parse cancelled';
-      await withTransaction(pool, async (client) => {
-        await fenceOperationState(client, scopeId, operationId, epoch, 'failed', message);
-        await knowledgeRepo.updateKnowledgeState(
-          client,
-          scopeId,
-          progress.knowledgeId!,
-          progress.knowledgeVersion!,
-          { status: 'failed' },
-        );
-      });
-      return { operationId, state: 'failed', resourceId: progress.knowledgeId ?? null, remoteId: progress.documentId, lastError: message };
+      const settled = await settleWithResourceStatus(
+        scopeId,
+        operationId,
+        epoch,
+        progress,
+        'failed',
+        'failed',
+        'parse cancelled',
+      );
+      return {
+        operationId,
+        state: settled.state,
+        resourceId: progress.knowledgeId ?? null,
+        remoteId: progress.documentId,
+        lastError: settled.lastError,
+      };
     }
 
     await withTransaction(pool, (client) =>
@@ -898,27 +1092,51 @@ export function createOperationsService(deps: OperationsDeps) {
     operationId: string,
     epoch: number,
     progress: OperationProgress,
+    attempt: number,
   ): Promise<OperationResult> {
     if (!progress.datasetId || !progress.documentId) {
       throw new Error('reindex operation is missing the remote document identity');
     }
 
-    if (progress.outcomeUnknown) {
-      // 启动解析的结果未知：先只读确认上游状态，确认还没开始解析才允许启动，
-      // 避免重复触发重建。
+    // 撤回是终态：已撤回的知识版本不再重建索引。
+    if (await isWithdrawn(scopeId, progress.knowledgeId, progress.knowledgeVersion)) {
+      const message = 'knowledge version was withdrawn before the reindex completed';
+      await withTransaction(pool, (client) =>
+        fenceOperationState(client, scopeId, operationId, epoch, 'cancelled', message),
+      );
+      return {
+        operationId,
+        state: 'cancelled',
+        resourceId: progress.knowledgeId ?? null,
+        remoteId: progress.documentId,
+        lastError: message,
+      };
+    }
+
+    const interrupted = progress.stage === 'reindex_attempted';
+    if (progress.outcomeUnknown || interrupted) {
+      // 启动解析的结果未知：只读核对，禁止根据旧状态重发。
       const observed = await ragflow.getDocumentStatus({
         datasetId: progress.datasetId,
         documentId: progress.documentId,
       });
-      if (observed.run === 'UNSTART') {
-        await ragflow.startParse({
-          datasetId: progress.datasetId,
-          documentIds: [progress.documentId],
-        });
+      if (observed.run === 'UNSTART' || observed.run === 'DONE') {
+        // Neither an idle document nor an old completed index identifies this write.
+        return deferUnknownWrite(scopeId, operationId, epoch, progress, attempt,
+          'upstream reindex outcome is unknown; manual check required');
       }
+      // An active parse can be polled without sending another write.
     } else if (progress.stage !== 'reindex_started') {
-      // 启动解析成功后才记阶段：明确「未送达」的失败可以安全重发，
-      // 结果未知的失败走上面的只读核对分支，不会盲重发。
+      // 发送意图先落库：恢复时才知道上一次到底有没有发出去。
+      await withTransaction(pool, (client) =>
+        writeProgress(
+          client,
+          scopeId,
+          operationId,
+          { ...progress, stage: 'reindex_attempted' },
+          epoch,
+        ),
+      );
       await ragflow.startParse({
         datasetId: progress.datasetId,
         documentIds: [progress.documentId],
@@ -940,22 +1158,21 @@ export function createOperationsService(deps: OperationsDeps) {
     });
     if (status.run === 'FAIL' || status.run === 'CANCEL') {
       const message = status.run === 'FAIL' ? 'reindex failed upstream' : 'reindex cancelled';
-      await withTransaction(pool, async (client) => {
-        await fenceOperationState(client, scopeId, operationId, epoch, 'failed', message);
-        await knowledgeRepo.updateKnowledgeState(
-          client,
-          scopeId,
-          progress.knowledgeId!,
-          progress.knowledgeVersion!,
-          { status: 'failed' },
-        );
-      });
+      const settled = await settleWithResourceStatus(
+        scopeId,
+        operationId,
+        epoch,
+        progress,
+        'failed',
+        'failed',
+        message,
+      );
       return {
         operationId,
-        state: 'failed',
+        state: settled.state,
         resourceId: progress.knowledgeId ?? null,
         remoteId: progress.documentId,
-        lastError: message,
+        lastError: settled.lastError,
       };
     }
     if (status.run !== 'DONE') {
@@ -976,25 +1193,27 @@ export function createOperationsService(deps: OperationsDeps) {
       status.progress !== null && status.progress >= 1 && chunkCount > 0
         ? null
         : 'upstream reported DONE before the rebuilt index was complete';
-    await withTransaction(pool, async (client) => {
-      await fenceOperationState(
-        client,
-        scopeId,
-        operationId,
-        epoch,
-        message ? 'in_progress' : 'succeeded',
-        message,
-      );
-      if (!message) {
-        await markKnowledgeReady(client, scopeId, progress, chunkCount);
-      }
-    });
+    const ready = message
+      ? false
+      : await withTransaction(pool, async (client) => {
+          // 先落资源状态再落操作终态：与撤回事务保持同一把行锁顺序。
+          const applied = await markKnowledgeReady(client, scopeId, progress, chunkCount);
+          await fenceOperationState(
+            client,
+            scopeId,
+            operationId,
+            epoch,
+            applied ? 'succeeded' : 'cancelled',
+            applied ? null : 'knowledge version was withdrawn before the reindex completed',
+          );
+          return applied;
+        });
     return {
       operationId,
-      state: message ? 'in_progress' : 'succeeded',
+      state: message ? 'in_progress' : ready ? 'succeeded' : 'cancelled',
       resourceId: progress.knowledgeId ?? null,
       remoteId: progress.documentId,
-      lastError: message,
+      lastError: message ?? (ready ? null : 'knowledge version was withdrawn before the reindex completed'),
     };
   }
 
@@ -1026,13 +1245,16 @@ export function createOperationsService(deps: OperationsDeps) {
     return { operationId, state: 'succeeded', resourceId: progress.knowledgeId ?? null, remoteId: progress.documentId, lastError: null };
   }
 
-  /** 解析完成后登记索引版本并把知识版本置为可检索。 */
+  /**
+   * 解析完成后登记索引版本并把知识版本置为可检索。
+   * 返回 false 表示该版本已撤回：撤回是终态，既不建索引也不改状态。
+   */
   async function markKnowledgeReady(
     client: PoolClient,
     scopeId: string,
     progress: OperationProgress,
     chunkCount: number,
-  ): Promise<void> {
+  ): Promise<boolean> {
     const knowledge = await knowledgeRepo.findKnowledgeRevision(
       client,
       scopeId,
@@ -1041,6 +1263,17 @@ export function createOperationsService(deps: OperationsDeps) {
     );
     if (!knowledge) {
       throw new Error('knowledge revision disappeared during parse completion');
+    }
+    // 先落资源状态：撤回是终态，已撤回的版本不能被迟到的解析改回 ready。
+    const applied = await knowledgeRepo.updateKnowledgeStateUnlessWithdrawn(
+      client,
+      scopeId,
+      progress.knowledgeId!,
+      progress.knowledgeVersion!,
+      { status: 'ready' },
+    );
+    if (!applied) {
+      return false;
     }
     const indexRevisionId = newId();
     await knowledgeRepo.insertIndexRevision(client, {
@@ -1069,13 +1302,7 @@ export function createOperationsService(deps: OperationsDeps) {
       progress.knowledgeVersion!,
       indexRevisionId,
     );
-    await knowledgeRepo.updateKnowledgeState(
-      client,
-      scopeId,
-      progress.knowledgeId!,
-      progress.knowledgeVersion!,
-      { status: 'ready' },
-    );
+    return true;
   }
 
   return { createOperation, readProgress, writeProgress, advance };

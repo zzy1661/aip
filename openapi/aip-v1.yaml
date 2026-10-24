@@ -871,8 +871,9 @@ paths:
       summary: 查询异步操作状态
       description: |
         操作状态包括 `pending` / `in_progress` / `succeeded` / `failed` /
-        `unknown_outcome`。`unknown_outcome` 表示写请求的结果无法确认：
+        `unknown_outcome` / `cancelled`。`unknown_outcome` 表示写请求的结果无法确认：
         平台不会盲目重发该写请求，需要人工核对上游后再处理。
+        `cancelled` 表示该操作不再需要执行（例如知识版本已撤回）。
       operationId: getOperation
       x-permission: operations:read
       responses:
@@ -1821,13 +1822,22 @@ components:
           type: string
         kind:
           type: string
-          enum: [knowledge_base.create, document.upload, document.parse, knowledge.withdraw]
+          enum:
+            [
+              knowledge_base.create,
+              document.upload,
+              document.parse,
+              document.reindex,
+              knowledge.withdraw,
+            ]
         state:
           type: string
-          enum: [pending, in_progress, succeeded, failed, unknown_outcome]
+          enum: [pending, in_progress, succeeded, failed, unknown_outcome, cancelled]
           description: |
             `unknown_outcome` 表示写请求的结果无法确认。平台不会盲目重发该写请求，
             需要人工核对上游后再处理。
+            `cancelled` 表示该操作不再需要执行（例如知识版本已撤回），
+            它既不是失败也不会被自动重试。
         resource_id:
           type: [string, 'null']
         remote_id:
