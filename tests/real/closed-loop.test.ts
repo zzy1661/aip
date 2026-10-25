@@ -2,10 +2,12 @@ import { createHash } from 'node:crypto';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { knowledgeAuthorization, withTransaction } from '@aip/api';
 import {
+  checkRealUpstreamUsed,
   createRealHarness,
   isRealEnabled,
   loadRealEnv,
   missingRealEnv,
+  readRecordedUpstreamIdentity,
   waitForKnowledgeReady,
   type RealEnv,
   type RealHarness,
@@ -16,6 +18,12 @@ import {
  *
  * 未设置 RUN_REAL_RAGFLOW=1 时报告 NOT RUN 并跳过；
  * 设置了但配置不齐时必须失败并列出缺失项。
+ *
+ * **抗替身断言**：harness 无论如何都会起一个记录式替身，
+ * 单看「用例通过」无法区分「打到了真实 RAGFlow」与「接线退化成替身」。
+ * 因此本文件用三条信号把这件事钉死：
+ * 真实传输被调用过、替身一次都没被调用、平台记录的上游数据集确实存在于真实上游。
+ * 反向对照见 `tests/real/anti-substitute.test.ts`。
  */
 describe('M26 真实 RAGFlow 闭环', () => {
   let harness: RealHarness;
@@ -78,6 +86,19 @@ describe('M26 真实 RAGFlow 闭环', () => {
     expect(kb.status).toBe(202);
     const kbId = kb.body.data.kb_id as string;
     await harness.advanceAll();
+
+    // 1.1 抗替身断言：建库这一步必须真的落到真实 RAGFlow 上。
+    // 平台声称的上游数据集 id 要能在真实上游按名查到，
+    // 且记录式替身一次都没被调用——否则「用例通过」只说明接线指向了某个替身。
+    const identity = await readRecordedUpstreamIdentity(
+      harness,
+      env,
+      kb.body.data.operation_id as string,
+    );
+    expect(
+      await checkRealUpstreamUsed(harness, env, identity),
+      '真实上游没有被真正使用：这一轮不能算真实联调证据',
+    ).toEqual([]);
 
     // 2. 上传文档。
     const marker = `REAL-LOOP-${Date.now()}`;
