@@ -1,0 +1,162 @@
+{
+  "_comment": "aip 与 onto 之间的共享契约夹具：概念查询接口 onto-concept-query/v1。两仓各存一份，逐字一致；权威副本见 docs/ontology-concept-query-contract.md。",
+  "contract_version": "onto-concept-query/v1",
+  "vocabulary_version": "onto-units-v1",
+  "concept_ref_pattern": "^[A-Za-z][A-Za-z0-9_]*:[A-Za-z][A-Za-z0-9_]*$",
+  "ontology_version_pattern": "^[1-9][0-9]*$",
+  "unit_ref_forms": ["<symbol>", "<namespace>:unit:<symbol>"],
+  "request": {
+    "method": "GET",
+    "path_template": "/api/ontology/concepts/{concept_ref}",
+    "query_params": ["ontology_version", "vocabulary_version", "unit_ref"]
+  },
+  "envelope": {
+    "success": { "code": 0, "message": "执行成功" },
+    "failure": { "code": "<http_status>", "message": "<reason>", "result": null, "error_code": "<ERROR_CODE>" }
+  },
+  "volatile_paths": ["result.ontology.published_at"],
+  "type_compatibility": {
+    "NUMBER": ["INTEGER", "DECIMAL"],
+    "STRING": ["STRING", "TEXT", "ENUM", "DATE", "DATETIME"],
+    "BOOLEAN": ["BOOLEAN"],
+    "JSON": []
+  },
+  "seed": {
+    "ontologies": [
+      {
+        "code": "demo",
+        "name": "演示本体",
+        "status": "PUBLISHED",
+        "properties": [
+          { "code": "amount", "name": "金额", "data_type": "DECIMAL" },
+          { "code": "label", "name": "标签", "data_type": "STRING" }
+        ]
+      },
+      {
+        "code": "draft",
+        "name": "草稿本体",
+        "status": "DRAFT",
+        "properties": [{ "code": "amount", "name": "金额", "data_type": "DECIMAL" }]
+      }
+    ]
+  },
+  "success_case": {
+    "name": "published_numeric_concept",
+    "concept_ref": "demo:amount",
+    "query": {
+      "ontology_version": "1",
+      "vocabulary_version": "onto-units-v1",
+      "unit_ref": "mm"
+    },
+    "response": {
+      "code": 0,
+      "message": "执行成功",
+      "result": {
+        "contract_version": "onto-concept-query/v1",
+        "concept_ref": "demo:amount",
+        "ontology": {
+          "code": "demo",
+          "name": "演示本体",
+          "version": 1,
+          "published_at": "<volatile>",
+          "published": true,
+          "is_current": true
+        },
+        "concept": {
+          "code": "amount",
+          "name": "金额",
+          "data_type": "DECIMAL",
+          "required": false,
+          "unique": false,
+          "description": null
+        },
+        "unit": {
+          "unit_ref": "mm",
+          "unit": "mm",
+          "dimension": "length",
+          "canonical": "m"
+        },
+        "vocabulary_version": "onto-units-v1"
+      }
+    },
+    "aip_expectation": {
+      "outcome": "ok",
+      "declared_data_type": "NUMBER",
+      "declared_unit_ref": "mm",
+      "declared_ontology_version": "1",
+      "declared_vocabulary_version": "onto-units-v1"
+    }
+  },
+  "error_cases": [
+    {
+      "name": "concept_ref_invalid",
+      "concept_ref": "demo",
+      "query": {},
+      "error": { "http_status": 400, "error_code": "CONCEPT_REF_INVALID" },
+      "aip_expectation": { "outcome": "reject", "http_status": 422, "error_code": "CONTRACT_INVALID" }
+    },
+    {
+      "name": "ontology_version_invalid",
+      "concept_ref": "demo:amount",
+      "query": { "ontology_version": "abc" },
+      "error": { "http_status": 400, "error_code": "ONTOLOGY_VERSION_INVALID" },
+      "aip_expectation": { "outcome": "reject", "http_status": 422, "error_code": "CONTRACT_INVALID" }
+    },
+    {
+      "name": "unit_ref_invalid",
+      "concept_ref": "demo:amount",
+      "query": { "unit_ref": "demo:Celsius" },
+      "error": { "http_status": 400, "error_code": "UNIT_REF_INVALID" },
+      "aip_expectation": { "outcome": "reject", "http_status": 422, "error_code": "CONTRACT_INVALID" }
+    },
+    {
+      "name": "unit_unknown",
+      "concept_ref": "demo:amount",
+      "query": { "unit_ref": "demo:unit:Celsius" },
+      "error": { "http_status": 422, "error_code": "UNIT_UNKNOWN" },
+      "aip_expectation": { "outcome": "reject", "http_status": 422, "error_code": "CONTRACT_INVALID" }
+    },
+    {
+      "name": "vocabulary_version_mismatch",
+      "concept_ref": "demo:amount",
+      "query": { "vocabulary_version": "demo-vocab-1.0.0" },
+      "error": { "http_status": 409, "error_code": "VOCABULARY_VERSION_MISMATCH" },
+      "aip_expectation": { "outcome": "reject", "http_status": 422, "error_code": "CONTRACT_INVALID" }
+    },
+    {
+      "name": "ontology_not_found",
+      "concept_ref": "nope:amount",
+      "query": {},
+      "error": { "http_status": 404, "error_code": "ONTOLOGY_NOT_FOUND" },
+      "aip_expectation": { "outcome": "reject", "http_status": 422, "error_code": "CONTRACT_INVALID" }
+    },
+    {
+      "name": "ontology_not_published",
+      "concept_ref": "draft:amount",
+      "query": {},
+      "error": { "http_status": 409, "error_code": "ONTOLOGY_NOT_PUBLISHED" },
+      "aip_expectation": { "outcome": "reject", "http_status": 422, "error_code": "CONTRACT_INVALID" }
+    },
+    {
+      "name": "ontology_version_not_found",
+      "concept_ref": "demo:amount",
+      "query": { "ontology_version": "9" },
+      "error": { "http_status": 404, "error_code": "ONTOLOGY_VERSION_NOT_FOUND" },
+      "aip_expectation": { "outcome": "reject", "http_status": 422, "error_code": "CONTRACT_INVALID" }
+    },
+    {
+      "name": "concept_not_found",
+      "concept_ref": "demo:missing",
+      "query": {},
+      "error": { "http_status": 404, "error_code": "CONCEPT_NOT_FOUND" },
+      "aip_expectation": { "outcome": "reject", "http_status": 422, "error_code": "CONTRACT_INVALID" }
+    },
+    {
+      "name": "unit_not_applicable",
+      "concept_ref": "demo:label",
+      "query": { "unit_ref": "mm" },
+      "error": { "http_status": 422, "error_code": "UNIT_NOT_APPLICABLE" },
+      "aip_expectation": { "outcome": "reject", "http_status": 422, "error_code": "CONTRACT_INVALID" }
+    }
+  ]
+}
