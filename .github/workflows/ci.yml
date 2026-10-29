@@ -1,0 +1,172 @@
+# aip 的最小 CI：三道门，与 `docs/acceptance-evidence.md` 的「门」列一一对应。
+#
+# 口径（与 ZACH-28 的交付口径一致）：
+# - `unit` / `contract` 两道门不需要任何上游，跑通就是跑通；
+# - `real-guard` 是**真实 RAGFlow 联调门**，它 fail-closed：
+#   缺上游配置时以非零退出（红灯），**绝不用 skip 冒充通过**；
+# - 仓库里不写任何密钥与上游地址：全部从仓库 secret 读，这里只留变量名。
+#
+# 需要配置的仓库 secret（Settings → Secrets and variables → Actions）：
+#   RAGFLOW_BASE_URL / RAGFLOW_API_KEY / RAGFLOW_API_VERSION /
+#   RAGFLOW_TEST_PROJECT_ID / RAGFLOW_EMBEDDING_MODEL /
+#   RAGFLOW_EMBEDDING_REVISION / RAGFLOW_IMAGE_DIGEST / RAGFLOW_SOURCE_SHA
+#
+# 没配这些 secret 时 `real-guard` 这一道门会红——**那是设计如此**。
+# 这道门不允许加 `if: secrets.X != ''` 之类的条件跳过：跳过就等于把
+# 「没跑」记成「跑通」，正是这道门要防的事。
+#
+# 变量取值口径见 `docs/ragflow-lock.md` §3（镜像 digest 与嵌入模型修订号
+# 都在那里逐项说明了取值来源）。
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# 只读权限：CI 不写仓库、不开 PR、不触发别的 workflow。
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  unit:
+    name: unit (tests/unit)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm test:unit
+
+      - name: 上传报告产物（summary.json / cases.json）
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reports-unit
+          path: reports/
+          if-no-files-found: ignore
+          retention-days: 14
+
+  contract:
+    name: contract (tests/contract)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm test:contract
+
+      - name: 上传报告产物（summary.json / cases.json）
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reports-contract
+          path: reports/
+          if-no-files-found: ignore
+          retention-days: 14
+
+  real-guard:
+    name: real-guard (真实 RAGFlow 联调门 · fail-closed)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    # 真实层要一个隔离库：每个用例自建 schema、结束即删。
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: aip_test
+          POSTGRES_PASSWORD: aip_test_pw
+          POSTGRES_DB: aip_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      AIP_TEST_DATABASE_URL: postgres://aip_test:aip_test_pw@localhost:5432/aip_test
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # 自检：证明这道门在缺配置时确实会红。
+      # 这一步刻意**不**注入任何 RAGFLOW_* 变量——它要的就是「缺配置」这个前提。
+      # 断言两件事：退出码非零、失败原因确实是「缺配置」。
+      - name: fail-closed 自检（缺配置时必须红）
+        run: |
+          set +e
+          output="$(pnpm test:ragflow:real:guard 2>&1)"
+          status=$?
+          set -e
+          printf '%s\n' "$output"
+          if [ "$status" -eq 0 ]; then
+            echo "::error::real-guard 在缺上游配置时以 0 退出——CI 会把「没跑」判成「跑通」，违反 fail-closed 约定。"
+            exit 1
+          fi
+          if ! printf '%s' "$output" | grep -q "required configuration is missing"; then
+            echo "::error::real-guard 缺配置时不是因「缺配置」失败：失败原因不对，失败路径不可判定。"
+            exit 1
+          fi
+          echo "fail-closed 自检通过：缺配置时以非零退出（exit=${status}）并明确列出缺失项。"
+
+      # 真跑：配置齐备时这道门必须真的跑绿。
+      # secret 没配 → 变量为空 → 上面那道自检已经证明它会红，不会被误判成通过。
+      - name: real-guard（配置齐备时必须真的跑绿）
+        env:
+          RAGFLOW_BASE_URL: ${{ secrets.RAGFLOW_BASE_URL }}
+          RAGFLOW_API_KEY: ${{ secrets.RAGFLOW_API_KEY }}
+          RAGFLOW_API_VERSION: ${{ secrets.RAGFLOW_API_VERSION }}
+          RAGFLOW_TEST_PROJECT_ID: ${{ secrets.RAGFLOW_TEST_PROJECT_ID }}
+          RAGFLOW_EMBEDDING_MODEL: ${{ secrets.RAGFLOW_EMBEDDING_MODEL }}
+          RAGFLOW_EMBEDDING_REVISION: ${{ secrets.RAGFLOW_EMBEDDING_REVISION }}
+          RAGFLOW_IMAGE_DIGEST: ${{ secrets.RAGFLOW_IMAGE_DIGEST }}
+          RAGFLOW_SOURCE_SHA: ${{ secrets.RAGFLOW_SOURCE_SHA }}
+        run: pnpm test:ragflow:real:guard
+
+      - name: 上传报告产物（summary.json / cases.json）
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reports-real
+          path: reports/
+          if-no-files-found: ignore
+          retention-days: 14
