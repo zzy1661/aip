@@ -227,12 +227,24 @@ $ echo $?
 ### 5.1 CI 的实际状态：已跑起来，而且第一轮就抓到了真问题
 
 workflow 合入 `main` 之后，CI **真的跑起来了**（`push: branches: [main]` 触发）。
-第一轮运行就抓到一处**真问题**，已修：
+第一轮运行就抓到一处**真问题**，已修；第二轮修完即符合预期。
 
 | 轮次 | unit | contract | real-guard |
 | --- | --- | --- | --- |
 | 第 1 轮 | ❌ 红 | ❌ 红 | ❌ 红（**按设计**） |
 | 原因 | `connect ECONNREFUSED 127.0.0.1:55433` | 同左 | 缺 8 项上游配置 → fail-closed |
+| 第 2 轮 | ✅ **绿**（72/72） | ✅ **绿**（116/116） | ❌ 红（**按设计**：fail-closed 自检 ✅ 绿，配置齐备那步 ❌ 红） |
+
+第 2 轮运行：[`CI #40904222231`](https://github.com/zzy1661/aip/actions/runs/40904222231)
+（`main` @ `e99fcbe`，event = push，2026-10-29T15:42:07Z → 15:43:21Z）。
+三个 job 的 step 级结论：
+
+| job | 关键 step | 结论 |
+| --- | --- | --- |
+| `unit` | `pnpm test:unit` | ✅ success |
+| `contract` | `pnpm test:contract` | ✅ success |
+| `real-guard` | **fail-closed 自检（缺配置时必须红）** | ✅ success（它确认了 guard 确实红了，且红的原因正确） |
+| `real-guard` | **real-guard（配置齐备时必须真的跑绿）** | ❌ failure（仓库一个 secret 都没配 → 门红） |
 
 **unit / contract 也需要 PostgreSQL。** 本地跑绿是因为本机恰好有 `aip-test-postgres`
 在 `127.0.0.1:55433`；GitHub 的 runner 上没有这个库，两层里凡是会建隔离 schema 的用例
@@ -244,10 +256,17 @@ workflow 合入 `main` 之后，CI **真的跑起来了**（`push: branches: [ma
 > 判断某层需不需要外部依赖，要看它有没有落到 `tests/helpers/db.ts` 那条建 schema 的路径上，
 > 而不是看它被放在哪个目录。
 
-**real-guard 的红是设计如此**：仓库里一个 Actions secret 都没配（`GET /actions/secrets`
-返回 `total_count: 0`），所以第二个 step 必然红——这正是 fail-closed。
-同一个 job 的第一个 step（**fail-closed 自检**）是**绿的**：它确认了 guard 在缺配置时
-以非零退出、并明确列出缺失的 8 项。一道门同时给出「该红时红」和「红的原因正确」两个事实。
+**CI 自己也会产出同样的记录。** 第 2 轮上传的三个 artifact 里的 `summary.json`
+与本表 §6.2 入仓的那批**同构**：
+
+| artifact | `commit` | `dirty` | `counts` | `run_end_reason` | `ragflow.source_sha` |
+| --- | --- | --- | --- | --- | --- |
+| `reports-unit` | `e99fcbe` | `false` | 72 / 72 / 0 / 0 | `passed` | `mock` |
+| `reports-contract` | `e99fcbe` | `false` | 116 / 116 / 0 / 0 | `passed` | `mock` |
+| `reports-real` | `e99fcbe` | `false` | 15 / 0 / 0 / **15 not_run** | **`failed`** | **`null`** |
+
+`reports-real` 就是 §3.5 那份「没跑就是没跑」的证据：`ragflow.source_sha = null`
+——**没有上游事实 = 没有真的跑过**，这道门不认「跳过即通过」。
 
 **要让它变绿需要什么**（只差这一件事了）：
 
@@ -352,3 +371,4 @@ cp -R reports/<sha>/<mode> docs/acceptance-evidence/<sha>/<mode>
 | --- | --- | --- |
 | 2026-10-29 | 首版：建立跨仓总表；证据摘要从 gitignore 的 `reports/` 迁到 `docs/acceptance-evidence/<sha>/`；两仓各加最小 CI | ZACH-28 |
 | 2026-10-29 | aip 分支合入 `main`（合并提交 `ff4ac58`）。CI **真实跑起来**，第一轮即暴露「`unit` / `contract` 也需要 PostgreSQL」——本机有 `aip-test-postgres` 把这个依赖掩盖了。三个 job 补上 `postgres:16-alpine` service 与 `AIP_TEST_DATABASE_URL`；总表 §2 / §5.1 同步更正 | ZACH-28（按需求方指示合入 main） |
+| 2026-10-29 | 修完后的第 2 轮 CI（`e99fcbe`）：`unit` ✅ 72/72、`contract` ✅ 116/116、`real-guard` ❌（fail-closed 自检 ✅，配置齐备那步 ❌——仓库未配上游 secret）。CI 自己的 artifact 里的 `summary.json` 与入仓那批同构（`commit=e99fcbe`、`dirty=false`）。总表 §5.1 补齐两轮对照与 artifact 对照 | ZACH-28 |
