@@ -1,9 +1,12 @@
 # aip 的最小 CI：三道门，与 `docs/acceptance-evidence.md` 的「门」列一一对应。
 #
 # 口径（与 ZACH-28 的交付口径一致）：
-# - `unit` / `contract` 两道门不需要任何上游，跑通就是跑通；
+# - `unit` / `contract` 两道门不需要任何**上游**（RAGFlow），但**需要 PostgreSQL**：
+#   两层里都有用例会建隔离 schema（见 `tests/helpers/db.ts`），
+#   所以三个 job 都起一个 `postgres:16-alpine` service 并注入 `AIP_TEST_DATABASE_URL`。
+#   少了这个 service，两层都会以 `connect ECONNREFUSED` 失败——这是真失败，不是环境噪声。
 # - `real-guard` 是**真实 RAGFlow 联调门**，它 fail-closed：
-#   缺上游配置时以非零退出（红灯），**绝不用 skip 冒充通过**；
+#   缺上游配置时以非零退出（红灯），**绝不用 skip 冒充通过**。
 # - 仓库里不写任何密钥与上游地址：全部从仓库 secret 读，这里只留变量名。
 #
 # 需要配置的仓库 secret（Settings → Secrets and variables → Actions）：
@@ -39,6 +42,23 @@ jobs:
     name: unit (tests/unit)
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    # 用例会建隔离 schema（每个用例自建、结束即删），所以要一个 PostgreSQL。
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: aip_test
+          POSTGRES_PASSWORD: aip_test_pw
+          POSTGRES_DB: aip_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      AIP_TEST_DATABASE_URL: postgres://aip_test:aip_test_pw@localhost:5432/aip_test
     steps:
       - uses: actions/checkout@v4
 
@@ -68,6 +88,22 @@ jobs:
     name: contract (tests/contract)
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: aip_test
+          POSTGRES_PASSWORD: aip_test_pw
+          POSTGRES_DB: aip_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      AIP_TEST_DATABASE_URL: postgres://aip_test:aip_test_pw@localhost:5432/aip_test
     steps:
       - uses: actions/checkout@v4
 
@@ -97,7 +133,6 @@ jobs:
     name: real-guard (真实 RAGFlow 联调门 · fail-closed)
     runs-on: ubuntu-latest
     timeout-minutes: 45
-    # 真实层要一个隔离库：每个用例自建 schema、结束即删。
     services:
       postgres:
         image: postgres:16-alpine
@@ -149,7 +184,7 @@ jobs:
           echo "fail-closed 自检通过：缺配置时以非零退出（exit=${status}）并明确列出缺失项。"
 
       # 真跑：配置齐备时这道门必须真的跑绿。
-      # secret 没配 → 变量为空 → 上面那道自检已经证明它会红，不会被误判成通过。
+      # secret 没配 → 变量为空 → 这道门红（fail-closed），不会被误判成通过。
       - name: real-guard（配置齐备时必须真的跑绿）
         env:
           RAGFLOW_BASE_URL: ${{ secrets.RAGFLOW_BASE_URL }}

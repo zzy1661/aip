@@ -60,24 +60,32 @@
 | aip | `feat/zach-28-acceptance-evidence-ci` | `4f1eb40f9ae2f0e7dc996571f6c0f1f3635df7f4` | `main` = `0a0775c`（+1：CI 配置） | clean（`dirty=false`） |
 | onto | `feat/zach-28-acceptance-evidence-ci` | `30bf3dea812ad7c5f716a2701a4eeb0fb0df641b` | `main` = `f29d3ba`（+1：CI 配置） | clean（`dirty=false`） |
 
-两仓都**只推分支、不合并**。真实组合验收层是**跨仓**的：它同时跑 onto 的页面与 aip 的后端，
+两仓的分支都已推送。**aip 的分支已按要求合入 `main`**（合并提交见 §8 变更记录），
+所以 §2.1 里 aip 各道的运行记录**就是 `main` 上 CI 会跑的那几道**。
+onto 的分支**未**合入 `main`——本轮只合了 aip。
+
+真实组合验收层是**跨仓**的：它同时跑 onto 的页面与 aip 的后端，
 所以 §2 的 G8 一行同时绑定两个 SHA。
 
 ## 2. 门清单（Gate）
 
 「门」是**可独立跑、可独立判红绿**的一道检查。总表每一行都挂在下面某道门上。
 
-| 门 | 仓 | 跑什么 | 复跑命令 | 需要上游 | CI 位置 |
-| --- | --- | --- | --- | --- | --- |
-| **G1** unit | aip | `tests/unit/**` | `pnpm test:unit` | 否 | `.github/workflows/ci.yml` → job `unit` |
-| **G2** contract | aip | `tests/contract/**` | `pnpm test:contract` | 否（用仓内置替身） | 同上 → job `contract` |
-| **G3** db | aip | `tests/db/**` | `pnpm test:db` | 需一个隔离 PG（`AIP_TEST_DATABASE_URL`） | 不在最小 CI 内（见 §5） |
-| **G4** e2e | aip | `tests/e2e/**` | `pnpm test:e2e` | 需一个隔离 PG | 不在最小 CI 内（见 §5） |
-| **G5** real-guard | aip | `tests/real/**`（**真实 RAGFlow**） | `pnpm test:ragflow:real:guard` | **是**（真实上游 8 个变量） | 同上 → job `real-guard` |
-| **G5-b** real-guard 失败路径 | aip | 同 G5，但**故意不配上游** | `pnpm test:ragflow:real:guard`（清空 `RAGFLOW_*`） | 否（就是要缺） | 同上 → job `real-guard` 的第一步 |
-| **G6** typecheck | onto | `tsc --noEmit` | `pnpm typecheck` | 否 | `onto/.github/workflows/ci.yml` → job `typecheck` |
-| **G7** test | onto | `pnpm -r test`（platform-shared / server / console / studio） | `pnpm test` | 否 | 同上 → job `test` |
-| **G8** real layer | onto | `console/real/**`（页面 × **真实 aip** × **真实 PG** × **真实 RAGFlow**） | `scripts/real-acceptance.sh up` → `pnpm --filter @onto/console test:platform:real` | **是**（完整起栈 + 凭据） | 不在最小 CI 内（见 §5） |
+| 门 | 仓 | 跑什么 | 复跑命令 | 需要 PG | 需要真实上游 | CI 位置 |
+| --- | --- | --- | --- | --- | --- | --- |
+| **G1** unit | aip | `tests/unit/**` | `pnpm test:unit` | **是** | 否 | `.github/workflows/ci.yml` → job `unit` |
+| **G2** contract | aip | `tests/contract/**` | `pnpm test:contract` | **是** | 否（用仓内置替身） | 同上 → job `contract` |
+| **G3** db | aip | `tests/db/**` | `pnpm test:db` | **是** | 否 | 不在最小 CI 内（见 §5） |
+| **G4** e2e | aip | `tests/e2e/**` | `pnpm test:e2e` | **是** | 否 | 不在最小 CI 内（见 §5） |
+| **G5** real-guard | aip | `tests/real/**`（**真实 RAGFlow**） | `pnpm test:ragflow:real:guard` | **是** | **是**（真实上游 8 个变量） | 同上 → job `real-guard` |
+| **G5-b** real-guard 失败路径 | aip | 同 G5，但**故意不配上游** | `pnpm test:ragflow:real:guard`（清空 `RAGFLOW_*`） | 是（但用例会先因缺配置而退出） | 否（就是要缺） | 同上 → job `real-guard` 的第一步 |
+| **G6** typecheck | onto | `tsc --noEmit` | `pnpm typecheck` | 否 | 否 | `onto/.github/workflows/ci.yml` → job `typecheck` |
+| **G7** test | onto | `pnpm -r test`（platform-shared / server / console / studio） | `pnpm test` | 否 | 否 | 同上 → job `test` |
+| **G8** real layer | onto | `console/real/**`（页面 × **真实 aip** × **真实 PG** × **真实 RAGFlow**） | `scripts/real-acceptance.sh up` → `pnpm --filter @onto/console test:platform:real` | **是** | **是**（完整起栈 + 凭据） | 不在最小 CI 内（见 §5） |
+
+> **「需要 PG」这一列是第一轮 CI 跑出来的**：aip 的 `unit` / `contract` 层里都有用例会建隔离 schema
+> （`tests/helpers/db.ts`），所以它们**也**需要 PostgreSQL，不只是 `db` / `e2e` / `real` 层。
+> 本地跑绿时本机恰好有 `aip-test-postgres` 在跑，把这个依赖掩盖了。详见 §5.1。
 
 ### 2.1 本轮每道门的运行记录
 
@@ -213,37 +221,47 @@ $ echo $?
 
 | 仓 | workflow | 门 | 状态 |
 | --- | --- | --- | --- |
-| aip | `.github/workflows/ci.yml` | `unit`、`contract`、`real-guard` | workflow 文件已随分支提交并推送；**GitHub 上尚未跑过一次真实 CI**（原因见 §5.1） |
-| onto | `.github/workflows/ci.yml` | `typecheck`、`test` | 同上 |
+| aip | `.github/workflows/ci.yml` | `unit`、`contract`、`real-guard` | **已合入 `main` 并真实跑过**；`unit`/`contract` 已绿，`real-guard` 因仓库未配上游 secret 而红（按设计，详见 §5.1） |
+| onto | `.github/workflows/ci.yml` | `typecheck`、`test` | workflow 文件已随分支提交并推送；onto 未合入 `main`（本轮只合了 aip） |
 
-### 5.1 本轮 CI 的实际状态（不伪造）
+### 5.1 CI 的实际状态：已跑起来，而且第一轮就抓到了真问题
 
-**workflow 文件在分支上，GitHub 上没有跑过真实 CI。** 原因不是权限不足，是 GitHub 的机制：
+workflow 合入 `main` 之后，CI **真的跑起来了**（`push: branches: [main]` 触发）。
+第一轮运行就抓到一处**真问题**，已修：
 
-- workflow 只有**存在于默认分支（`main`）**时才会被 GitHub 注册；
-  `GET /repos/{owner}/{repo}/actions/workflows` 目前返回 `total_count: 0`。
-- 因此 `workflow_dispatch` 的 API 调用（`POST /actions/workflows/ci.yml/dispatches`）
-  两仓都返回 **404**；`GET /actions/runs` 返回 `total_count: 0`。
-- 本 issue 的授权范围是「**只推分支，不合并、不部署**」——
-  把 workflow 放进 `main` 需要合并，开 PR 又超出「只推分支」。
+| 轮次 | unit | contract | real-guard |
+| --- | --- | --- | --- |
+| 第 1 轮 | ❌ 红 | ❌ 红 | ❌ 红（**按设计**） |
+| 原因 | `connect ECONNREFUSED 127.0.0.1:55433` | 同左 | 缺 8 项上游配置 → fail-closed |
 
-**补完最后一步需要什么**（三件事，缺一不可）：
+**unit / contract 也需要 PostgreSQL。** 本地跑绿是因为本机恰好有 `aip-test-postgres`
+在 `127.0.0.1:55433`；GitHub 的 runner 上没有这个库，两层里凡是会建隔离 schema 的用例
+（`tests/unit/` 的 4 个文件、`tests/contract/` 的 24 个文件）全部 `ECONNREFUSED`。
+**这不是产品缺陷，是 CI 配置漏了依赖**：三个 job 现在都起 `postgres:16-alpine` service
+并注入 `AIP_TEST_DATABASE_URL`。
 
-1. **让 workflow 进入默认分支**：把 `feat/zach-28-acceptance-evidence-ci` 合入 `main`
-   （或开一个 PR——`pull_request` 事件会自动触发这两份 workflow）。
-2. **配 8 个仓库 secret**（Settings → Secrets and variables → Actions）：
+> 这条经验值得留在文档里：**「本地绿」不等于「CI 绿」**。
+> 判断某层需不需要外部依赖，要看它有没有落到 `tests/helpers/db.ts` 那条建 schema 的路径上，
+> 而不是看它被放在哪个目录。
+
+**real-guard 的红是设计如此**：仓库里一个 Actions secret 都没配（`GET /actions/secrets`
+返回 `total_count: 0`），所以第二个 step 必然红——这正是 fail-closed。
+同一个 job 的第一个 step（**fail-closed 自检**）是**绿的**：它确认了 guard 在缺配置时
+以非零退出、并明确列出缺失的 8 项。一道门同时给出「该红时红」和「红的原因正确」两个事实。
+
+**要让它变绿需要什么**（只差这一件事了）：
+
+1. **配 8 个仓库 secret**（Settings → Secrets and variables → Actions）：
    `RAGFLOW_BASE_URL` / `RAGFLOW_API_KEY` / `RAGFLOW_API_VERSION` / `RAGFLOW_TEST_PROJECT_ID` /
    `RAGFLOW_EMBEDDING_MODEL` / `RAGFLOW_EMBEDDING_REVISION` / `RAGFLOW_IMAGE_DIGEST` / `RAGFLOW_SOURCE_SHA`。
-   **不配也能跑**——`real-guard` 会**红**（这正是 fail-closed 的设计），但不会绿。
-3. **token 权限**：推 workflow 需要 `workflow` scope（本机 token 已具备：
+   **不配它就红**——那不是可以忽略的噪声，正是这道门要拦的「把没跑记成跑通」。
+2. **token 权限**：推 workflow 需要 `workflow` scope（本机 token 已具备：
    `read:user, repo, user:email, workflow`）。
 
-**在此之前，本地已把 CI 的每一步都按同样命令在同一个 head 上真跑过一遍**
-（`pnpm install --frozen-lockfile` + 各 job 的 `run` 命令，见 §2.1）。
-唯一的差异是 `real-guard` job 的 PostgreSQL：CI 里用 `services.postgres` 容器
-（`postgres:16-alpine`，`POSTGRES_USER=aip_test` / `POSTGRES_PASSWORD=aip_test_pw` /
-`POSTGRES_DB=aip_test`，映射到 `localhost:5432`），本地跑的是同镜像的既有容器
-`aip-test-postgres`（`127.0.0.1:55433`，同名角色与同名库）。
+**在本机也按同样命令复跑过一遍**（`pnpm install --frozen-lockfile` + 各 job 的 `run` 命令，
+见 §2.1）。唯一的差异是 PostgreSQL：CI 里用 `services.postgres` 容器
+（`postgres:16-alpine`，`aip_test` / `aip_test_pw` / `aip_test`，映射到 `localhost:5432`），
+本地跑的是同镜像的既有容器 `aip-test-postgres`（`127.0.0.1:55433`，同名角色与同名库）。
 **连接串的端口不同，库结构、角色与用例行为一致**——每个用例自建 schema、结束即删。
 
 `real-guard` job 里那段 fail-closed 自检的 bash 是**逐字从 workflow 里抽出来执行的**：
@@ -257,9 +275,11 @@ $ echo $?
 
 **为什么 G3 / G4 / G8 不在最小 CI 里**：
 
-- **G3 / G4**（db / e2e 层）需要 PostgreSQL 实例与角色隔离，不是「装完依赖就能跑」的一道门；
-  把它们塞进最小 CI 会让 CI 的定位变模糊。本轮已在本地把它们跑绿并落了摘要
-  （`docs/acceptance-evidence/<sha>/db/summary.json`、`e2e/summary.json`）。
+- **G3 / G4**（db / e2e 层）除了 PostgreSQL 之外，还要**角色隔离**：
+  M01 / M02 的实例级用例需要显式的 `AIP_TEST_ADMIN_DATABASE_URL`（专用实例 + 建角色建库），
+  没配就整组记 NOT RUN。把「有时会整组 NOT RUN」的门放进最小 CI，会让 CI 的红绿含义变模糊。
+  （注意：**PG 本身不是排除理由**——`unit` / `contract` 也需要 PG，它们同样在 CI 里带了 service。）
+  本轮已在本地把它们跑绿并落了摘要（`docs/acceptance-evidence/<sha>/db/summary.json`、`e2e/summary.json`）。
 - **G8**（onto 真实组合验收层）需要完整起栈（PostgreSQL + 三个 aip 实例 + worker + 路由代理 +
   正式构建预览）与真实 RAGFlow 凭据，是**一次性的人工 / 专用环境门**，不是 PR 门。
   它由 `scripts/real-acceptance.sh` 一条命令起栈，复跑记录在
@@ -331,3 +351,4 @@ cp -R reports/<sha>/<mode> docs/acceptance-evidence/<sha>/<mode>
 | 日期 | 变更 | 出处 |
 | --- | --- | --- |
 | 2026-10-29 | 首版：建立跨仓总表；证据摘要从 gitignore 的 `reports/` 迁到 `docs/acceptance-evidence/<sha>/`；两仓各加最小 CI | ZACH-28 |
+| 2026-10-29 | aip 分支合入 `main`（合并提交 `ff4ac58`）。CI **真实跑起来**，第一轮即暴露「`unit` / `contract` 也需要 PostgreSQL」——本机有 `aip-test-postgres` 把这个依赖掩盖了。三个 job 补上 `postgres:16-alpine` service 与 `AIP_TEST_DATABASE_URL`；总表 §2 / §5.1 同步更正 | ZACH-28（按需求方指示合入 main） |
