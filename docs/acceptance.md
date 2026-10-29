@@ -237,6 +237,7 @@ ZACH-10 复审发现（既有行为，非某次改动引入）：已批准且可
 | 「概念不存在」与「本体未发布」可区分 | `CONCEPT_NOT_FOUND`（404）vs `ONTOLOGY_NOT_PUBLISHED`（409），机器可读的 `error_code`；`onto/server/src/verify.ts` 第 35 节逐条比对夹具 | FULL |
 | aip 换契约：从「假设契约」改为冻结契约 | `services/api/src/ontology/client.ts`（按契约逐字段核对；契约不符 → 503，语义不符 → 422 并指出引用） | FULL |
 | 双向契约测试：两端共用同一份 fixture，任一侧改字段另一侧变红 | aip：`tests/contract/onto-concept-contract.test.ts`（含 6 个「字段被改名 → 必须变红」的证伪用例 + 类型/版本/发布状态的语义证伪）；onto：`server/src/runtime/concepts.test.ts` + `server/src/verify.ts` 第 35 节（真库、真路由、逐字段相等） | FULL |
+| **实测三种漂移都会亮红灯**（不是声称，是跑出来的） | ① 改 onto 实现（`data_type` → `datatype`）→ onto 验收跑红：`FAIL 响应体与共享夹具逐字段相等 → 不一致：result.concept.datatype, result.concept.data_type`（333 通过 / 1 失败）；② 改 aip 实现（客户端改读 `datatype`）→ aip 契约测试红：5 条失败；③ 契约漂移（onto 夹具改名并同步到 aip）→ **没改的那一侧**红：aip `FAIL 共享夹具的 sha256 与记录一致 → expected 'f6cf272c…' to be 'e0fc5a6c…'`，另有 4 条语义断言同时失败 | FULL |
 | 证据①：概念存在且已发布 → **校验通过**（正向一侧） | `tests/onto-real/onto-concept-query.test.ts`「概念存在且已发布 → 注册通过（正向证据）」，真实 onto + 真实 aip API，**201** | FULL |
 | 证据②：概念不存在 → **422 且精确指出引用** | 同上「概念不存在 → 422，并精确指出该引用」：422 `CONTRACT_INVALID`，`details[0].reason` 含该引用，`details[0].field_path` = `payload.input_contract[0].concept_ref` | FULL |
 | 失败关闭：本体不可达不降级为通过 | `tests/onto-real/onto-concept-query.test.ts`「本体服务不可达时返回 ONTO_UNAVAILABLE」：503 `ONTO_UNAVAILABLE`；既有 `tests/unit/concept-gate.test.ts` 同步保持 | FULL |
