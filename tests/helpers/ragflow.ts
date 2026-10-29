@@ -28,6 +28,14 @@ export interface FakeResponse {
   drop?: boolean;
   /** 响应前延迟，用于超时与竞态场景。 */
   delayMs?: number;
+  /**
+   * 挂起：上游已经受理请求（文档已登记），但永远不返回响应。
+   *
+   * 与 drop 的区别：drop 是「请求没送达」，hang 是「请求已送达、结果未回」。
+   * 崩溃恢复用例要落在后者上：发送意图已落库、上游已有同名文档，
+   * 只有响应没回来，接管者才能靠只读核对认领而不是重传。
+   */
+  hang?: boolean;
 }
 
 export interface FakeDataset {
@@ -65,6 +73,13 @@ interface QueuedResponse {
 export interface FakeRagFlow {
   url: string;
   calls: RecordedCall[];
+  /**
+   * 当前还开着的连接数。
+   *
+   * 进程被 SIGKILL 之后，它在上游这边的连接必须一起消失：
+   * 用它证明「那个进程真的没了」，而不只是「pid 被回收了」。
+   */
+  openConnections(): number;
   datasets: Map<string, FakeDataset>;
   documents: Map<string, FakeDocument>;
   retrievalChunks: FakeChunk[];
@@ -122,12 +137,18 @@ export async function startFakeRagFlow(): Promise<FakeRagFlow> {
   const queue: QueuedResponse[] = [];
   const retrievalChunks: FakeChunk[] = [];
   let counter = 0;
+  /** 挂起标记：只在本轮路由处理期间为真（路由处理是同步的）。 */
+  let hanging = false;
   const nextId = (prefix: string): string => {
     counter += 1;
     return `${prefix}-${String(counter).padStart(4, '0')}`;
   };
 
   function sendFake(res: http.ServerResponse, response: FakeResponse): void {
+    if (hanging) {
+      // 上游已受理请求（副作用已落库），但响应永不写出：客户端会一直等下去。
+      return;
+    }
     if (response.drop) {
       res.socket?.destroy();
       return;
@@ -274,6 +295,7 @@ export async function startFakeRagFlow(): Promise<FakeRagFlow> {
     sendFake(res, { status: 404, body: envelope(null, 'route not found') });
   }
 
+  const sockets = new Set<import('node:net').Socket>();
   const server = http.createServer((req, res) => {
     const chunks: Buffer[] = [];
     req.on('data', (chunk: Buffer) => chunks.push(chunk));
@@ -298,6 +320,16 @@ export async function startFakeRagFlow(): Promise<FakeRagFlow> {
       const queued = queue.find((entry) => entry.remaining > 0 && entry.match(call));
       if (queued) {
         queued.remaining -= 1;
+        if (queued.response.hang) {
+          // 挂起：仍然执行正常路由（文档等副作用照常登记），只是不写响应。
+          hanging = true;
+          try {
+            respond(res, call);
+          } finally {
+            hanging = false;
+          }
+          return;
+        }
         sendFake(res, queued.response);
         return;
       }
@@ -306,12 +338,18 @@ export async function startFakeRagFlow(): Promise<FakeRagFlow> {
     });
   });
 
+  server.on('connection', (socket) => {
+    sockets.add(socket);
+    socket.on('close', () => sockets.delete(socket));
+  });
+
   await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
   const address = server.address() as AddressInfo;
 
   return {
     url: `http://127.0.0.1:${address.port}`,
     calls,
+    openConnections: () => sockets.size,
     datasets,
     documents,
     retrievalChunks,
@@ -329,6 +367,8 @@ export async function startFakeRagFlow(): Promise<FakeRagFlow> {
       retrievalChunks.length = 0;
     },
     async close() {
+      // 挂起中的请求会一直占着连接：必须先强制断开，否则 close 永远等不到回调。
+      server.closeAllConnections();
       await new Promise<void>((resolve, reject) =>
         server.close((error) => (error ? reject(error) : resolve())),
       );
