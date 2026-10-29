@@ -1,0 +1,1290 @@
+{
+  "mode": "e2e",
+  "cases": [
+    {
+      "case": "M15 审核闭环 > 审核通过后落库审核记录并推进状态修订号",
+      "file": "tests/e2e/knowledge-review.test.ts",
+      "mode": "e2e",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 16,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "47b51812-fe21-4690-8a96-b778ac64c040",
+        "549d5cc2-a43c-403e-8c2d-6b4e51d82152",
+        "5c495849-8730-46be-b4b6-6a45807a3e96",
+        "6946735b-8c32-4b01-869e-ee4320fb79e8",
+        "6c33e5a4-058e-4fa6-b1b1-0339c9186582",
+        "72dc2d78-84be-4eaa-ab2a-c180416c7fd1",
+        "a21b0f0d-649e-4e0c-94a2-9dc40ca3ac09",
+        "c7f676a7-d041-4772-9f70-993a2b0640c1",
+        "d117943a-e3eb-435f-a648-42b5c80958b7",
+        "d291ae87-4c51-468c-a4e2-e92d3b964d75",
+        "eadbc6c2-b5eb-4df2-bcb3-40b6a023945a",
+        "ef80b9dd-6810-4b6d-9cbc-20621da9ba04",
+        "f7834d71-dd95-4761-b5ec-2e4b7bc97dec",
+        "fea19270-be65-4d38-96c6-25a2a829aa59"
+      ],
+      "sample_hash": "0fe957381610a64168cd91bee5c03bb4d7ce0b3b92f5945d6b65af506422589e",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M15 审核闭环 > expected_hash 与当前内容不符时拒绝审核",
+      "file": "tests/e2e/knowledge-review.test.ts",
+      "mode": "e2e",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 3,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "453770e8-cb0b-48de-9198-efa1078682a3",
+        "47b51812-fe21-4690-8a96-b778ac64c040",
+        "4f5aaa2c-5b22-4069-96fc-608576e451d0",
+        "549d5cc2-a43c-403e-8c2d-6b4e51d82152",
+        "6946735b-8c32-4b01-869e-ee4320fb79e8",
+        "6c33e5a4-058e-4fa6-b1b1-0339c9186582",
+        "72dc2d78-84be-4eaa-ab2a-c180416c7fd1",
+        "83e0fafa-291c-406e-87f7-75932704d91c",
+        "876b0d01-7eb7-47b7-89e8-e795c09c089c",
+        "a21b0f0d-649e-4e0c-94a2-9dc40ca3ac09",
+        "c7f676a7-d041-4772-9f70-993a2b0640c1",
+        "d291ae87-4c51-468c-a4e2-e92d3b964d75",
+        "eadbc6c2-b5eb-4df2-bcb3-40b6a023945a",
+        "ef80b9dd-6810-4b6d-9cbc-20621da9ba04"
+      ],
+      "sample_hash": "e1e4ff3cdb6d018d3eba528a8d19b698d6c1ea17fa2b0b3f5d47afa58d20d584",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M15 审核闭环 > 并发审核不会相互覆盖：状态修订号过期的一方被拒绝",
+      "file": "tests/e2e/knowledge-review.test.ts",
+      "mode": "e2e",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 3,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "06f46638-0e31-4e7e-b0b8-c28b7ed61b37",
+        "1176ce37-cc56-4635-830f-da5ca8e254d9",
+        "13abf308-7b25-4bf6-bcb1-29e57e30b2e8",
+        "47b51812-fe21-4690-8a96-b778ac64c040",
+        "549d5cc2-a43c-403e-8c2d-6b4e51d82152",
+        "6946735b-8c32-4b01-869e-ee4320fb79e8",
+        "6c33e5a4-058e-4fa6-b1b1-0339c9186582",
+        "72dc2d78-84be-4eaa-ab2a-c180416c7fd1",
+        "80aeba75-bcac-4b16-86b6-14f75911dcb1",
+        "a21b0f0d-649e-4e0c-94a2-9dc40ca3ac09",
+        "c7f676a7-d041-4772-9f70-993a2b0640c1",
+        "d291ae87-4c51-468c-a4e2-e92d3b964d75",
+        "eadbc6c2-b5eb-4df2-bcb3-40b6a023945a",
+        "ef80b9dd-6810-4b6d-9cbc-20621da9ba04"
+      ],
+      "sample_hash": "a47dae883587f9b52998b4db8720bd2b24b181a62f67e1e9a2380e68f6c19901",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M15 审核闭环 > 缺少 knowledge:review 权限的主体不能审核",
+      "file": "tests/e2e/knowledge-review.test.ts",
+      "mode": "e2e",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager",
+        "user-1/reader"
+      ],
+      "trace_ids": [
+        "1003fc9b-ccf9-49ef-8590-a3645be349fb",
+        "47b51812-fe21-4690-8a96-b778ac64c040",
+        "549d5cc2-a43c-403e-8c2d-6b4e51d82152",
+        "6344b5de-c745-4c69-917c-ad0cc0b41353",
+        "6946735b-8c32-4b01-869e-ee4320fb79e8",
+        "6c33e5a4-058e-4fa6-b1b1-0339c9186582",
+        "72dc2d78-84be-4eaa-ab2a-c180416c7fd1",
+        "a21b0f0d-649e-4e0c-94a2-9dc40ca3ac09",
+        "c7f676a7-d041-4772-9f70-993a2b0640c1",
+        "cb79598a-e0c4-43af-85b9-65ff629a52b8",
+        "d291ae87-4c51-468c-a4e2-e92d3b964d75",
+        "ea382c9c-fd5d-4835-920b-c5ec1fd2f0f8",
+        "eadbc6c2-b5eb-4df2-bcb3-40b6a023945a",
+        "ef80b9dd-6810-4b6d-9cbc-20621da9ba04"
+      ],
+      "sample_hash": "c1ee516e7b972f13b49520223a5a01a5285c4923890f1561f388838036c89a09",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M15 审核闭环 > 驳回时不写入有效期区间",
+      "file": "tests/e2e/knowledge-review.test.ts",
+      "mode": "e2e",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 3,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "3c593caf-7522-4b64-bdb3-db13010d9568",
+        "47b51812-fe21-4690-8a96-b778ac64c040",
+        "549d5cc2-a43c-403e-8c2d-6b4e51d82152",
+        "6946735b-8c32-4b01-869e-ee4320fb79e8",
+        "6c33e5a4-058e-4fa6-b1b1-0339c9186582",
+        "72dc2d78-84be-4eaa-ab2a-c180416c7fd1",
+        "a21b0f0d-649e-4e0c-94a2-9dc40ca3ac09",
+        "c2deb649-9beb-44e1-a96a-956b298cfe6e",
+        "c7f676a7-d041-4772-9f70-993a2b0640c1",
+        "d291ae87-4c51-468c-a4e2-e92d3b964d75",
+        "e30db5fd-681a-4d63-82c8-9bccda6f0623",
+        "e80bc3b8-c140-413a-8421-87e367fd4b17",
+        "eadbc6c2-b5eb-4df2-bcb3-40b6a023945a",
+        "ef80b9dd-6810-4b6d-9cbc-20621da9ba04"
+      ],
+      "sample_hash": "a44b10025d21d1eb4c81bf88abebd9105cc7ea1fc724a5773c0d8c5949ae2f75",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M15 审核闭环 > 被驳回的知识不可检索，且不产生上游请求",
+      "file": "tests/e2e/knowledge-review.test.ts",
+      "mode": "e2e",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 5,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "0e76bc47-97f3-4653-ac12-46c4fe1c543c",
+        "2d86f299-bcd6-4ec2-b231-0eedae1fb2c4",
+        "47b51812-fe21-4690-8a96-b778ac64c040",
+        "549d5cc2-a43c-403e-8c2d-6b4e51d82152",
+        "59ba1a49-24aa-4750-bd95-f8daa59c920e",
+        "5fc82e48-eb1d-4287-9ad8-e72c9e959c83",
+        "6946735b-8c32-4b01-869e-ee4320fb79e8",
+        "6c33e5a4-058e-4fa6-b1b1-0339c9186582",
+        "72dc2d78-84be-4eaa-ab2a-c180416c7fd1",
+        "a21b0f0d-649e-4e0c-94a2-9dc40ca3ac09",
+        "c7f676a7-d041-4772-9f70-993a2b0640c1",
+        "d291ae87-4c51-468c-a4e2-e92d3b964d75",
+        "eadbc6c2-b5eb-4df2-bcb3-40b6a023945a",
+        "ef80b9dd-6810-4b6d-9cbc-20621da9ba04",
+        "f34b7e8d-08fc-44f2-a886-f23568f82cdc"
+      ],
+      "sample_hash": "3e8b6f61a36d13273e651782374167f8c59b9324706ce7c25dd8267907a28705",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M15 审核闭环 > 有效期区间非法时拒绝审核",
+      "file": "tests/e2e/knowledge-review.test.ts",
+      "mode": "e2e",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "1c016aa5-0746-42ab-83d7-ebce79c12ac9",
+        "28f493af-2621-4de4-a272-f4e5dda0dba6",
+        "47b51812-fe21-4690-8a96-b778ac64c040",
+        "549d5cc2-a43c-403e-8c2d-6b4e51d82152",
+        "6946735b-8c32-4b01-869e-ee4320fb79e8",
+        "6c33e5a4-058e-4fa6-b1b1-0339c9186582",
+        "6c7c6115-dfae-4835-9f22-70d94055e08f",
+        "72dc2d78-84be-4eaa-ab2a-c180416c7fd1",
+        "7536df2d-190c-450a-9667-6a37ef95262a",
+        "a21b0f0d-649e-4e0c-94a2-9dc40ca3ac09",
+        "c7f676a7-d041-4772-9f70-993a2b0640c1",
+        "d291ae87-4c51-468c-a4e2-e92d3b964d75",
+        "eadbc6c2-b5eb-4df2-bcb3-40b6a023945a",
+        "ef80b9dd-6810-4b6d-9cbc-20621da9ba04"
+      ],
+      "sample_hash": "a24f42876a808e72a27945b81b6bc26aaadcde536da836a3e700fc725dc6fde6",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M15 审核闭环 > 审核人权限齐备时可以独立于上传者完成审核",
+      "file": "tests/e2e/knowledge-review.test.ts",
+      "mode": "e2e",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "reviewer-1/reviewer",
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "3ac30239-c556-4099-abe0-68148e26e6f2",
+        "47b51812-fe21-4690-8a96-b778ac64c040",
+        "549d5cc2-a43c-403e-8c2d-6b4e51d82152",
+        "6946735b-8c32-4b01-869e-ee4320fb79e8",
+        "6c33e5a4-058e-4fa6-b1b1-0339c9186582",
+        "72dc2d78-84be-4eaa-ab2a-c180416c7fd1",
+        "85923ebc-85c2-4293-a4fa-89c904cf2c7c",
+        "a21b0f0d-649e-4e0c-94a2-9dc40ca3ac09",
+        "c646b6f5-8b34-48b1-8a9b-55eb8d0a5ec1",
+        "c7f676a7-d041-4772-9f70-993a2b0640c1",
+        "d291ae87-4c51-468c-a4e2-e92d3b964d75",
+        "eadbc6c2-b5eb-4df2-bcb3-40b6a023945a",
+        "ef80b9dd-6810-4b6d-9cbc-20621da9ba04",
+        "f12634bc-1a41-484c-bd07-9fba4e639ce1"
+      ],
+      "sample_hash": "02a26ce1b0ff11acc15bfb9684cbd0aefbf9cf85fe78a107de0f14d9c29f6b49",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M21 来源引用 > 证据带有来源文件、来源版本与知识版本",
+      "file": "tests/e2e/citations.test.ts",
+      "mode": "e2e",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 12,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "47b51812-fe21-4690-8a96-b778ac64c040",
+        "549d5cc2-a43c-403e-8c2d-6b4e51d82152",
+        "5bcea2a2-cebf-491a-8c3a-348f6a0bd5e0",
+        "6946735b-8c32-4b01-869e-ee4320fb79e8",
+        "6c33e5a4-058e-4fa6-b1b1-0339c9186582",
+        "72dc2d78-84be-4eaa-ab2a-c180416c7fd1",
+        "7ab33b29-8ca4-4604-a9df-4b6115b72332",
+        "98e3d001-ce31-4a3c-86ec-0ee8bf35da44",
+        "a21b0f0d-649e-4e0c-94a2-9dc40ca3ac09",
+        "c7f676a7-d041-4772-9f70-993a2b0640c1",
+        "d291ae87-4c51-468c-a4e2-e92d3b964d75",
+        "e3c9740b-3e70-4326-a0f9-5af3fd3084e0",
+        "eadbc6c2-b5eb-4df2-bcb3-40b6a023945a",
+        "ef80b9dd-6810-4b6d-9cbc-20621da9ba04",
+        "f8a47565-9c4d-40e9-b461-aa75f72ce61c"
+      ],
+      "sample_hash": "612bb6ef78e443feafef38a4ac7e56a9e7b90ee2de78e9da685e3ab605f2116f",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M21 来源引用 > 没有可核验位置时标记 incomplete 而不是伪造页码",
+      "file": "tests/e2e/citations.test.ts",
+      "mode": "e2e",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 3,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "47b51812-fe21-4690-8a96-b778ac64c040",
+        "4b95cc21-5dcb-470c-8b4a-9016357c6ff2",
+        "549d5cc2-a43c-403e-8c2d-6b4e51d82152",
+        "6946735b-8c32-4b01-869e-ee4320fb79e8",
+        "6c33e5a4-058e-4fa6-b1b1-0339c9186582",
+        "72dc2d78-84be-4eaa-ab2a-c180416c7fd1",
+        "9e8c781a-6e84-4ad7-86f0-1eb67703ffba",
+        "a21b0f0d-649e-4e0c-94a2-9dc40ca3ac09",
+        "a23859b3-31bc-4162-94bb-54eba04c94c6",
+        "c14e51ab-e480-48af-92e4-ece3ec8664bb",
+        "c7f676a7-d041-4772-9f70-993a2b0640c1",
+        "d291ae87-4c51-468c-a4e2-e92d3b964d75",
+        "e8f78152-0342-4a94-bcdd-856361db30e2",
+        "eadbc6c2-b5eb-4df2-bcb3-40b6a023945a",
+        "ef80b9dd-6810-4b6d-9cbc-20621da9ba04"
+      ],
+      "sample_hash": "7980fcfefc5501ca59c0807c321e8fe75c713b324e6d3483dc8cad7a9aacc835",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M21 来源引用 > 证据详情可按 evidence_id 回查，且携带同样的来源定位",
+      "file": "tests/e2e/citations.test.ts",
+      "mode": "e2e",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 4,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "05e8a82f-1feb-4f61-8d54-e4f10335a24e",
+        "17acd3f5-7cd3-4791-901c-797083e58a08",
+        "3176a51a-d856-4421-88a1-2a7e5fb4a129",
+        "47b51812-fe21-4690-8a96-b778ac64c040",
+        "549d5cc2-a43c-403e-8c2d-6b4e51d82152",
+        "6946735b-8c32-4b01-869e-ee4320fb79e8",
+        "6c33e5a4-058e-4fa6-b1b1-0339c9186582",
+        "72dc2d78-84be-4eaa-ab2a-c180416c7fd1",
+        "8242b6ac-c06f-4367-921b-a7297c98b078",
+        "84336502-0731-4920-8422-c988292fe2fd",
+        "a21b0f0d-649e-4e0c-94a2-9dc40ca3ac09",
+        "bb6b2d24-2fd7-4f9e-aca8-bf2bb14e4563",
+        "c7f676a7-d041-4772-9f70-993a2b0640c1",
+        "d291ae87-4c51-468c-a4e2-e92d3b964d75",
+        "eadbc6c2-b5eb-4df2-bcb3-40b6a023945a",
+        "ef80b9dd-6810-4b6d-9cbc-20621da9ba04"
+      ],
+      "sample_hash": "30621cf8f8845eec7fc6ddd5420896b55146b21fe34b4badb394aeaa70e47bbc",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M21 来源引用 > 来源下载返回原始字节与内容哈希",
+      "file": "tests/e2e/citations.test.ts",
+      "mode": "e2e",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 3,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "2139ef06-ac4d-491e-9790-882f121c234d",
+        "258971a2-a46a-42bd-adfd-a0154acbd6b4",
+        "47b51812-fe21-4690-8a96-b778ac64c040",
+        "549d5cc2-a43c-403e-8c2d-6b4e51d82152",
+        "6946735b-8c32-4b01-869e-ee4320fb79e8",
+        "6c33e5a4-058e-4fa6-b1b1-0339c9186582",
+        "6cad60a2-4947-4902-bc39-565defeb9ece",
+        "72dc2d78-84be-4eaa-ab2a-c180416c7fd1",
+        "a21b0f0d-649e-4e0c-94a2-9dc40ca3ac09",
+        "abcbcd0c-a3b5-410c-bd19-b13cab962332",
+        "c7f676a7-d041-4772-9f70-993a2b0640c1",
+        "d291ae87-4c51-468c-a4e2-e92d3b964d75",
+        "e70b9fd7-1607-4d21-b6fc-582b83a246e9",
+        "eadbc6c2-b5eb-4df2-bcb3-40b6a023945a",
+        "ef80b9dd-6810-4b6d-9cbc-20621da9ba04"
+      ],
+      "sample_hash": "2d91bfd0ca81ebc849c69f0aab18c25a9e26c843dfc6a57f61f9ce27cb76f088",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M21 来源引用 > 证据快照落库并记录授权修订号",
+      "file": "tests/e2e/citations.test.ts",
+      "mode": "e2e",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 7,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "00d7528c-c886-42ea-bdb3-c3c893ead049",
+        "47b51812-fe21-4690-8a96-b778ac64c040",
+        "549d5cc2-a43c-403e-8c2d-6b4e51d82152",
+        "6946735b-8c32-4b01-869e-ee4320fb79e8",
+        "6c33e5a4-058e-4fa6-b1b1-0339c9186582",
+        "72dc2d78-84be-4eaa-ab2a-c180416c7fd1",
+        "77221655-3578-4b9c-aea9-08e6f7247e09",
+        "7b18ae49-8a45-443f-a257-40b21fe251ed",
+        "a21b0f0d-649e-4e0c-94a2-9dc40ca3ac09",
+        "a662fde7-6db6-4153-93b7-8d0d0ce24e1a",
+        "c7f676a7-d041-4772-9f70-993a2b0640c1",
+        "d291ae87-4c51-468c-a4e2-e92d3b964d75",
+        "eadbc6c2-b5eb-4df2-bcb3-40b6a023945a",
+        "ee79517c-cb53-467a-a9d7-33df91590b88",
+        "ef80b9dd-6810-4b6d-9cbc-20621da9ba04"
+      ],
+      "sample_hash": "e463e30e1cb13b5473893bc6d232a4d8b5ece42d56b493e726baba12f09c790d",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M21 来源引用 > 授权被撤销后证据详情不可回查",
+      "file": "tests/e2e/citations.test.ts",
+      "mode": "e2e",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 1,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "407aae44-8d17-4de7-a103-0631b06fe86c",
+        "47b51812-fe21-4690-8a96-b778ac64c040",
+        "549d5cc2-a43c-403e-8c2d-6b4e51d82152",
+        "5a628155-35fb-4808-afa7-b9079df5c702",
+        "6946735b-8c32-4b01-869e-ee4320fb79e8",
+        "6c33e5a4-058e-4fa6-b1b1-0339c9186582",
+        "6cad532a-9da0-4eaf-b745-eb4a74048ebd",
+        "72dc2d78-84be-4eaa-ab2a-c180416c7fd1",
+        "8bba8186-801e-48ca-9856-868ed69fb995",
+        "9c3680bc-9708-49b2-9588-0a9ee13842c6",
+        "a21b0f0d-649e-4e0c-94a2-9dc40ca3ac09",
+        "c7f676a7-d041-4772-9f70-993a2b0640c1",
+        "ceae43ba-e98a-4cbd-80b9-f024018679dd",
+        "d291ae87-4c51-468c-a4e2-e92d3b964d75",
+        "eadbc6c2-b5eb-4df2-bcb3-40b6a023945a",
+        "ef80b9dd-6810-4b6d-9cbc-20621da9ba04"
+      ],
+      "sample_hash": "5d371c214e8c2d6838878b720c295e698ec71aa13b24ebe7cb654d1ed9cab5f3",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M12 上传上限：HTTP 层的 20MiB 边界 > 恰好 20MiB 被接受",
+      "file": "tests/e2e/upload-limit-real.test.ts",
+      "mode": "e2e",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 1,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "47b51812-fe21-4690-8a96-b778ac64c040",
+        "549d5cc2-a43c-403e-8c2d-6b4e51d82152",
+        "6946735b-8c32-4b01-869e-ee4320fb79e8",
+        "6c33e5a4-058e-4fa6-b1b1-0339c9186582",
+        "72dc2d78-84be-4eaa-ab2a-c180416c7fd1",
+        "a21b0f0d-649e-4e0c-94a2-9dc40ca3ac09",
+        "c7f676a7-d041-4772-9f70-993a2b0640c1",
+        "d291ae87-4c51-468c-a4e2-e92d3b964d75",
+        "e6d78bd9-4b8c-4627-b8a5-3bfe67e5cd52",
+        "eadbc6c2-b5eb-4df2-bcb3-40b6a023945a",
+        "ef80b9dd-6810-4b6d-9cbc-20621da9ba04"
+      ],
+      "sample_hash": "081648046039d669aac53a0b306e8ef8a7c95a7e8a4ef418d784cc1b7f8f95e2",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M12 上传上限：HTTP 层的 20MiB 边界 > 超 1 字节被拒且不触达上游",
+      "file": "tests/e2e/upload-limit-real.test.ts",
+      "mode": "e2e",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 3,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "47b51812-fe21-4690-8a96-b778ac64c040",
+        "549d5cc2-a43c-403e-8c2d-6b4e51d82152",
+        "6946735b-8c32-4b01-869e-ee4320fb79e8",
+        "6c33e5a4-058e-4fa6-b1b1-0339c9186582",
+        "72dc2d78-84be-4eaa-ab2a-c180416c7fd1",
+        "a21b0f0d-649e-4e0c-94a2-9dc40ca3ac09",
+        "c7f676a7-d041-4772-9f70-993a2b0640c1",
+        "cc607cb8-288f-4293-9ac9-40e9ba693393",
+        "d291ae87-4c51-468c-a4e2-e92d3b964d75",
+        "eadbc6c2-b5eb-4df2-bcb3-40b6a023945a",
+        "ef80b9dd-6810-4b6d-9cbc-20621da9ba04"
+      ],
+      "sample_hash": "fa2c63563b4fea3366752e915eb6a9dab93f8c92a4d88ad96e99d06db98553f7",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M15 撤回全链路 > 撤回前可以检索到证据",
+      "file": "tests/e2e/withdraw.test.ts",
+      "mode": "e2e",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 3,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "02b5a98d-0b60-4b3f-aeb7-cc8df2783a2a",
+        "47b51812-fe21-4690-8a96-b778ac64c040",
+        "549d5cc2-a43c-403e-8c2d-6b4e51d82152",
+        "6946735b-8c32-4b01-869e-ee4320fb79e8",
+        "6c33e5a4-058e-4fa6-b1b1-0339c9186582",
+        "72dc2d78-84be-4eaa-ab2a-c180416c7fd1",
+        "a21b0f0d-649e-4e0c-94a2-9dc40ca3ac09",
+        "c7f676a7-d041-4772-9f70-993a2b0640c1",
+        "d291ae87-4c51-468c-a4e2-e92d3b964d75",
+        "eadbc6c2-b5eb-4df2-bcb3-40b6a023945a",
+        "ef80b9dd-6810-4b6d-9cbc-20621da9ba04"
+      ],
+      "sample_hash": "a2435941fc33f63c736463716bad2e76e546a63aee697ad19a24c037491dc8bd",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M15 撤回全链路 > 使用过期修订号撤回被拒绝",
+      "file": "tests/e2e/withdraw.test.ts",
+      "mode": "e2e",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "47b51812-fe21-4690-8a96-b778ac64c040",
+        "549d5cc2-a43c-403e-8c2d-6b4e51d82152",
+        "6946735b-8c32-4b01-869e-ee4320fb79e8",
+        "6c33e5a4-058e-4fa6-b1b1-0339c9186582",
+        "72dc2d78-84be-4eaa-ab2a-c180416c7fd1",
+        "a21b0f0d-649e-4e0c-94a2-9dc40ca3ac09",
+        "c7f676a7-d041-4772-9f70-993a2b0640c1",
+        "d291ae87-4c51-468c-a4e2-e92d3b964d75",
+        "eadbc6c2-b5eb-4df2-bcb3-40b6a023945a",
+        "ef80b9dd-6810-4b6d-9cbc-20621da9ba04",
+        "fe13d926-62c5-408c-af76-9f0f5ef08f11"
+      ],
+      "sample_hash": "2b2e2d78ae526f22c2fc0dac4a1b087ae47ac452f0b28c93e2d15d24a6c84053",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M15 撤回全链路 > 撤回成功后不再召回，版本状态变为 withdrawn",
+      "file": "tests/e2e/withdraw.test.ts",
+      "mode": "e2e",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 8,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "123e2f0d-6a0e-401c-910b-1bbd4abec17c",
+        "1e637d92-df3a-4f66-821e-0b2a034faae0",
+        "47b51812-fe21-4690-8a96-b778ac64c040",
+        "549d5cc2-a43c-403e-8c2d-6b4e51d82152",
+        "6946735b-8c32-4b01-869e-ee4320fb79e8",
+        "6c33e5a4-058e-4fa6-b1b1-0339c9186582",
+        "72dc2d78-84be-4eaa-ab2a-c180416c7fd1",
+        "a21b0f0d-649e-4e0c-94a2-9dc40ca3ac09",
+        "c7f676a7-d041-4772-9f70-993a2b0640c1",
+        "d291ae87-4c51-468c-a4e2-e92d3b964d75",
+        "e120ab39-4918-4b82-9305-aaf7d24c539e",
+        "eadbc6c2-b5eb-4df2-bcb3-40b6a023945a",
+        "ef0e4e53-2a4a-4620-a8f2-e6aabae2c964",
+        "ef80b9dd-6810-4b6d-9cbc-20621da9ba04"
+      ],
+      "sample_hash": "8f58ab4565f634061b1aa8cf173f94e7f9d175729a1f50fca784ae7f4402f9f5",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M15 撤回全链路 > 撤回后证据详情不可回查",
+      "file": "tests/e2e/withdraw.test.ts",
+      "mode": "e2e",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "47b51812-fe21-4690-8a96-b778ac64c040",
+        "549d5cc2-a43c-403e-8c2d-6b4e51d82152",
+        "6946735b-8c32-4b01-869e-ee4320fb79e8",
+        "6c33e5a4-058e-4fa6-b1b1-0339c9186582",
+        "72dc2d78-84be-4eaa-ab2a-c180416c7fd1",
+        "8bb283b8-8c78-44de-8fd2-523a01356798",
+        "a21b0f0d-649e-4e0c-94a2-9dc40ca3ac09",
+        "c7f676a7-d041-4772-9f70-993a2b0640c1",
+        "d291ae87-4c51-468c-a4e2-e92d3b964d75",
+        "eadbc6c2-b5eb-4df2-bcb3-40b6a023945a",
+        "ef80b9dd-6810-4b6d-9cbc-20621da9ba04"
+      ],
+      "sample_hash": "e32365f12be6716fcb66b086a9b19acadeabfa28977ebb49e3021820c29bdc76",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M15 撤回全链路 > 撤回登记 knowledge.withdraw 操作，推进到终态并删除远端文档",
+      "file": "tests/e2e/withdraw.test.ts",
+      "mode": "e2e",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 4,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "47b51812-fe21-4690-8a96-b778ac64c040",
+        "549d5cc2-a43c-403e-8c2d-6b4e51d82152",
+        "6946735b-8c32-4b01-869e-ee4320fb79e8",
+        "6c33e5a4-058e-4fa6-b1b1-0339c9186582",
+        "72dc2d78-84be-4eaa-ab2a-c180416c7fd1",
+        "a21b0f0d-649e-4e0c-94a2-9dc40ca3ac09",
+        "c7f676a7-d041-4772-9f70-993a2b0640c1",
+        "d291ae87-4c51-468c-a4e2-e92d3b964d75",
+        "e638a3ac-1395-4bdb-abf8-ade8df929d6a",
+        "eadbc6c2-b5eb-4df2-bcb3-40b6a023945a",
+        "ef80b9dd-6810-4b6d-9cbc-20621da9ba04"
+      ],
+      "sample_hash": "e32365f12be6716fcb66b086a9b19acadeabfa28977ebb49e3021820c29bdc76",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M15 撤回全链路 > 撤回推进授权修订号",
+      "file": "tests/e2e/withdraw.test.ts",
+      "mode": "e2e",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 1,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "47b51812-fe21-4690-8a96-b778ac64c040",
+        "549d5cc2-a43c-403e-8c2d-6b4e51d82152",
+        "6946735b-8c32-4b01-869e-ee4320fb79e8",
+        "6c33e5a4-058e-4fa6-b1b1-0339c9186582",
+        "72dc2d78-84be-4eaa-ab2a-c180416c7fd1",
+        "a21b0f0d-649e-4e0c-94a2-9dc40ca3ac09",
+        "c7f676a7-d041-4772-9f70-993a2b0640c1",
+        "d291ae87-4c51-468c-a4e2-e92d3b964d75",
+        "eadbc6c2-b5eb-4df2-bcb3-40b6a023945a",
+        "ef80b9dd-6810-4b6d-9cbc-20621da9ba04"
+      ],
+      "sample_hash": "22d8d839483bbda6c87c6d357852feebfecc136631c3a4a9aa7f3f5335ab5376",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M15 撤回全链路 > 缺少 knowledge:manage 权限的主体不能撤回",
+      "file": "tests/e2e/withdraw.test.ts",
+      "mode": "e2e",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "reader-1/reader",
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "32e62139-2f47-4b08-92a9-ab7c86713a6f",
+        "47b51812-fe21-4690-8a96-b778ac64c040",
+        "549d5cc2-a43c-403e-8c2d-6b4e51d82152",
+        "6946735b-8c32-4b01-869e-ee4320fb79e8",
+        "6c33e5a4-058e-4fa6-b1b1-0339c9186582",
+        "72dc2d78-84be-4eaa-ab2a-c180416c7fd1",
+        "a21b0f0d-649e-4e0c-94a2-9dc40ca3ac09",
+        "c7f676a7-d041-4772-9f70-993a2b0640c1",
+        "d291ae87-4c51-468c-a4e2-e92d3b964d75",
+        "eadbc6c2-b5eb-4df2-bcb3-40b6a023945a",
+        "ef80b9dd-6810-4b6d-9cbc-20621da9ba04"
+      ],
+      "sample_hash": "1ff9f7a27c1d466bf4c86f3d66f67b6193f78a2932b4435c6574e05e7a727532",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M15 撤回全链路 > 撤回请求缺少理由时按契约拒绝",
+      "file": "tests/e2e/withdraw.test.ts",
+      "mode": "e2e",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "47b51812-fe21-4690-8a96-b778ac64c040",
+        "549d5cc2-a43c-403e-8c2d-6b4e51d82152",
+        "6946735b-8c32-4b01-869e-ee4320fb79e8",
+        "6c33e5a4-058e-4fa6-b1b1-0339c9186582",
+        "72dc2d78-84be-4eaa-ab2a-c180416c7fd1",
+        "7793a48f-fe7e-4445-9a53-14956c791977",
+        "a21b0f0d-649e-4e0c-94a2-9dc40ca3ac09",
+        "c7f676a7-d041-4772-9f70-993a2b0640c1",
+        "d291ae87-4c51-468c-a4e2-e92d3b964d75",
+        "eadbc6c2-b5eb-4df2-bcb3-40b6a023945a",
+        "ef80b9dd-6810-4b6d-9cbc-20621da9ba04"
+      ],
+      "sample_hash": "5cb97c6e53dfe80db21592f3d48fb20139f461de4ed092aed8f1276e3eae6e38",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M15 撤回全链路 > 撤回后来源下载立即被拒，不等上游删索引完成",
+      "file": "tests/e2e/withdraw.test.ts",
+      "mode": "e2e",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "47b51812-fe21-4690-8a96-b778ac64c040",
+        "549d5cc2-a43c-403e-8c2d-6b4e51d82152",
+        "6946735b-8c32-4b01-869e-ee4320fb79e8",
+        "6c33e5a4-058e-4fa6-b1b1-0339c9186582",
+        "6d786dac-ff24-4bb1-adf0-f1159241fcdb",
+        "72dc2d78-84be-4eaa-ab2a-c180416c7fd1",
+        "a21b0f0d-649e-4e0c-94a2-9dc40ca3ac09",
+        "c7f676a7-d041-4772-9f70-993a2b0640c1",
+        "d291ae87-4c51-468c-a4e2-e92d3b964d75",
+        "eadbc6c2-b5eb-4df2-bcb3-40b6a023945a",
+        "ef80b9dd-6810-4b6d-9cbc-20621da9ba04"
+      ],
+      "sample_hash": "e32365f12be6716fcb66b086a9b19acadeabfa28977ebb49e3021820c29bdc76",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M-10 索引重建保留旧引用 > 重建前检索产生一条绑定首个索引修订的证据",
+      "file": "tests/e2e/index-rebuild.test.ts",
+      "mode": "e2e",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 3,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "47b51812-fe21-4690-8a96-b778ac64c040",
+        "549d5cc2-a43c-403e-8c2d-6b4e51d82152",
+        "6946735b-8c32-4b01-869e-ee4320fb79e8",
+        "6c33e5a4-058e-4fa6-b1b1-0339c9186582",
+        "72dc2d78-84be-4eaa-ab2a-c180416c7fd1",
+        "8eeb7ffb-c0ac-4ec0-af6c-69498a0787bf",
+        "a21b0f0d-649e-4e0c-94a2-9dc40ca3ac09",
+        "c7f676a7-d041-4772-9f70-993a2b0640c1",
+        "d291ae87-4c51-468c-a4e2-e92d3b964d75",
+        "eadbc6c2-b5eb-4df2-bcb3-40b6a023945a",
+        "ef80b9dd-6810-4b6d-9cbc-20621da9ba04"
+      ],
+      "sample_hash": "42f4342be2c5da299da01f0560778c2fcf168576f502419f5d8f94353097c74c",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M-10 索引重建保留旧引用 > 重建产生新的索引修订与新的映射行，旧映射不被覆盖",
+      "file": "tests/e2e/index-rebuild.test.ts",
+      "mode": "e2e",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 9,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "47b51812-fe21-4690-8a96-b778ac64c040",
+        "549d5cc2-a43c-403e-8c2d-6b4e51d82152",
+        "6946735b-8c32-4b01-869e-ee4320fb79e8",
+        "6c33e5a4-058e-4fa6-b1b1-0339c9186582",
+        "72dc2d78-84be-4eaa-ab2a-c180416c7fd1",
+        "a21b0f0d-649e-4e0c-94a2-9dc40ca3ac09",
+        "c7f676a7-d041-4772-9f70-993a2b0640c1",
+        "ca6a51c7-3b7a-48a2-8015-118ea81020c8",
+        "d291ae87-4c51-468c-a4e2-e92d3b964d75",
+        "eadbc6c2-b5eb-4df2-bcb3-40b6a023945a",
+        "ef80b9dd-6810-4b6d-9cbc-20621da9ba04",
+        "f43addc0-9919-4057-b617-e4b14f421656"
+      ],
+      "sample_hash": "558231c6a90cfa35d28b25a62111fbc228d19a18114abd1287bf1945c6d01afb",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M-10 索引重建保留旧引用 > 重建前的旧 evidence 仍然可读，且仍指向旧的索引修订",
+      "file": "tests/e2e/index-rebuild.test.ts",
+      "mode": "e2e",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "47b51812-fe21-4690-8a96-b778ac64c040",
+        "549d5cc2-a43c-403e-8c2d-6b4e51d82152",
+        "6946735b-8c32-4b01-869e-ee4320fb79e8",
+        "6c33e5a4-058e-4fa6-b1b1-0339c9186582",
+        "72dc2d78-84be-4eaa-ab2a-c180416c7fd1",
+        "8f4626b1-989b-43f8-b454-bec4a4a55067",
+        "a21b0f0d-649e-4e0c-94a2-9dc40ca3ac09",
+        "c7f676a7-d041-4772-9f70-993a2b0640c1",
+        "d291ae87-4c51-468c-a4e2-e92d3b964d75",
+        "eadbc6c2-b5eb-4df2-bcb3-40b6a023945a",
+        "ef80b9dd-6810-4b6d-9cbc-20621da9ba04"
+      ],
+      "sample_hash": "f05e72ddf72d89741a84781a23bae23951a8cdcb9e5e6e7430008aaab0db79d3",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M-10 索引重建保留旧引用 > 重建后的检索使用新的索引修订",
+      "file": "tests/e2e/index-rebuild.test.ts",
+      "mode": "e2e",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 1,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "47b51812-fe21-4690-8a96-b778ac64c040",
+        "549d5cc2-a43c-403e-8c2d-6b4e51d82152",
+        "6946735b-8c32-4b01-869e-ee4320fb79e8",
+        "6c33e5a4-058e-4fa6-b1b1-0339c9186582",
+        "72dc2d78-84be-4eaa-ab2a-c180416c7fd1",
+        "a21b0f0d-649e-4e0c-94a2-9dc40ca3ac09",
+        "a963e01a-8fc5-439e-a28d-40cd4a04d5e8",
+        "c7f676a7-d041-4772-9f70-993a2b0640c1",
+        "d291ae87-4c51-468c-a4e2-e92d3b964d75",
+        "eadbc6c2-b5eb-4df2-bcb3-40b6a023945a",
+        "ef80b9dd-6810-4b6d-9cbc-20621da9ba04"
+      ],
+      "sample_hash": "42f4342be2c5da299da01f0560778c2fcf168576f502419f5d8f94353097c74c",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M-10 索引重建保留旧引用 > 重建不重新上传文件，也不改变审核结论",
+      "file": "tests/e2e/index-rebuild.test.ts",
+      "mode": "e2e",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 4,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "47b51812-fe21-4690-8a96-b778ac64c040",
+        "549d5cc2-a43c-403e-8c2d-6b4e51d82152",
+        "6946735b-8c32-4b01-869e-ee4320fb79e8",
+        "6c33e5a4-058e-4fa6-b1b1-0339c9186582",
+        "72dc2d78-84be-4eaa-ab2a-c180416c7fd1",
+        "95e9fe4a-d361-4044-b51a-953bdb677a93",
+        "a21b0f0d-649e-4e0c-94a2-9dc40ca3ac09",
+        "c7f676a7-d041-4772-9f70-993a2b0640c1",
+        "d291ae87-4c51-468c-a4e2-e92d3b964d75",
+        "eadbc6c2-b5eb-4df2-bcb3-40b6a023945a",
+        "eb5b34cc-f5b1-432b-b375-b32cf18f6785",
+        "ef80b9dd-6810-4b6d-9cbc-20621da9ba04"
+      ],
+      "sample_hash": "558231c6a90cfa35d28b25a62111fbc228d19a18114abd1287bf1945c6d01afb",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M-10 索引重建保留旧引用 > 缺少 knowledge:manage 的主体不能触发重建",
+      "file": "tests/e2e/index-rebuild.test.ts",
+      "mode": "e2e",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "reader-1/reader",
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "20f6c24d-f565-452c-be9b-eb4b51a8ae0f",
+        "47b51812-fe21-4690-8a96-b778ac64c040",
+        "549d5cc2-a43c-403e-8c2d-6b4e51d82152",
+        "6946735b-8c32-4b01-869e-ee4320fb79e8",
+        "6c33e5a4-058e-4fa6-b1b1-0339c9186582",
+        "72dc2d78-84be-4eaa-ab2a-c180416c7fd1",
+        "a21b0f0d-649e-4e0c-94a2-9dc40ca3ac09",
+        "c7f676a7-d041-4772-9f70-993a2b0640c1",
+        "d291ae87-4c51-468c-a4e2-e92d3b964d75",
+        "eadbc6c2-b5eb-4df2-bcb3-40b6a023945a",
+        "ef80b9dd-6810-4b6d-9cbc-20621da9ba04"
+      ],
+      "sample_hash": "f05e72ddf72d89741a84781a23bae23951a8cdcb9e5e6e7430008aaab0db79d3",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M-10 索引重建保留旧引用 > 对不存在的知识版本重建返回 404",
+      "file": "tests/e2e/index-rebuild.test.ts",
+      "mode": "e2e",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 1,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "47b51812-fe21-4690-8a96-b778ac64c040",
+        "549d5cc2-a43c-403e-8c2d-6b4e51d82152",
+        "6946735b-8c32-4b01-869e-ee4320fb79e8",
+        "6c33e5a4-058e-4fa6-b1b1-0339c9186582",
+        "72dc2d78-84be-4eaa-ab2a-c180416c7fd1",
+        "a21b0f0d-649e-4e0c-94a2-9dc40ca3ac09",
+        "c7f676a7-d041-4772-9f70-993a2b0640c1",
+        "d291ae87-4c51-468c-a4e2-e92d3b964d75",
+        "eadbc6c2-b5eb-4df2-bcb3-40b6a023945a",
+        "ef80b9dd-6810-4b6d-9cbc-20621da9ba04",
+        "fa7f24d3-5706-4422-9270-0a92df694123"
+      ],
+      "sample_hash": "f05e72ddf72d89741a84781a23bae23951a8cdcb9e5e6e7430008aaab0db79d3",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M12 上传限制 > 超过大小上限的文件被拒绝且不触达上游",
+      "file": "tests/e2e/upload-security.test.ts",
+      "mode": "e2e",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 3,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "47b51812-fe21-4690-8a96-b778ac64c040",
+        "549d5cc2-a43c-403e-8c2d-6b4e51d82152",
+        "6946735b-8c32-4b01-869e-ee4320fb79e8",
+        "6c33e5a4-058e-4fa6-b1b1-0339c9186582",
+        "72dc2d78-84be-4eaa-ab2a-c180416c7fd1",
+        "a21b0f0d-649e-4e0c-94a2-9dc40ca3ac09",
+        "b5a6cf12-5131-4367-bd44-5f62fdfb1b34",
+        "c7f676a7-d041-4772-9f70-993a2b0640c1",
+        "d291ae87-4c51-468c-a4e2-e92d3b964d75",
+        "eadbc6c2-b5eb-4df2-bcb3-40b6a023945a",
+        "ef80b9dd-6810-4b6d-9cbc-20621da9ba04"
+      ],
+      "sample_hash": "8db2aa0ab7c20529ab0102051d2bdb5fcba7116818425b8783e0d7ec015d2c06",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M12 上传限制 > 扩展名不在允许清单内被拒绝",
+      "file": "tests/e2e/upload-security.test.ts",
+      "mode": "e2e",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 3,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "47b51812-fe21-4690-8a96-b778ac64c040",
+        "549d5cc2-a43c-403e-8c2d-6b4e51d82152",
+        "62dcfda0-64a7-4f4b-97b5-5fee02c2ea37",
+        "6946735b-8c32-4b01-869e-ee4320fb79e8",
+        "6c33e5a4-058e-4fa6-b1b1-0339c9186582",
+        "72dc2d78-84be-4eaa-ab2a-c180416c7fd1",
+        "a21b0f0d-649e-4e0c-94a2-9dc40ca3ac09",
+        "c7f676a7-d041-4772-9f70-993a2b0640c1",
+        "d291ae87-4c51-468c-a4e2-e92d3b964d75",
+        "eadbc6c2-b5eb-4df2-bcb3-40b6a023945a",
+        "ef80b9dd-6810-4b6d-9cbc-20621da9ba04"
+      ],
+      "sample_hash": "4a3e8913f0d41f6f5c314dadf6041afcfa80e3ffb5c1051cc75e7b1f006fdda6",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M12 上传限制 > 扩展名与 MIME 不匹配被拒绝",
+      "file": "tests/e2e/upload-security.test.ts",
+      "mode": "e2e",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "47b51812-fe21-4690-8a96-b778ac64c040",
+        "549d5cc2-a43c-403e-8c2d-6b4e51d82152",
+        "6946735b-8c32-4b01-869e-ee4320fb79e8",
+        "6c33e5a4-058e-4fa6-b1b1-0339c9186582",
+        "72dc2d78-84be-4eaa-ab2a-c180416c7fd1",
+        "a21b0f0d-649e-4e0c-94a2-9dc40ca3ac09",
+        "acf5d7c2-ceeb-4a37-bac4-b2b639be0143",
+        "c7f676a7-d041-4772-9f70-993a2b0640c1",
+        "d291ae87-4c51-468c-a4e2-e92d3b964d75",
+        "eadbc6c2-b5eb-4df2-bcb3-40b6a023945a",
+        "ef80b9dd-6810-4b6d-9cbc-20621da9ba04"
+      ],
+      "sample_hash": "b3e294e30ffccaf191b66d5b3f8fee18fc5d36bfded5bdc8605a1d71d958ddee",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M12 上传限制 > 伪装成 pdf 的文本被拒绝",
+      "file": "tests/e2e/upload-security.test.ts",
+      "mode": "e2e",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 3,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "47b51812-fe21-4690-8a96-b778ac64c040",
+        "549d5cc2-a43c-403e-8c2d-6b4e51d82152",
+        "6946735b-8c32-4b01-869e-ee4320fb79e8",
+        "6c33e5a4-058e-4fa6-b1b1-0339c9186582",
+        "72dc2d78-84be-4eaa-ab2a-c180416c7fd1",
+        "a21b0f0d-649e-4e0c-94a2-9dc40ca3ac09",
+        "c7f676a7-d041-4772-9f70-993a2b0640c1",
+        "d291ae87-4c51-468c-a4e2-e92d3b964d75",
+        "eadbc6c2-b5eb-4df2-bcb3-40b6a023945a",
+        "ef80b9dd-6810-4b6d-9cbc-20621da9ba04",
+        "f66465b4-f7e5-4b03-ad75-c655891e7c2a"
+      ],
+      "sample_hash": "4d175fbcb98486d71081155a1ea47780b79b3374f60fd302a742483918d3f7d0",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M12 上传限制 > 文件名中的路径成分被剥离，落库为裸文件名",
+      "file": "tests/e2e/upload-security.test.ts",
+      "mode": "e2e",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 5,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "1bb8edbb-8b75-47bc-84af-4e556d1705a7",
+        "47b51812-fe21-4690-8a96-b778ac64c040",
+        "549d5cc2-a43c-403e-8c2d-6b4e51d82152",
+        "6946735b-8c32-4b01-869e-ee4320fb79e8",
+        "6c33e5a4-058e-4fa6-b1b1-0339c9186582",
+        "72dc2d78-84be-4eaa-ab2a-c180416c7fd1",
+        "a21b0f0d-649e-4e0c-94a2-9dc40ca3ac09",
+        "c7f676a7-d041-4772-9f70-993a2b0640c1",
+        "d291ae87-4c51-468c-a4e2-e92d3b964d75",
+        "eadbc6c2-b5eb-4df2-bcb3-40b6a023945a",
+        "ef80b9dd-6810-4b6d-9cbc-20621da9ba04"
+      ],
+      "sample_hash": "012afe53b2e0af46f8f3de0e9a20f4ebc891c24ce4bb95b47056284be27c305e",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M12 上传限制 > 空文件被拒绝",
+      "file": "tests/e2e/upload-security.test.ts",
+      "mode": "e2e",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "36a1dedb-f29b-406c-95b1-d686b6fd375d",
+        "47b51812-fe21-4690-8a96-b778ac64c040",
+        "549d5cc2-a43c-403e-8c2d-6b4e51d82152",
+        "6946735b-8c32-4b01-869e-ee4320fb79e8",
+        "6c33e5a4-058e-4fa6-b1b1-0339c9186582",
+        "72dc2d78-84be-4eaa-ab2a-c180416c7fd1",
+        "a21b0f0d-649e-4e0c-94a2-9dc40ca3ac09",
+        "c7f676a7-d041-4772-9f70-993a2b0640c1",
+        "d291ae87-4c51-468c-a4e2-e92d3b964d75",
+        "eadbc6c2-b5eb-4df2-bcb3-40b6a023945a",
+        "ef80b9dd-6810-4b6d-9cbc-20621da9ba04"
+      ],
+      "sample_hash": "94a1e0bc09db184e88c490cace62064aec2d5c17bb223c0d1380e198a93f6126",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M12 上传限制 > 含非法控制字符的文本被拒绝",
+      "file": "tests/e2e/upload-security.test.ts",
+      "mode": "e2e",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "47b51812-fe21-4690-8a96-b778ac64c040",
+        "549d5cc2-a43c-403e-8c2d-6b4e51d82152",
+        "6946735b-8c32-4b01-869e-ee4320fb79e8",
+        "6c33e5a4-058e-4fa6-b1b1-0339c9186582",
+        "72dc2d78-84be-4eaa-ab2a-c180416c7fd1",
+        "a21b0f0d-649e-4e0c-94a2-9dc40ca3ac09",
+        "c7f676a7-d041-4772-9f70-993a2b0640c1",
+        "d291ae87-4c51-468c-a4e2-e92d3b964d75",
+        "d31fb81a-5be3-482e-bb80-39304dfa5926",
+        "eadbc6c2-b5eb-4df2-bcb3-40b6a023945a",
+        "ef80b9dd-6810-4b6d-9cbc-20621da9ba04"
+      ],
+      "sample_hash": "b354ea531af0335e06f09cc591aa81bc8da230e84e8c1f4606591420e7f8a234",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M12 上传限制 > 合法文件被接受并登记为待解析",
+      "file": "tests/e2e/upload-security.test.ts",
+      "mode": "e2e",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 4,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "47b51812-fe21-4690-8a96-b778ac64c040",
+        "549d5cc2-a43c-403e-8c2d-6b4e51d82152",
+        "6946735b-8c32-4b01-869e-ee4320fb79e8",
+        "6c33e5a4-058e-4fa6-b1b1-0339c9186582",
+        "72dc2d78-84be-4eaa-ab2a-c180416c7fd1",
+        "804edb03-d66e-4ad7-802b-106db69cef44",
+        "a21b0f0d-649e-4e0c-94a2-9dc40ca3ac09",
+        "c7f676a7-d041-4772-9f70-993a2b0640c1",
+        "d291ae87-4c51-468c-a4e2-e92d3b964d75",
+        "eadbc6c2-b5eb-4df2-bcb3-40b6a023945a",
+        "ef80b9dd-6810-4b6d-9cbc-20621da9ba04"
+      ],
+      "sample_hash": "6df97e50fab56f49b5d9645f2128faf3d7566deedb267655bb80508681f5a2dd",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M26 最小闭环（模拟上游） > 注册 Skill、绑定 Agent、审核知识后可以检索到带来源的证据",
+      "file": "tests/e2e/closed-loop.test.ts",
+      "mode": "e2e",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 14,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "00509eb4-79b0-425b-b134-52e91b61cc8a",
+        "47b51812-fe21-4690-8a96-b778ac64c040",
+        "549d5cc2-a43c-403e-8c2d-6b4e51d82152",
+        "64acdb31-6de4-4752-8a90-6d3de7c16e24",
+        "6600c39b-a962-4ebe-a397-cdf87c5d47e7",
+        "6946735b-8c32-4b01-869e-ee4320fb79e8",
+        "6c33e5a4-058e-4fa6-b1b1-0339c9186582",
+        "7116807c-b10a-4c1a-b01c-32019930aca5",
+        "72dc2d78-84be-4eaa-ab2a-c180416c7fd1",
+        "7717b68e-bff0-4a3f-9ed3-fecae9288bf7",
+        "a21b0f0d-649e-4e0c-94a2-9dc40ca3ac09",
+        "c7f676a7-d041-4772-9f70-993a2b0640c1",
+        "d291ae87-4c51-468c-a4e2-e92d3b964d75",
+        "e64b7877-e316-4c66-a97b-77c24040b884",
+        "e7286064-f7d0-4392-99a7-8e3b28403bcf",
+        "eadbc6c2-b5eb-4df2-bcb3-40b6a023945a",
+        "ef80b9dd-6810-4b6d-9cbc-20621da9ba04",
+        "fb23d0de-eea8-43c0-be29-b6c50613b8d0"
+      ],
+      "sample_hash": "6d6358e4200e3af42c83e7eadd4be7d2eaf43906d780ee52dfea5eb7655cd917",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M26 最小闭环（模拟上游） > Agent 绑定到不存在的 Skill 版本时被拒绝",
+      "file": "tests/e2e/closed-loop.test.ts",
+      "mode": "e2e",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "0bbc1ab5-a86a-459b-b962-eda76123e471",
+        "47b51812-fe21-4690-8a96-b778ac64c040",
+        "549d5cc2-a43c-403e-8c2d-6b4e51d82152",
+        "6946735b-8c32-4b01-869e-ee4320fb79e8",
+        "6c33e5a4-058e-4fa6-b1b1-0339c9186582",
+        "72dc2d78-84be-4eaa-ab2a-c180416c7fd1",
+        "a21b0f0d-649e-4e0c-94a2-9dc40ca3ac09",
+        "c7f676a7-d041-4772-9f70-993a2b0640c1",
+        "d291ae87-4c51-468c-a4e2-e92d3b964d75",
+        "eadbc6c2-b5eb-4df2-bcb3-40b6a023945a",
+        "ef80b9dd-6810-4b6d-9cbc-20621da9ba04"
+      ],
+      "sample_hash": "ccf6874afa9627ff1e4936a458ac31313dbf7543c9f981a948600a263ac47e49",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M26 最小闭环（模拟上游） > Agent 绑定的 Skill 标识格式非法时被拒绝而不是落到数据库错误",
+      "file": "tests/e2e/closed-loop.test.ts",
+      "mode": "e2e",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "47b51812-fe21-4690-8a96-b778ac64c040",
+        "549d5cc2-a43c-403e-8c2d-6b4e51d82152",
+        "6946735b-8c32-4b01-869e-ee4320fb79e8",
+        "6c33e5a4-058e-4fa6-b1b1-0339c9186582",
+        "72dc2d78-84be-4eaa-ab2a-c180416c7fd1",
+        "91a8970a-ac16-461b-bd9d-4494bded60de",
+        "a21b0f0d-649e-4e0c-94a2-9dc40ca3ac09",
+        "c7f676a7-d041-4772-9f70-993a2b0640c1",
+        "d291ae87-4c51-468c-a4e2-e92d3b964d75",
+        "eadbc6c2-b5eb-4df2-bcb3-40b6a023945a",
+        "ef80b9dd-6810-4b6d-9cbc-20621da9ba04"
+      ],
+      "sample_hash": "b6999057a975a876756bc75467681b537527a39c9700e91cde3fad027477fbb4",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M14 用户可见的 stale 标记 > 上游写响应丢失后 GET 返回 stale=true 与明确的未知状态",
+      "file": "tests/e2e/knowledge-stale.test.ts",
+      "mode": "e2e",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 5,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "03f38c65-7aa6-4490-a25a-9793b8f348c7",
+        "47b51812-fe21-4690-8a96-b778ac64c040",
+        "549d5cc2-a43c-403e-8c2d-6b4e51d82152",
+        "6946735b-8c32-4b01-869e-ee4320fb79e8",
+        "6c33e5a4-058e-4fa6-b1b1-0339c9186582",
+        "72dc2d78-84be-4eaa-ab2a-c180416c7fd1",
+        "8d36bf60-4f17-465b-93e6-fec2a9cf8896",
+        "a2020fcf-c680-4478-a8c8-9bacf4d3a580",
+        "a21b0f0d-649e-4e0c-94a2-9dc40ca3ac09",
+        "c7f676a7-d041-4772-9f70-993a2b0640c1",
+        "d291ae87-4c51-468c-a4e2-e92d3b964d75",
+        "eadbc6c2-b5eb-4df2-bcb3-40b6a023945a",
+        "ef80b9dd-6810-4b6d-9cbc-20621da9ba04"
+      ],
+      "sample_hash": "48a72137e89a5f6b21729d1d8b8d276eeb664e0e2bd97acba52c093ecd3345fd",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M14 用户可见的 stale 标记 > 正常解析完成的知识版本 stale=false",
+      "file": "tests/e2e/knowledge-stale.test.ts",
+      "mode": "e2e",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "47b51812-fe21-4690-8a96-b778ac64c040",
+        "549d5cc2-a43c-403e-8c2d-6b4e51d82152",
+        "6946735b-8c32-4b01-869e-ee4320fb79e8",
+        "6c33e5a4-058e-4fa6-b1b1-0339c9186582",
+        "72dc2d78-84be-4eaa-ab2a-c180416c7fd1",
+        "740fb222-a21e-4eef-b8b2-13a78c510f56",
+        "a21b0f0d-649e-4e0c-94a2-9dc40ca3ac09",
+        "bd94e730-8ffb-4f2c-9b23-651a229d1f26",
+        "c7f676a7-d041-4772-9f70-993a2b0640c1",
+        "d291ae87-4c51-468c-a4e2-e92d3b964d75",
+        "e20d9014-3a75-454c-83f1-3661f5f96992",
+        "eadbc6c2-b5eb-4df2-bcb3-40b6a023945a",
+        "ef80b9dd-6810-4b6d-9cbc-20621da9ba04"
+      ],
+      "sample_hash": "db71f04ed4e8cb98a7b74e0b5a82b5a4f2c6cb6df5a9df3b110387b30552734b",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    }
+  ]
+}
