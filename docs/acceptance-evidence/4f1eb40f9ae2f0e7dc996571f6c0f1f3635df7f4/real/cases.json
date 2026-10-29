@@ -1,0 +1,423 @@
+{
+  "mode": "real",
+  "cases": [
+    {
+      "case": "M27 真实 RAGFlow 隔离失败 > 联调前置检查：未启用时报告 NOT RUN 与缺失配置项",
+      "file": "tests/real/isolation-failure.test.ts",
+      "mode": "real",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 1,
+      "subject_role": [
+        "user-1/reviewer"
+      ],
+      "trace_ids": [
+        "06c62cd3-8586-400e-9ee2-bb399c1eef62",
+        "54010043-5022-4c29-9bdc-7a85135998e4",
+        "782f8b45-90af-4046-84d9-6007a4260b9e",
+        "ae8c91c2-4856-41b5-83c2-a78d8058118a",
+        "cd6a1b95-41ea-4f4c-a760-935603c289b7",
+        "d7369540-c6f2-4e7d-89bc-d23d7ae47dda",
+        "e2c4a6b0-c120-41f1-ac99-f378dd9858b8",
+        "e96178d1-1d81-4777-ba1b-794a4c5a9894",
+        "f40f3f82-d819-4e8b-8e1a-35ddc8b84a1f"
+      ],
+      "sample_hash": "9afc1e2d899b5d198fcdfde59add6eba1ad9b95082217d01c5c0793274a0ba85",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M27 真实 RAGFlow 隔离失败 > 授权为空时真实上游请求数为 0",
+      "file": "tests/real/isolation-failure.test.ts",
+      "mode": "real",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 5,
+      "subject_role": [
+        "user-1/reviewer",
+        "user-no-grant/reader"
+      ],
+      "trace_ids": [
+        "06c62cd3-8586-400e-9ee2-bb399c1eef62",
+        "3216cb8c-71dd-4e60-8100-29c8032cf21d",
+        "54010043-5022-4c29-9bdc-7a85135998e4",
+        "782f8b45-90af-4046-84d9-6007a4260b9e",
+        "940cf53c-fe1a-4183-a82c-22809227de64",
+        "ae8c91c2-4856-41b5-83c2-a78d8058118a",
+        "cd6a1b95-41ea-4f4c-a760-935603c289b7",
+        "d7369540-c6f2-4e7d-89bc-d23d7ae47dda",
+        "e2c4a6b0-c120-41f1-ac99-f378dd9858b8",
+        "e96178d1-1d81-4777-ba1b-794a4c5a9894",
+        "f40f3f82-d819-4e8b-8e1a-35ddc8b84a1f"
+      ],
+      "sample_hash": "e1b4a3fcddf8df9108fc7ee9957b7ca0051597c452bf998c3847567920762b27",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M27 真实 RAGFlow 隔离失败 > 无权文档不出现在真实检索结果中",
+      "file": "tests/real/isolation-failure.test.ts",
+      "mode": "real",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 7,
+      "subject_role": [
+        "user-1/reviewer",
+        "user-no-grant/reader"
+      ],
+      "trace_ids": [
+        "06c62cd3-8586-400e-9ee2-bb399c1eef62",
+        "2b736007-2b57-4b64-bd37-9816eb10aecd",
+        "31ec1de1-a9ff-4120-b49e-f450ed15b5ca",
+        "42c1d4bb-8a56-435c-89c1-749111d73c2d",
+        "46acc56a-110a-441f-b67d-a2c7d4069baa",
+        "54010043-5022-4c29-9bdc-7a85135998e4",
+        "556c004a-1d90-4151-8aac-e4b799f581c0",
+        "6fe8ca22-c4ee-4d2f-af64-eec6d28340f0",
+        "782f8b45-90af-4046-84d9-6007a4260b9e",
+        "96723217-087b-4705-bec3-c73903cb11c5",
+        "a3b58dbc-a45e-4640-acf5-877b04cc6992",
+        "ae8c91c2-4856-41b5-83c2-a78d8058118a",
+        "b223f3f0-2944-4d47-b17f-01dc7b5ae350",
+        "cd6a1b95-41ea-4f4c-a760-935603c289b7",
+        "d7369540-c6f2-4e7d-89bc-d23d7ae47dda",
+        "e2c4a6b0-c120-41f1-ac99-f378dd9858b8",
+        "e96178d1-1d81-4777-ba1b-794a4c5a9894",
+        "f40f3f82-d819-4e8b-8e1a-35ddc8b84a1f",
+        "f512f226-6e25-4e29-abef-75f2aedb01af"
+      ],
+      "sample_hash": "006f753a3adf1e2fcd9b705a7cfb2b25cfa9703b24130f1e5f4a0f3445d8d5ef",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M26 真实 RAGFlow 闭环 > 联调前置检查：未启用时报告 NOT RUN 与缺失配置项",
+      "file": "tests/real/closed-loop.test.ts",
+      "mode": "real",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 1,
+      "subject_role": [
+        "user-1/reviewer"
+      ],
+      "trace_ids": [
+        "06c62cd3-8586-400e-9ee2-bb399c1eef62",
+        "54010043-5022-4c29-9bdc-7a85135998e4",
+        "782f8b45-90af-4046-84d9-6007a4260b9e",
+        "ae8c91c2-4856-41b5-83c2-a78d8058118a",
+        "cd6a1b95-41ea-4f4c-a760-935603c289b7",
+        "d7369540-c6f2-4e7d-89bc-d23d7ae47dda",
+        "e2c4a6b0-c120-41f1-ac99-f378dd9858b8",
+        "e96178d1-1d81-4777-ba1b-794a4c5a9894",
+        "f40f3f82-d819-4e8b-8e1a-35ddc8b84a1f"
+      ],
+      "sample_hash": "9afc1e2d899b5d198fcdfde59add6eba1ad9b95082217d01c5c0793274a0ba85",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M26 真实 RAGFlow 闭环 > 建知识库 -> 上传 -> 解析 -> 审核 -> 检索拿到带来源引用的证据",
+      "file": "tests/real/closed-loop.test.ts",
+      "mode": "real",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 18,
+      "subject_role": [
+        "user-1/manager",
+        "user-1/reviewer"
+      ],
+      "trace_ids": [
+        "012ee08c-acfa-4d56-9edd-c75f9250c731",
+        "06c62cd3-8586-400e-9ee2-bb399c1eef62",
+        "15574027-be45-47d2-807b-69493554c286",
+        "36df3269-b5ab-4382-9b9e-6dec6ec3ae03",
+        "46b50148-02ae-4f86-b075-16a44b88e736",
+        "495c917d-26f9-4a88-8575-65e2e6df031b",
+        "54010043-5022-4c29-9bdc-7a85135998e4",
+        "782f8b45-90af-4046-84d9-6007a4260b9e",
+        "80bdec1b-34f3-4ca7-80e4-c47030613896",
+        "ae8c91c2-4856-41b5-83c2-a78d8058118a",
+        "b44db30c-9dc2-43c7-bdd8-0a5ef7e9116f",
+        "bf327a8f-f11f-4069-94d5-0dc6904ed00d",
+        "c045b4ea-0a79-45f3-961d-6aa758b1e82e",
+        "c4dfe6e5-4542-4cae-a1a0-2203d988ea3d",
+        "cd6a1b95-41ea-4f4c-a760-935603c289b7",
+        "d7369540-c6f2-4e7d-89bc-d23d7ae47dda",
+        "e2c4a6b0-c120-41f1-ac99-f378dd9858b8",
+        "e96178d1-1d81-4777-ba1b-794a4c5a9894",
+        "f40f3f82-d819-4e8b-8e1a-35ddc8b84a1f",
+        "f5f8b027-336e-49e4-b860-fa541ce0f58a"
+      ],
+      "sample_hash": "928e18794cea496d442a1c3ed3f13d91d6a97b107fc4cfc1f4148b46e6befa33",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M27 真实解析失败 > 联调前置检查：未启用时报告 NOT RUN 与缺失配置项",
+      "file": "tests/real/parse-failure.test.ts",
+      "mode": "real",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 1,
+      "subject_role": [
+        "user-1/reviewer"
+      ],
+      "trace_ids": [
+        "06c62cd3-8586-400e-9ee2-bb399c1eef62",
+        "54010043-5022-4c29-9bdc-7a85135998e4",
+        "782f8b45-90af-4046-84d9-6007a4260b9e",
+        "ae8c91c2-4856-41b5-83c2-a78d8058118a",
+        "cd6a1b95-41ea-4f4c-a760-935603c289b7",
+        "d7369540-c6f2-4e7d-89bc-d23d7ae47dda",
+        "e2c4a6b0-c120-41f1-ac99-f378dd9858b8",
+        "e96178d1-1d81-4777-ba1b-794a4c5a9894",
+        "f40f3f82-d819-4e8b-8e1a-35ddc8b84a1f"
+      ],
+      "sample_hash": "9afc1e2d899b5d198fcdfde59add6eba1ad9b95082217d01c5c0793274a0ba85",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M27 真实解析失败 > 上游确实解析失败：文档状态为 FAIL",
+      "file": "tests/real/parse-failure.test.ts",
+      "mode": "real",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 5,
+      "subject_role": [
+        "user-1/reviewer"
+      ],
+      "trace_ids": [
+        "06c62cd3-8586-400e-9ee2-bb399c1eef62",
+        "0ba28b18-2f24-4d17-b033-7985e8ed267d",
+        "1810d0cb-48f0-4161-888c-2b452970142f",
+        "21d96d75-a77e-417f-9fba-f82e2f61ae94",
+        "54010043-5022-4c29-9bdc-7a85135998e4",
+        "5de83a18-8ce1-4c68-b8ee-31f96a3418df",
+        "782f8b45-90af-4046-84d9-6007a4260b9e",
+        "9cc22d39-06ef-40d0-96f9-0f103c06cac6",
+        "a91b3f43-06d6-4937-ac67-5e2a880864bb",
+        "ae8c91c2-4856-41b5-83c2-a78d8058118a",
+        "cd6a1b95-41ea-4f4c-a760-935603c289b7",
+        "d7369540-c6f2-4e7d-89bc-d23d7ae47dda",
+        "e2c4a6b0-c120-41f1-ac99-f378dd9858b8",
+        "e96178d1-1d81-4777-ba1b-794a4c5a9894",
+        "f40f3f82-d819-4e8b-8e1a-35ddc8b84a1f"
+      ],
+      "sample_hash": "b74424d7baeba490aedf57cedcccb4cb9a58d9e40a6479b4eea089462cb4c950",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M27 真实解析失败 > 平台侧保持 failed：解析操作终态是 failed，文档不伪装成功",
+      "file": "tests/real/parse-failure.test.ts",
+      "mode": "real",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 12,
+      "subject_role": [
+        "user-1/reviewer"
+      ],
+      "trace_ids": [
+        "04bf6463-bd26-414f-b9a6-7da8b4bf225f",
+        "06c62cd3-8586-400e-9ee2-bb399c1eef62",
+        "144a9076-3795-4d8b-9048-8a2aa2532b43",
+        "54010043-5022-4c29-9bdc-7a85135998e4",
+        "782f8b45-90af-4046-84d9-6007a4260b9e",
+        "9a40d781-787b-40f1-9062-952838191ec3",
+        "ae8c91c2-4856-41b5-83c2-a78d8058118a",
+        "cd6a1b95-41ea-4f4c-a760-935603c289b7",
+        "d7369540-c6f2-4e7d-89bc-d23d7ae47dda",
+        "e2c4a6b0-c120-41f1-ac99-f378dd9858b8",
+        "e96178d1-1d81-4777-ba1b-794a4c5a9894",
+        "ee217104-66cc-4827-b2f5-013c8ae5643e",
+        "f40f3f82-d819-4e8b-8e1a-35ddc8b84a1f"
+      ],
+      "sample_hash": "8988a0efea16790e1296965c4f3ad873fc491382712bf21d96748ae5a9524e19",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M27 真实解析失败 > 解析失败的文档不产生任何可检索的成功证据",
+      "file": "tests/real/parse-failure.test.ts",
+      "mode": "real",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 4,
+      "subject_role": [
+        "user-1/reviewer"
+      ],
+      "trace_ids": [
+        "06c62cd3-8586-400e-9ee2-bb399c1eef62",
+        "43e9486d-7e62-4fab-a318-15e8b70adbb9",
+        "54010043-5022-4c29-9bdc-7a85135998e4",
+        "782f8b45-90af-4046-84d9-6007a4260b9e",
+        "ae8c91c2-4856-41b5-83c2-a78d8058118a",
+        "cd6a1b95-41ea-4f4c-a760-935603c289b7",
+        "d7369540-c6f2-4e7d-89bc-d23d7ae47dda",
+        "e2c4a6b0-c120-41f1-ac99-f378dd9858b8",
+        "e96178d1-1d81-4777-ba1b-794a4c5a9894",
+        "f40f3f82-d819-4e8b-8e1a-35ddc8b84a1f"
+      ],
+      "sample_hash": "f026ce9ae0b714c743e4976707d68100a775a9b9a96daa2da50869f9b7710a13",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M27 真实上游不可达 > 联调前置检查：未启用时报告 NOT RUN 与缺失配置项",
+      "file": "tests/real/upstream-unreachable.test.ts",
+      "mode": "real",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 1,
+      "subject_role": [
+        "user-1/reviewer"
+      ],
+      "trace_ids": [
+        "06c62cd3-8586-400e-9ee2-bb399c1eef62",
+        "54010043-5022-4c29-9bdc-7a85135998e4",
+        "782f8b45-90af-4046-84d9-6007a4260b9e",
+        "ae8c91c2-4856-41b5-83c2-a78d8058118a",
+        "cd6a1b95-41ea-4f4c-a760-935603c289b7",
+        "d7369540-c6f2-4e7d-89bc-d23d7ae47dda",
+        "e2c4a6b0-c120-41f1-ac99-f378dd9858b8",
+        "e96178d1-1d81-4777-ba1b-794a4c5a9894",
+        "f40f3f82-d819-4e8b-8e1a-35ddc8b84a1f"
+      ],
+      "sample_hash": "9afc1e2d899b5d198fcdfde59add6eba1ad9b95082217d01c5c0793274a0ba85",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M27 真实上游不可达 > 目标端口确实没有监听：连接被内核拒绝（真实网络失败，不是替身）",
+      "file": "tests/real/upstream-unreachable.test.ts",
+      "mode": "real",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 1,
+      "subject_role": [
+        "user-1/reviewer"
+      ],
+      "trace_ids": [
+        "06c62cd3-8586-400e-9ee2-bb399c1eef62",
+        "54010043-5022-4c29-9bdc-7a85135998e4",
+        "782f8b45-90af-4046-84d9-6007a4260b9e",
+        "ae8c91c2-4856-41b5-83c2-a78d8058118a",
+        "cd6a1b95-41ea-4f4c-a760-935603c289b7",
+        "d7369540-c6f2-4e7d-89bc-d23d7ae47dda",
+        "e2c4a6b0-c120-41f1-ac99-f378dd9858b8",
+        "e96178d1-1d81-4777-ba1b-794a4c5a9894",
+        "f40f3f82-d819-4e8b-8e1a-35ddc8b84a1f"
+      ],
+      "sample_hash": "9afc1e2d899b5d198fcdfde59add6eba1ad9b95082217d01c5c0793274a0ba85",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M27 真实上游不可达 > 检索遇到真实不可达：返回 503 RAGFLOW_UNAVAILABLE，不落成 500，也不产生证据",
+      "file": "tests/real/upstream-unreachable.test.ts",
+      "mode": "real",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 7,
+      "subject_role": [
+        "user-1/reviewer"
+      ],
+      "trace_ids": [
+        "06c62cd3-8586-400e-9ee2-bb399c1eef62",
+        "54010043-5022-4c29-9bdc-7a85135998e4",
+        "782f8b45-90af-4046-84d9-6007a4260b9e",
+        "ae8c91c2-4856-41b5-83c2-a78d8058118a",
+        "cd6a1b95-41ea-4f4c-a760-935603c289b7",
+        "d40e4dc6-f590-4f60-b8dd-c729df8c4ae7",
+        "d7369540-c6f2-4e7d-89bc-d23d7ae47dda",
+        "e2c4a6b0-c120-41f1-ac99-f378dd9858b8",
+        "e96178d1-1d81-4777-ba1b-794a4c5a9894",
+        "f40f3f82-d819-4e8b-8e1a-35ddc8b84a1f"
+      ],
+      "sample_hash": "d5ed4a6f5209bd4a430aafee80a97bfae877aeac88cf48ac9e5dd024bb98a4e7",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M27 真实上游不可达 > 写路径遇到真实不可达：操作与知识库都不落成成功状态",
+      "file": "tests/real/upstream-unreachable.test.ts",
+      "mode": "real",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 7,
+      "subject_role": [
+        "user-1/reviewer"
+      ],
+      "trace_ids": [
+        "06c62cd3-8586-400e-9ee2-bb399c1eef62",
+        "1a809a77-7c8d-486f-9d18-26c78a0defce",
+        "54010043-5022-4c29-9bdc-7a85135998e4",
+        "6a5adae3-a846-47e4-88db-877d1f764ca8",
+        "782f8b45-90af-4046-84d9-6007a4260b9e",
+        "ae8c91c2-4856-41b5-83c2-a78d8058118a",
+        "cd6a1b95-41ea-4f4c-a760-935603c289b7",
+        "d1687260-c713-478d-8363-183b44a88fde",
+        "d7369540-c6f2-4e7d-89bc-d23d7ae47dda",
+        "e2c4a6b0-c120-41f1-ac99-f378dd9858b8",
+        "e96178d1-1d81-4777-ba1b-794a4c5a9894",
+        "f40f3f82-d819-4e8b-8e1a-35ddc8b84a1f"
+      ],
+      "sample_hash": "97aace7e23bfcb29a805823c6500274626b0311f54273165124eb9a4fd96f6c1",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M26 抗替身反向对照 > 联调前置检查：未启用时报告 NOT RUN 与缺失配置项",
+      "file": "tests/real/anti-substitute.test.ts",
+      "mode": "real",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 1,
+      "subject_role": [
+        "user-1/reviewer"
+      ],
+      "trace_ids": [
+        "06c62cd3-8586-400e-9ee2-bb399c1eef62",
+        "54010043-5022-4c29-9bdc-7a85135998e4",
+        "782f8b45-90af-4046-84d9-6007a4260b9e",
+        "ae8c91c2-4856-41b5-83c2-a78d8058118a",
+        "cd6a1b95-41ea-4f4c-a760-935603c289b7",
+        "d7369540-c6f2-4e7d-89bc-d23d7ae47dda",
+        "e2c4a6b0-c120-41f1-ac99-f378dd9858b8",
+        "e96178d1-1d81-4777-ba1b-794a4c5a9894",
+        "f40f3f82-d819-4e8b-8e1a-35ddc8b84a1f"
+      ],
+      "sample_hash": "9afc1e2d899b5d198fcdfde59add6eba1ad9b95082217d01c5c0793274a0ba85",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M26 抗替身反向对照 > 上游退化成替身时：流程照样跑绿，但抗替身断言必须报告违规",
+      "file": "tests/real/anti-substitute.test.ts",
+      "mode": "real",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 7,
+      "subject_role": [
+        "user-1/reviewer"
+      ],
+      "trace_ids": [
+        "06c62cd3-8586-400e-9ee2-bb399c1eef62",
+        "23c341dc-7489-4c5d-9656-28eab2e8fb7b",
+        "38614a31-9a68-4678-9565-5a3f4669ee9d",
+        "54010043-5022-4c29-9bdc-7a85135998e4",
+        "782f8b45-90af-4046-84d9-6007a4260b9e",
+        "ae8c91c2-4856-41b5-83c2-a78d8058118a",
+        "cd6a1b95-41ea-4f4c-a760-935603c289b7",
+        "d7369540-c6f2-4e7d-89bc-d23d7ae47dda",
+        "e2c4a6b0-c120-41f1-ac99-f378dd9858b8",
+        "e96178d1-1d81-4777-ba1b-794a4c5a9894",
+        "f40f3f82-d819-4e8b-8e1a-35ddc8b84a1f"
+      ],
+      "sample_hash": "dd7ece5b536c873c0b6a98e78db9938b2395601f6e113ef6f5863e165ae4d8a2",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    }
+  ]
+}
