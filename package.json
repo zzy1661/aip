@@ -18,6 +18,7 @@
     "test:e2e": "vitest run --config vitest.e2e.config.ts",
     "test:ragflow:real": "vitest run --config vitest.real.config.ts",
     "test:ragflow:real:guard": "node tools/real-guard.mjs",
+    "test:onto:real": "vitest run --config vitest.onto-real.config.ts",
     "test": "pnpm test:unit && pnpm test:db && pnpm test:contract && pnpm test:e2e",
     "migrate": "pnpm --filter @aip/api run migrate",
     "grant:document": "pnpm --filter @aip/api run grant:document"

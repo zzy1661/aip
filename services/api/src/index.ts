@@ -12,6 +12,8 @@ export { createAuthMiddleware, requirePermissionMiddleware } from './auth/middle
 export { hasPermission, hasAllPermissions, requirePermission } from './auth/policy.js';
 export {
   createOntoConceptValidator,
+  CONCEPT_QUERY_CONTRACT_VERSION,
+  CONCEPT_TYPE_COMPATIBILITY,
   type ConceptValidator,
   type ConceptValidationOutcome,
   type ConceptReference,

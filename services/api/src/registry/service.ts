@@ -8,6 +8,7 @@ import {
   type AgentPayload,
   type AssetDetail,
   type AssetSummary,
+  type ContractField,
   type RegisterAssetRequest,
   type SkillPayload,
 } from '@aip/contracts';
@@ -17,7 +18,7 @@ import { runIdempotent } from '../idempotency/service.js';
 import { withTransaction } from '../db/uow.js';
 import { hashObject, newId } from '../util/hash.js';
 import type { Principal } from '../auth/principal.js';
-import type { ConceptValidator } from '../ontology/client.js';
+import type { ConceptValidationOutcome, ConceptValidator } from '../ontology/client.js';
 import {
   assertVersionFormat,
   validateAgentPayload,
@@ -92,21 +93,54 @@ export function createRegistryService(deps: RegistryDeps) {
   const { pool, validator, concepts } = deps;
 
   async function validateSkillConcepts(payload: SkillPayload): Promise<void> {
-    const refs = [...payload.input_contract, ...payload.output_contract]
-      .filter((field) => field.concept_ref !== null)
-      .map((field) => ({
-        concept_ref: field.concept_ref as string,
-        unit_ref: field.unit_ref,
-        ontology_version: field.ontology_version,
-        vocabulary_version: field.vocabulary_version,
-      }));
-    if (refs.length === 0) return;
-    const outcome = await concepts.validate(refs);
+    const fields = [
+      ...payload.input_contract.map((field, index) => ({
+        field,
+        path: `payload.input_contract[${index}]`,
+      })),
+      ...payload.output_contract.map((field, index) => ({
+        field,
+        path: `payload.output_contract[${index}]`,
+      })),
+    ].filter((entry) => entry.field.concept_ref !== null);
+    if (fields.length === 0) return;
+    const outcome = await concepts.validate(
+      fields.map((entry) => ({
+        concept_ref: entry.field.concept_ref as string,
+        data_type: entry.field.data_type,
+        unit_ref: entry.field.unit_ref,
+        ontology_version: entry.field.ontology_version,
+        vocabulary_version: entry.field.vocabulary_version,
+      })),
+    );
     if (!outcome.ok) {
       throw apiError('CONTRACT_INVALID', 'concept reference validation failed', [
-        fieldIssue(outcome.field_path, outcome.reason),
+        fieldIssue(pathOfFailedReference(fields, outcome), outcome.reason),
       ]);
     }
+  }
+
+  /**
+   * The field path the failure belongs to.
+   *
+   * A concept reference lives in one contract field, and the person who has to
+   * fix the registration needs to be told *which* field: "concept reference
+   * demo:missing does not exist" is much less actionable than a path that
+   * points at the field carrying it.
+   *
+   * The reference is located by the value that failed. When the failure cannot
+   * be located -- the validator did not say which reference it was -- the
+   * validator's own path is used.
+   */
+  function pathOfFailedReference(
+    fields: Array<{ field: ContractField; path: string }>,
+    outcome: Extract<ConceptValidationOutcome, { ok: false }>,
+  ): string {
+    if (outcome.concept_ref) {
+      const hit = fields.find((entry) => entry.field.concept_ref === outcome.concept_ref);
+      if (hit) return `${hit.path}.concept_ref`;
+    }
+    return outcome.field_path;
   }
 
   /**
