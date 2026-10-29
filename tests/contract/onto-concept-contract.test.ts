@@ -35,7 +35,7 @@ const CONTRACT_DOC_PATH = fileURLToPath(
 );
 
 /** 契约文档与共享夹具的 sha256：改动它们必须同时改两仓。 */
-const CONTRACT_DOC_SHA256 = '5cb3332fe350be409ee1428713138d8c8674727e8dbc90f92a887817809da5c2';
+const CONTRACT_DOC_SHA256 = '244741a1bc887765bd083e3faebd6ff43c833b3c8791cf8aa05344ee8f5a98f1';
 const FIXTURE_SHA256 = 'e0fc5a6caec5e36b8f506e7b4c0160d7394f0d47b27e9d0e89d9db431b0772d0';
 
 interface Fixture {
