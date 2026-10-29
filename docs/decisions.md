@@ -365,3 +365,54 @@ ZACH-10 复审发现（既有行为，非某次改动引入）：一个已批准
   而不是按状态码分流。
 - 已批准版本的内容若确实需要下线，走撤回（withdraw）路径而不是「改判为拒绝」——
   撤回会一并失效授权与检索，是既有的、被单独设计过的终态。
+
+---
+
+## D15：本体概念查询契约冻结在两仓，aip 按契约解释 onto 的回答
+
+**背景**
+D3 要求「概念引用必须经本体服务逐条校验」，但两端**没有共同的契约**：
+aip 的客户端假定存在 `GET /api/ontology/concepts/{concept_ref}`
+（`services/api/src/ontology/client.ts` 自述「是本批的**假设契约**」），
+onto 的运行态路由里根本没有这个端点。后果是**恒假阴性**：
+本体服务一旦真的部署，所有带 `concept_ref` 的注册都会被按「概念不存在」拒绝，
+数值型/概念型契约一条都注册不进来；而「概念存在且已发布 → 校验通过」这一侧
+**永远拿不到证据**——不是环境没配好，是两端根本没有共同契约。
+
+**决策**
+1. **先冻结契约，再实现**。契约写在两仓 `docs/ontology-concept-query-contract.md`，
+   **逐字一致**（同一份内容各存一份，`sha256` 钉死在两仓的测试里）；
+   共享夹具 `onto-concept-query.v1.json` 同样两仓各存一份、逐字一致。
+   单侧改动会被自己仓的测试挡住，不会出现「一侧假设、一侧没有」。
+2. **`concept_ref` 的形态是 `<本体码>:<属性码>`**。onto 的模型里「概念」就是
+   **某个本体的一个属性**，这个形态直接落在一等公民上；「概念 ID@版本」会把
+   onto 的内部 ID 暴露成对外契约，而且版本已经由 `ontology_version` 单独表达。
+3. **失败分三类，各有各的结论**：
+   - **契约不符**（字段缺失/改名/契约版本不对）→ `503 ONTO_UNAVAILABLE`。
+     这不是注册写错了，是对面不是这份契约实现的服务；**绝不降级为通过**。
+   - **语义不符**（本体未发布、绑定的本体版本已被取代、绑定的词表版本不是对方在用的、
+     单位解析不出来、声明的类型与概念类型不兼容）→ `422 CONTRACT_INVALID`，
+     `details[].reason` **精确指出该 `concept_ref`**，`details[].field_path`
+     指向真正出问题的那一项（`payload.input_contract[0].concept_ref`）。
+   - **服务不可用/凭据被拒** → `503 ONTO_UNAVAILABLE`（沿用 M23 既有语义，不降级成功）。
+4. **类型兼容表随契约冻结**（aip `NUMBER` ↔ onto `INTEGER`/`DECIMAL`，
+   `STRING` ↔ `STRING`/`TEXT`/`ENUM`/`DATE`/`DATETIME`，`BOOLEAN` ↔ `BOOLEAN`，
+   `JSON` 无对应）。声明 `NUMBER` 却指向 `STRING` 概念是**注册方的错**，
+   放过去就是把语义错误记进注册库。
+5. **aip 的对外契约不变**：`openapi/aip-v1.yaml` **不改**——
+   这次冻结的是 aip ↔ onto 之间的契约，没有新增或改名 aip 对外的字段，
+   `concept_ref` / `unit_ref` / `ontology_version` / `vocabulary_version`
+   的名字与类型都不变，变的只是**取值被校验得更严**（由概念校验门兑现，
+   违反时 422 `CONTRACT_INVALID`）。因此 onto console 的契约快照 pin
+   （`console/contract/aip-v1.yaml`，aip 提交 `468c2cc`，sha256 `0a1b1c60…`）
+   **不需要跟进**，已用 sha256 复核一致。
+
+**影响**
+- 数值型/概念型契约第一次**可以注册**：概念存在且已发布 → 注册通过（正向证据）。
+- 「概念不存在」与「本体未发布」不再混成一个 404：onto 给 `error_code`，
+  aip 按它分流出不同的 422 理由。
+- 契约漂移会红：onto 改了字段而没改夹具 → onto 侧红；aip 改了期望而没改夹具 → aip 侧红。
+- **已知限制**：onto 的认证是部署级规则（`Authorization: Bearer`，`ONTO_REQUIRE_AUTH=1` 时必填），
+  当前 aip 客户端只发 `x-audience`、不带凭据，所以只适用于未开启强制认证的部署；
+  在要求认证的部署里 onto 回答 401，aip 映射成 `503 ONTO_UNAVAILABLE`（失败关闭，不放行）。
+  补齐凭据传递是后续批次的事。

@@ -213,3 +213,34 @@ ZACH-10 复审发现（既有行为，非某次改动引入）：已批准且可
 回归证据：`tests/unit/review-policy.test.ts`（状态机分支）、`tests/contract/review-verdict-final.test.ts`
 （409 错误码、无副作用、幂等、pending 两条路径、并发双审核、检索与下载一致）、`tests/db/review-verdict-final.test.ts`
 （数据库层拒写、`AIP01` 映射、同结论放行）、`tests/db/migration-upgrade.test.ts`（011 升级路径）。
+
+---
+
+## 8. ZACH-30：本体概念查询契约（aip ↔ onto）
+
+这一节记的是**上一批**留下的那个缺口：aip 校验 `concept_ref` 的那条链路，
+两端**没有共同契约**——aip 假定了一个 onto 从未提供的端点，于是概念校验门
+**恒假阴性**，而「概念存在且已发布 → 校验通过」这一侧**拿不到任何证据**。
+本轮先冻结契约，再两侧各自实现，最后用**同一份夹具**双向验证。
+
+契约与夹具（两仓逐字一致，`sha256` 被两仓的测试钉死）：
+
+| 产物 | aip 仓 | onto 仓 | sha256 |
+| --- | --- | --- | --- |
+| 契约文档 | `docs/ontology-concept-query-contract.md` | `docs/ontology-concept-query-contract.md` | `5cb3332f…` |
+| 共享夹具 | `tests/fixtures/onto-concept-query.v1.json` | `server/contracts/onto-concept-query.v1.json` | `e0fc5a6c…` |
+
+| 判据 | 证据 | 状态 |
+| --- | --- | --- |
+| 契约冻结：路径、方法、`concept_ref` 形态、响应字段、错误码、判定顺序、版本化与兼容策略 | `docs/ontology-concept-query-contract.md`（两仓逐字一致，`sha256` 由 `tests/contract/onto-concept-contract.test.ts:101`、`onto/server/src/runtime/concepts.test.ts:61` 钉死） | FULL |
+| onto 出路由：只读、按**已发布快照**解析 | `onto/server/src/runtime/concepts.ts`、`onto/server/src/http.ts`（路由 `/api/ontology/concepts/:concept_ref`）；验收跑打真路由：`onto/server/src/verify.ts` 第 35 节 | FULL |
+| 「概念不存在」与「本体未发布」可区分 | `CONCEPT_NOT_FOUND`（404）vs `ONTOLOGY_NOT_PUBLISHED`（409），机器可读的 `error_code`；`onto/server/src/verify.ts` 第 35 节逐条比对夹具 | FULL |
+| aip 换契约：从「假设契约」改为冻结契约 | `services/api/src/ontology/client.ts`（按契约逐字段核对；契约不符 → 503，语义不符 → 422 并指出引用） | FULL |
+| 双向契约测试：两端共用同一份 fixture，任一侧改字段另一侧变红 | aip：`tests/contract/onto-concept-contract.test.ts`（含 6 个「字段被改名 → 必须变红」的证伪用例 + 类型/版本/发布状态的语义证伪）；onto：`server/src/runtime/concepts.test.ts` + `server/src/verify.ts` 第 35 节（真库、真路由、逐字段相等） | FULL |
+| 证据①：概念存在且已发布 → **校验通过**（正向一侧） | `tests/onto-real/onto-concept-query.test.ts`「概念存在且已发布 → 注册通过（正向证据）」，真实 onto + 真实 aip API，**201** | FULL |
+| 证据②：概念不存在 → **422 且精确指出引用** | 同上「概念不存在 → 422，并精确指出该引用」：422 `CONTRACT_INVALID`，`details[0].reason` 含该引用，`details[0].field_path` = `payload.input_contract[0].concept_ref` | FULL |
+| 失败关闭：本体不可达不降级为通过 | `tests/onto-real/onto-concept-query.test.ts`「本体服务不可达时返回 ONTO_UNAVAILABLE」：503 `ONTO_UNAVAILABLE`；既有 `tests/unit/concept-gate.test.ts` 同步保持 | FULL |
+| 对外契约与 console 快照 pin | `openapi/aip-v1.yaml` **不改**（本次冻结的是 aip ↔ onto 之间的契约，aip 对外字段的名字与类型都不变）；onto console 快照 pin（aip `468c2cc`，sha256 `0a1b1c60…`）已用 sha256 复核一致，**无需跟进** | FULL |
+| 已知限制：onto 要求认证的部署 | aip 客户端只发 `x-audience`、不带凭据；`ONTO_REQUIRE_AUTH=1` 时 onto 回答 401 → aip 映射 `503 ONTO_UNAVAILABLE`（失败关闭，不放行）。补齐凭据传递属后续批次 | **PARTIAL**（限制：未在强制认证的 onto 上联调过） |
+
+**统计：本节 FULL 9 条／PARTIAL 1 条／NOT RUN 0 条。**
