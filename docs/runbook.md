@@ -20,7 +20,7 @@ pnpm install
 
 ## 2. 环境变量
 
-配置只在 `services/api/src/config.ts` 的 `loadConfig()` 中从环境变量读取；缺失的必填项在启动时直接失败，不做静默降级。
+配置只从环境变量读取：`services/api/src/config.ts` 的 `loadConfig()` 读取主体配置，`services/api/src/main.ts`、`services/worker/src/main.ts`、`services/api/src/db/migrate.ts` 各读自己的少量项（见下表「读取位置」列）；缺失的必填项在启动时直接失败，不做静默降级。
 
 ### 2.1 必填
 
@@ -71,6 +71,7 @@ pnpm install
 | `AIP_UPLOAD_MAX_BYTES` | 单文件上传上限 | `20971520`（20 MiB） |
 | `AIP_PARSE_DEADLINE_MS` | 解析截止时间，超时进入终态失败 | `1200000`（20 分钟） |
 | `AIP_RETRIEVAL_MAX_DOCUMENTS` | 单次检索的授权文档白名单上限 | `200` |
+| `AIP_OPERATION_LEASE_MS` | 操作租约时长；必须大于「上传超时 + 只读预算 + 30 秒余量」，否则启动失败 | 上传超时 + 只读预算 + `30000`（按超时配置联动） |
 
 ### 2.5 本体（onto）概念校验
 
@@ -83,6 +84,7 @@ pnpm install
 
 | 变量名 | 含义 | 默认 | 读取位置 |
 | --- | --- | --- | --- |
+| `NODE_ENV` | 运行环境；`production` 时 `AUTH_MODE` 必须为 `jwks`，否则启动失败 | `development` | `services/api/src/config.ts` |
 | `PORT` | API 监听端口 | `8080` | `services/api/src/main.ts` |
 | `LOG_LEVEL` | pino 日志级别 | `info` | `services/api/src/main.ts`、`services/worker/src/main.ts` |
 | `WORKER_POLL_INTERVAL_MS` | Worker 轮询间隔 | `2000` | `services/worker/src/main.ts` |
@@ -92,7 +94,12 @@ pnpm install
 | `RUN_REAL_RAGFLOW` | 置 `1` 启用真实 RAGFlow 联调层 | 未设置 | `services/api/src/config.ts` |
 | `RAGFLOW_TEST_PROJECT_ID` | 真实联调使用的 project id | 空 | `services/api/src/config.ts` |
 
-完整清单见仓库根 `.env.example`。
+完整清单见仓库根 `.env.example`：那里只列产品代码实际读取的运行时变量。
+compose 专用变量（数据库角色口令 `POSTGRES_*`、镜像名）不由产品代码读取，
+由 compose 自己消费，见 `deploy/.env.example` 与 `deploy/compose.example.yaml`。
+
+本节变量表与 `.env.example` 的一致性由 `tests/contract/runbook-config-consistency.test.ts`
+断言：代码读取的变量集合与两侧清单的并集必须完全相等，任何一侧多一个或少一个都判失败。
 
 ## 3. 迁移
 
@@ -138,6 +145,10 @@ DATABASE_URL=postgres://<migration-user>:<password>@<host>:5432/<database> pnpm 
 
 `pnpm migrate` 只读 `DATABASE_URL`（`loadMigrateConfig`），不要求上游凭据：迁移不访问上游，也不签发令牌。
 compose 示例里的 `migrate` 服务跑完即退出，`api` / `worker` 依赖它成功后再启动。
+
+compose 自身的变量（`POSTGRES_USER`、`POSTGRES_PASSWORD`、`POSTGRES_DB`、`POSTGRES_APP_USER`、
+`POSTGRES_APP_PASSWORD` 与镜像名）由 compose 消费、不由产品代码读取，示例见 `deploy/.env.example`；
+用 compose 起栈时把它复制成 `deploy/.env`（compose 从同目录读取）。
 
 ## 4. 启动
 
