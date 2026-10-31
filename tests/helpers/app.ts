@@ -76,6 +76,13 @@ export interface HarnessOptions {
   /** 测试库连接串；真实集成层用它指向独立库，不污染默认测试库。 */
   databaseUrl?: string;
   /**
+   * 复用调用方准备的文件存储根目录。
+   *
+   * 真实 worker 进程用例需要 API 与 worker 读写同一份文件：
+   * 调用方把同一个根目录同时交给 harness 和 worker 进程。
+   */
+  fileStoreRoot?: string;
+  /**
    * 复用已经迁移好的 schema。
    *
    * 角色分离用例用它让 API 以「无 DDL 的应用角色」运行：
@@ -114,6 +121,8 @@ export interface Harness {
   db: TestDatabase;
   ragflow: FakeRagFlow;
   files: FileStore;
+  /** 文件存储根目录：真实 worker 进程用例需要把它交给外部进程。 */
+  fileStoreRoot: string;
   operations: OperationsService;
   registry: RegistryService;
   knowledge: KnowledgeService;
@@ -225,7 +234,7 @@ export async function createHarness(options: HarnessOptions = {}): Promise<Harne
   const db = await createTestDatabase(options.label ?? 'case', options.databaseUrl, {
     schema: options.databaseSchema,
   });
-  const fileRoot = await mkdtemp(join(tmpdir(), 'aip-test-files-'));
+  const fileRoot = options.fileStoreRoot ?? (await mkdtemp(join(tmpdir(), 'aip-test-files-')));
   const ragflow = await startFakeRagFlow();
 
   const files = new FileStore(fileRoot);
@@ -352,6 +361,7 @@ export async function createHarness(options: HarnessOptions = {}): Promise<Harne
     db,
     ragflow,
     files,
+    fileStoreRoot: fileRoot,
     operations,
     registry,
     knowledge,

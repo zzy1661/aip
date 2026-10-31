@@ -1,0 +1,2955 @@
+{
+  "mode": "contract",
+  "cases": [
+    {
+      "case": "M19 只读重试预算与故障分类 > 上游 429 且带 Retry-After 时按 Retry-After 退避后重试成功",
+      "file": "tests/contract/ragflow-retry.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 5,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "0ee70d22-e79e-4ba4-95f4-357a4d30da7a",
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "330a3763-ee39-47b7-a4f1-d649bc795ff0",
+        "51a059a4-4a7e-4486-808f-186f07de9e71",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "c4417aaa-8603-4a44-aa62-8fd5f4732a9b",
+        "cbedb410-4843-433f-9549-39d6e083a738",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "31e2a54ba99e62083a519c96713c8d4243641615a942724effb63d54ed4fc37f",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M19 只读重试预算与故障分类 > Retry-After 超出剩余预算时立即放弃，不做超预算等待",
+      "file": "tests/contract/ragflow-retry.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 4,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "27a00d4f-17c9-4bb9-8898-3decf8082ac1",
+        "28fe172e-73b3-48c2-bc65-94dc352a10bd",
+        "3be42ba6-36bb-46a2-bc80-4f92a0cc3c72",
+        "4ebff242-1446-4624-9b1d-648c4c191d99",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "e7fb098c-87f4-4654-83d0-313ae894a140",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "813ca1a4f68bef2de35d1916696944c106f0a7cbc4996221a00be9e139ec3af9",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M19 只读重试预算与故障分类 > 上游持续 429 时尝试次数有上限，总耗时不超过只读预算",
+      "file": "tests/contract/ragflow-retry.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 5,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "43babd78-01c3-4f44-bf29-f48dc3ab25eb",
+        "4544fa9f-4ecc-4dc3-9933-75349229bca3",
+        "4e17f288-d9eb-4d31-baae-f6616208e1b7",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "6f0c0b5d-f4eb-4d4c-8422-6b071cd0e8af",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "8e9b253f-185c-4a2d-bf10-77224231c727",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "35442f4fe9584d6cf206151203a747006347d608aa15a001031610baea22bcfe",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M19 只读重试预算与故障分类 > 写响应丢失时只发一次创建请求，操作进入结果未知",
+      "file": "tests/contract/ragflow-retry.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 6,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "15b31262-b023-4564-97e9-dc4df5069db3",
+        "24d05fc6-96cc-4471-9673-f1408342f73a",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "dd5cd383-273e-479a-bba3-4592b621719b",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "f6d133a81560c5458f9bbb13f0c1a2c6a43ac69383da20ca16d8b8973a0d2319",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M19 只读重试预算与故障分类 > 连接被拒（确定没有送达）时操作留在 in_progress，允许安全重试",
+      "file": "tests/contract/ragflow-retry.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 7,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "6a6b0931-f824-43d2-8b5d-bcc2487844fc",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "90474876-aa82-4f27-be4f-471c8a17cfb4",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "e69f3da6-e903-4ff8-8805-ffbcefef3cd1",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "d0ca05c3436aac4f4c61c5e0aa53bbf48986afb850976148de6a5e9b4d1f42fa",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M19 只读重试预算与故障分类 > 读请求的响应丢失时操作留在 in_progress，可以安全重试",
+      "file": "tests/contract/ragflow-retry.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 5,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "b26abe11-ad21-4509-b45b-d28e496cdd76",
+        "b9a5d63e-f4e0-4c7f-96a7-1025449372cf",
+        "d6c4e876-ae51-4321-aca5-183adfafa42d",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "42bab9e3a37e4a2eb1a6ebddadd38d9e09ada4ad7493539dbb0b696d8bf6c90f",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M19 只读重试预算与故障分类 > 读超时判为「已送达但没有回包」，连接失败判为「未送达」",
+      "file": "tests/contract/ragflow-retry.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 6,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "5c67237bf49d670345957fca679fb1157037fdfb79f5bb951256b2f34afe3b31",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M19 只读重试预算与故障分类 > 错误响应不泄露上游 API key、上游原始报文与文件正文",
+      "file": "tests/contract/ragflow-retry.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 9,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "35c60c3c-5015-4eac-83da-3faa80ed04e5",
+        "481125c8-88c7-4b9b-83f5-6b79094bff31",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "5d685990-e28f-4cc3-a7bb-7cf6879a24c5",
+        "709fbe0e-20d1-45f5-8032-c442bb3b1edc",
+        "7559e1c4-1e72-4cd9-a955-823be0c4c30d",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "bb349432-8788-4401-be78-85199749e080",
+        "c43915f2-df9a-461c-a832-693af1a2ac37",
+        "da952644-a68f-4e68-bda6-5b481dc1e6fd",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "dd3f688c41249edd45c70ee024b3e2035b0e6e2e3778b67555fa864f5621dba8",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M19 只读重试预算与故障分类 > 错误体的 trace_id 非空且与 x-trace-id 响应头一致",
+      "file": "tests/contract/ragflow-retry.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 4,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "490d1ba8-ec37-423d-81a2-d990701d7799",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "55a48332-366c-4bb7-9ce0-469bc9f94748",
+        "850704d6-f022-41c8-a07b-dff468e57c28",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "d23542e6-aca2-4ad9-87e0-8b889feb8a02",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b",
+        "ffa9bd3f-e7e5-4783-aa7b-ab5a25ba4e11"
+      ],
+      "sample_hash": "f2e1c84f846c26b3bdc247f6d65f912856126af63418011ef297c61b7133509a",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M19 上游故障与重试预算 > 上游 5xx 时重试次数有上限，并返回 503 而不是 500",
+      "file": "tests/contract/ragflow-unavailable.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 4,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "47d193f8-0769-4ff4-8156-56e1160d8f46",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "6a5ff3cc-64c5-4528-8431-ae8b4327534a",
+        "7aadd4d2-81cf-4a70-a9e6-3419485a74c4",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "8d923ab0-c2cf-4794-a29f-532b2a19b983",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "c4156e1b-f6e6-44b7-9663-b989ac087556",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "67c23df61e68cd84051c893015eac5152d5aad651160b4ddcebe612e08e544bb",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M19 上游故障与重试预算 > 单次超时被限制在剩余预算内，总耗时不超过只读预算",
+      "file": "tests/contract/ragflow-unavailable.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 4,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "08646b8c-ff5c-4a4a-b24b-e667d1c20433",
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "2b477813-d96f-47c8-91df-0ca593241f33",
+        "4bde957a-8a91-4e21-95f3-ad7aa2408739",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "92580789-d213-4484-af93-aec747480b3c",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "db65b246-3075-4100-aa86-da1c8df1a1b4",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "8e1c7b8868f541f417257fbdfb13620175f4e7a88ec2d23089ab5acd61660d20",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "审核终态：已批准的版本不能被改判 > 已批准的版本再次审核为 rejected 返回 409 REVIEW_ALREADY_APPROVED",
+      "file": "tests/contract/review-verdict-final.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 3,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "16000cfe-8fd2-4f53-8ee0-8daad6d7e712",
+        "37bdc437-e9b4-474f-bf8b-2c2d3ac4ff76",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "628d2060-ebbd-4dc7-8f66-70d13138b0bf",
+        "6ad2b4e2-4d62-4b1d-87fe-a7fc46f369c6",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "8ee7e506-7718-4420-90eb-983a3c3fe533",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "d49fefc3-9ed6-480b-b25a-24b1017e685e",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "ad24d28ed1472d80dbb64ad956301b33184cd98e0d937d1f4e8b268b998db19f",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "审核终态：已批准的版本不能被改判 > 被拒的改判不写审核记录、不改结论、不推进修订号",
+      "file": "tests/contract/review-verdict-final.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 4,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "1393708f-c04c-44e5-80cb-da95305705ec",
+        "41df75a8-c0a7-4515-912f-a5cb592e7ed3",
+        "477d6a97-25ba-4fc0-8115-f56b87205e99",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "746e7a21-dc8e-4ed3-8148-16aff928b2d6",
+        "77698137-c30b-4921-a5a5-13134ff5920c",
+        "80c4349e-3f8c-4cd8-ba3a-9ff37a2fe911",
+        "81ae7672-1cc5-4040-91d8-f9f5732261d9",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "d339fe71426f9e24f55b1161fccaee8e97a6ebdcc1092bf4fd2842567a25295b",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "审核终态：已批准的版本不能被改判 > 已批准的版本同结论重复审核按幂等返回当前状态，不写审核记录",
+      "file": "tests/contract/review-verdict-final.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 4,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "39fc804c-e821-4c70-81f7-4fc9f981e277",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "64be4d02-4a1d-430c-8e39-11a4a17c7d00",
+        "6ea7487a-e96a-4c9e-af61-3168e9512b15",
+        "821f9bf1-62e5-4afb-b1a0-9fb8106f40cb",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "8bd72ad3-2956-4650-8a1e-ab7290ca23c0",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "a264c2fd-c181-4a41-a022-557d195d4b33",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "5f658953b6421ab3ff721c032cc260bff01e403e6debcd52587d02ebbeab7633",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "审核终态：已批准的版本不能被改判 > pending 的两条审核路径不受影响",
+      "file": "tests/contract/review-verdict-final.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 4,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "0671df50-a441-42f3-8e95-385d3fcae69e",
+        "0a8f9754-6736-46e7-8e75-8ae7df9860a5",
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "1713cdb8-94cb-4913-8dcb-c98ac6d92775",
+        "2a4fe3db-aa82-4fe7-afb3-ab719b9176e4",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "5bc03310-1a2c-4b9b-ae37-bab5a976cc7b",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "e759f5cf-131b-47be-9551-85aab535daf1",
+        "fda5a0fd-7d01-42a5-b8b0-2850d185bc89",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "a84a2bf74ca4ad748901c1ff9d91d0107890c5705bcb0c9da5c0801be3aa7f98",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "审核终态：已批准的版本不能被改判 > 已批准的版本即使哈希不匹配也仍然落在同一个稳定错误码上",
+      "file": "tests/contract/review-verdict-final.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "3258c707-8640-4cc4-9f98-b2f6d76c366f",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "54f26ff2-69b1-4987-ba83-8a5687a79546",
+        "672ec56f-795c-4648-9f8e-104840e2b415",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "8b5b7a3d-cee8-410b-a023-ce82a3050a8d",
+        "91a2f407-037a-440d-8c2e-dab588be4b7f",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "aa5674ef-fefa-4a01-b782-a8be32864c1d",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "f2c6c5ddc27783c05378b09d0b44b674d2d17ca0554e4935b5fbdc16f9e104dd",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "审核终态：已批准的版本不能被改判 > 同一版本并发两次审核只有一次成功，另一方得到明确冲突且不产生双写",
+      "file": "tests/contract/review-verdict-final.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 4,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "1b3ff287-22c0-4195-87e3-2315ade64648",
+        "5164a2fe-ee3d-4250-867f-5bba0c5a8455",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "859ac685-6142-4b2c-ac7f-ac0b68cfc032",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "a20bcbc2-7e20-4ce3-bea5-4a708be9928c",
+        "a62c0c24-b154-4e17-b643-7351d9787146",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "9e96d2e6b330c490b84483d380c96163638956925e70a1a0a963b591e582a4a8",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "审核终态：已批准的版本不能被改判 > 已批准的版本并发改判为 rejected：两次都被拒，状态与审核记录都不变",
+      "file": "tests/contract/review-verdict-final.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 5,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "1a69d2ae-6180-4d83-99bd-52dde2221565",
+        "320a51a5-fa45-414d-878a-0c8aaa262e85",
+        "5212d98d-9413-45af-8f6e-2ab3a47b5f05",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "ab91c682-7bb1-4cf8-b9b1-b5e40f2bebfe",
+        "cc194bb7-6fa8-4719-bf61-cd07056ba5bd",
+        "cff28f8b-30b6-4ad3-acd3-4698cbcf8353",
+        "f7517417-f9fc-4bbf-b1b2-74bc7d09942b",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "691acd26785fb68a7402c6bba083f4f6e4b070876f2481ddac603859d32afc0b",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "审核终态：已批准的版本不能被改判 > 改判被拒后检索仍命中该版本：检索与下载对同一版本的结论一致",
+      "file": "tests/contract/review-verdict-final.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 8,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "0f96e973-6c27-489d-b28d-5f89121b926d",
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "12d2a238-a934-4130-9572-f3d533203df0",
+        "19fd6192-5803-4a01-83a0-4c6ef1edeb93",
+        "3b7ee8d0-00e4-4473-aa28-31d148d0080c",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "565c47ba-3e17-4d60-8f3f-54c76ecbfefe",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "c37d19a9-a370-4f20-82f2-5c8586816158",
+        "d1c92601-a6e4-41a6-9dc5-66394aa0d5cf",
+        "de731c13-c47d-4620-ba42-4c82a1b5790a",
+        "ebf14d45-e068-45d0-abac-32ff45d80c1f",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "a639f7c0a62c96f7a8f8aed1c2fb285bc5bb3291dec8f88d331d51bdc924d025",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M13 上游 run 状态分支 > run 为数字字符串 \"0\" 时按未开始处理，保持解析中",
+      "file": "tests/contract/parse-status-branches.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 4,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "1c8d3fb3-69a1-441e-9fcc-223ed3c137c1",
+        "271ab41f-4ab0-4478-8354-0f8d9b7b1abf",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "8b271ae6-3d34-4ec2-96ea-ed6ea3dedbb0",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "bda8708d-ed2f-464c-b113-40f1dfdfe329",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "d26f1775274c7fa513d3950a14eb24baa7ee48a38a9696d9412b04a091e5f727",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M13 上游 run 状态分支 > run 为数字字符串 \"1\" 时按解析中处理，不进入 ready",
+      "file": "tests/contract/parse-status-branches.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 4,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "080a5297-36ab-458c-95df-2767898386ac",
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "398134d4-130d-4f5f-89d7-62753cde3aaa",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "7ead9cc0-91e8-4fb5-a2a9-8ae9cf67b885",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "dfffaaa0-2800-4abd-8289-50e0a04ed5bf",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "3ff47be1c5a775e406dd316f889165e9d1fde9876b24675514b67e6d6a623a74",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M13 上游 run 状态分支 > run 为数字字符串 \"2\" 时按取消处理，落成失败终态",
+      "file": "tests/contract/parse-status-branches.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 3,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "191ca575-dbe8-4c7e-b727-06288e523a74",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "9753ec6b-b3bf-4c2a-a503-95cdfd2e2e3e",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "9eaf1702-3283-4a64-8e50-996d68a911f1",
+        "a7c9fb45-9200-477a-99aa-a74be9b64cca",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "d1d72ac444cca695633153d11bb04b968df75c9eb488930021c64339cc7b60e1",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M13 上游 run 状态分支 > run 为数字字符串 \"3\" 且进度完成、分块数大于 0 时进入 ready",
+      "file": "tests/contract/parse-status-branches.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 5,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "2b3a81c1-511f-4e8d-a2df-90ff5203a13c",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "5c586ca7-a572-48b7-ad63-4dc9a72420d9",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "94726df6-445c-42d3-9ac9-44fe103bd44c",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "d70d8887-8d98-4826-9f1b-374ecdc50c9d",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "8dafbe9d63a9a4324f49ba21b097b5ff8fe88105853ddf8954e4171ff18397b2",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M13 上游 run 状态分支 > run 为数字字符串 \"4\" 时按解析失败处理，落成失败终态",
+      "file": "tests/contract/parse-status-branches.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 3,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "73a6ecb9-11aa-4ce2-9382-c704cb946216",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "eeb801dc-470f-493b-96f2-67c53760b314",
+        "fc11c356-ca08-4957-b3b8-b1248ebb1352",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b",
+        "ff4d98c2-46f8-420c-8584-6f0f54f2473e"
+      ],
+      "sample_hash": "0d8cd58f3066771396dca528b8500ebadf22a44d03b7c6b251427e3e6015ec41",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M13 上游 run 状态分支 > run 为枚举名 UNSTART 时保持解析中，不当成失败",
+      "file": "tests/contract/parse-status-branches.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 3,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "c2426217-d8df-4ea8-9dda-963c137b6ad1",
+        "c6c01b9b-ef0f-4354-a258-b3be9e069644",
+        "d8487dbc-5ddb-4708-8074-c95e5d0dc6d6",
+        "debb010f-ec82-46f0-aaae-59d04ecc6e2e",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "be3722411f8fa89edd3a8d84ad4ca718a573642a6e2d67627219804d2740a782",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M13 上游 run 状态分支 > 上游回包缺少 run 字段时按协议错误处理",
+      "file": "tests/contract/parse-status-branches.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 3,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "719baf64-34f7-4a28-adee-7c1235489cdd",
+        "7c4cff03-4ec0-4ce9-869f-c0fd619e3026",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "8b788d0e-90ed-49e9-8be7-cbb49b93aebe",
+        "8f9a9f77-ad87-4aef-bdfb-c498e792b6fe",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "c6ab60417d6af673de826aae3afeb656f95b49b4b5b2dba6cd65033439e75349",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M13 上游 run 状态分支 > 上游 run 为 null 时按协议错误处理",
+      "file": "tests/contract/parse-status-branches.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 3,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "128e94b6-9207-4041-bb7b-8aa77cd2e4c4",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "5cea9051-6136-470c-87c3-80a8abf825b6",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "fafbef1e-f098-4ba7-846a-3c9c66de0c74",
+        "fb7369cd-57e2-4e76-8349-3ae564194824",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "29c92b0fb439d4d8378f869e2650d6e203b3cd19037950887fe32bc6fcd7b4da",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M13 上游 run 状态分支 > 上游 run 为未知字符串时按协议错误处理",
+      "file": "tests/contract/parse-status-branches.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 3,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "41014d3e-6ea2-4723-872f-8363f94c333f",
+        "4986e8b6-43f1-4de7-b7b7-9891e5389f15",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "8cba981a-31bf-405f-8eff-3bca9f75fe35",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "b4d37f8c-6492-47d3-9bda-3d6a5403cf70",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "5e37a4e1451838547f844211840ef76d8019b3bbdb7ce4685a6540cc10feee80",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M16/M18 检索权限与白名单边界 > 缺少 knowledge:read 的主体检索被拒，且不产生任何上游请求",
+      "file": "tests/contract/retrieval-authz.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 3,
+      "subject_role": [
+        "user-1/manager",
+        "user-no-read/writer"
+      ],
+      "trace_ids": [
+        "02792d66-90c4-48a5-aea2-5b4d3b7b92f2",
+        "0c0dde74-5549-400e-af8c-92ef072fac0b",
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "2e0482fa-eecc-4327-be8e-cf2be5c4c992",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "559c0465-de20-4955-a43f-12e0910eff05",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "d7871f57-6575-4801-9f82-9181bf16d024",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "ad790e7be024599ce6ee29568d609ca91c594f6a5681336a7de4d39426e9f8e9",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M16/M18 检索权限与白名单边界 > 缺少 knowledge:read 的主体读取文档详情被拒",
+      "file": "tests/contract/retrieval-authz.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager",
+        "user-no-read/writer"
+      ],
+      "trace_ids": [
+        "08976a22-8d6b-462b-a4c2-5ab03f15bc6e",
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "9e7ff03f-40f9-4537-b2c4-1e6226ac8a06",
+        "ac6966fa-dad0-47af-8c04-b9ed3bdad0a0",
+        "f6b523f6-e5ec-495b-b4d1-f7b6043fc40e",
+        "fa852afa-33ba-45ee-8209-d56b0eb403c1",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "b26baae36e1cc9033cb4e3ecaca1ea9f431aeba3a93f683f066d310d51464c6e",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M16/M18 检索权限与白名单边界 > 客户端混传有权与无权知识时，无权部分不泄露存在性",
+      "file": "tests/contract/retrieval-authz.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 3,
+      "subject_role": [
+        "user-1/manager",
+        "user-other/manager"
+      ],
+      "trace_ids": [
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "3c92f2ed-c5c8-4de1-ab40-a1162cb3e56a",
+        "498f35a4-8961-467e-b2f5-123728adb4ed",
+        "4acc12c9-a1b6-4dee-b16d-9187ca4f9d6b",
+        "4e861bd0-f5c5-4dbd-b8bf-fd6af64a5158",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "5f7fb418-587b-41e6-9100-cda92e0f9abc",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "e3beb143cb6eb0347fd68f198322707f2991b94047efdd34c11c06fbccf3d919",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M16/M18 检索权限与白名单边界 > 上游 HTTP 200 但业务码非 0 时整体失败，不伪装成空结果",
+      "file": "tests/contract/retrieval-authz.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 3,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "16757409-535f-435e-91d7-19bf9217cb00",
+        "3796d418-3550-4aab-b1bb-4dc21ea3cdae",
+        "4ff438ed-53cb-4608-b1e1-1f6b0b557714",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "64470db7-9d87-4f5a-a6e6-dee77273e62c",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "c73a45c0-2fc3-439f-838c-845d7bb679a7",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "572f29226580211a5e2342646bafa64b0ad735eeaf61b8d3406361f13dedb7ba",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M16/M18 检索权限与白名单边界 > 上游回包结构不符时整体失败",
+      "file": "tests/contract/retrieval-authz.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "499257a1-bcec-4c73-858d-464333be22c7",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "8e5a48ec-edaa-4fe1-86ed-06394db69e35",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "a457daa2-3e23-42fe-8fac-c58b05b11206",
+        "b6b1c441-b352-49e6-bb31-86189c8bf746",
+        "bfccc4ea-707e-470a-a52e-2dc9d6785347",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "12ab2efac39fc4120b573cb2903ce5e4618e36e3bbbfa8831774140e291dd250",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M16/M18 检索权限与白名单边界 > metadata 不能替代 ID 级别的白名单限制",
+      "file": "tests/contract/retrieval-authz.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 3,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "3093dbb9-ba55-4bfb-9317-4bafffd756c4",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "8a569907-776b-403b-a2ee-d4d2bf71dbf8",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "993aa95c-7f76-43d8-95bf-4d9c61655ea1",
+        "c0fd853d-7171-440d-a28d-aaa51465188b",
+        "d16f0fd9-e477-4a2a-944a-acb4177bda9e",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "218561879d9e99aea3ec4660f44b5f1a9d4ca620e180cd9a19e69b3cc0b6b92d",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M22 作用域与访问限制 > 缺少令牌时返回 401",
+      "file": "tests/contract/scope-limits.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "anonymous/no-permission",
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "20e5c093-7335-4067-bae8-a652fbee792e",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "b76bc0aad7f88f3787c072919cd2dc2a490a492ce6d1a3cca6b585f0b7d1fb23",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M22 作用域与访问限制 > 过期令牌返回 401",
+      "file": "tests/contract/scope-limits.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "9cae63db-aaa2-43bd-b907-846254d63e76",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "b76bc0aad7f88f3787c072919cd2dc2a490a492ce6d1a3cca6b585f0b7d1fb23",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M22 作用域与访问限制 > 签名密钥不对的令牌返回 401",
+      "file": "tests/contract/scope-limits.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 1,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "a7e2cac5-bda6-462e-93ee-823cf14ce02e",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "b76bc0aad7f88f3787c072919cd2dc2a490a492ce6d1a3cca6b585f0b7d1fb23",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M22 作用域与访问限制 > 作用域与部署不一致时返回 403",
+      "file": "tests/contract/scope-limits.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "86a6eef5-3579-4cf3-80c5-af1ee762251b",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "b76bc0aad7f88f3787c072919cd2dc2a490a492ce6d1a3cca6b585f0b7d1fb23",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M22 作用域与访问限制 > 声明多个 scope 的令牌被显式拒绝，不按首元素放行",
+      "file": "tests/contract/scope-limits.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 3,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "cd9c6021-e630-4d7d-b5df-5544053d5bea",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "b76bc0aad7f88f3787c072919cd2dc2a490a492ce6d1a3cca6b585f0b7d1fb23",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M22 作用域与访问限制 > 缺少所需权限时返回 403 并指明缺哪个权限",
+      "file": "tests/contract/scope-limits.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager",
+        "user-1/reader"
+      ],
+      "trace_ids": [
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "561bf188-6d44-402d-8e62-2e8058b0ee28",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "f3efe7bcd4a7a96b8a6738fe0b317e2cc477a895e9776779db8eb944fe97c388",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M22 作用域与访问限制 > 被本地拒绝的主体返回 403",
+      "file": "tests/contract/scope-limits.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager",
+        "user-denied/manager"
+      ],
+      "trace_ids": [
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "45913cff-e7d0-4aef-b541-d49fae0d655f",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "b76bc0aad7f88f3787c072919cd2dc2a490a492ce6d1a3cca6b585f0b7d1fb23",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M22 作用域与访问限制 > 显式引用无权访问的知识按 404 处理，不泄露存在性",
+      "file": "tests/contract/scope-limits.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager",
+        "user-other/manager"
+      ],
+      "trace_ids": [
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "3a3e94fe-a857-4fd9-995e-5c2a48b9bf49",
+        "3cc49e67-4096-48c4-93aa-116712afacee",
+        "4bf6de63-9711-415f-a865-9c0a85a24863",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "53d826f1ee7a9178f12f754c5ab2672be3a4bb941a734a88071ac2f9905b7748",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M22 作用域与访问限制 > 显式引用不存在的知识同样按 404 处理",
+      "file": "tests/contract/scope-limits.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "0c5297a0-fe1c-4665-b25b-ab4f4afa0e2f",
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "b243405a-3e03-4e05-a6cb-82adc6fea5fd",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "e2c90f725c845523307525c2257ad1bfec10282be30cb8ce7fdf7c2e378d1f2f",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M22 作用域与访问限制 > 显式引用未审核通过的知识返回 409 INDEX_NOT_READY",
+      "file": "tests/contract/scope-limits.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "b5ccb71b-6493-4ba0-8e97-14f1463aa84c",
+        "ed8c2bb1-cf65-42f0-9a24-435ba60a42c8",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b",
+        "ff8c4217-1bf7-41b4-8376-63eb62cb0e12"
+      ],
+      "sample_hash": "ef70d2138c2ad994aa97b0d36e82e6e336e70204585fdbca5060fdde533f009c",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M22 作用域与访问限制 > 下载来源文件需要 source:read 与文档级下载授权",
+      "file": "tests/contract/scope-limits.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 5,
+      "subject_role": [
+        "user-1/manager",
+        "user-1/reader",
+        "user-no-download/reader",
+        "user-no-grant/reader"
+      ],
+      "trace_ids": [
+        "11bd371c-6f3b-447c-bf29-03bfb458d03b",
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "1297a934-4474-4b11-9eef-c03b983db23e",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "549f7665-96ac-469c-a719-10a75231d9b6",
+        "80379a5b-ea67-40f5-8ed5-0edff88de56b",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "acc3cd16-79c1-438f-8c61-00d93d9dd70a",
+        "afdef0ac-48de-4563-978b-3933c550a8f3",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "8f27bd748dd7b1583032923476bb9d6b8458c6a6607f72684d50c3a465d4cb8e",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M22/M23 检索范围与详情语义 > top_n 超过上限时返回 422 CONTRACT_INVALID 并定位到 top_n",
+      "file": "tests/contract/retrieval-limits.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 4,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "104a02b6-0a59-4ba9-842a-ed7e98a71f30",
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "d79cdb6f-bd87-450b-99c3-5f7d5b3fd33e",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "a41d3178f123e2d99bc758be42a0e8892e67dd89aa65b5321cd58304a842110b",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M22/M23 检索范围与详情语义 > top_n 为 0 时同样被拒",
+      "file": "tests/contract/retrieval-limits.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 3,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "ca37cc1e-5a47-4776-b449-d68e28435c46",
+        "f2170a3b-e44e-4299-993e-a70cebd77f4a",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "52f68389c7352924a1c935bc392ac91280b7ab7cae02fd903c45676b99ca7b90",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M22/M23 检索范围与详情语义 > top_n 取上限值时被接受",
+      "file": "tests/contract/retrieval-limits.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 3,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "9fbad409-3838-4d8b-95f1-6ea81bd58bcb",
+        "d15df7f5-09f0-4527-a970-247a782b77d7",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "ff95c9e01e0f85284a9e293c829ca0fe7c9765122def0670c8be3ad433a813d8",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M22/M23 检索范围与详情语义 > 授权范围跨越多个数据集时整体拒绝，不产生上游检索",
+      "file": "tests/contract/retrieval-limits.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 4,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "4859ec48-a334-40ad-8749-4fc8526b690a",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "5bc7ecbe-6f4d-48b0-a143-5f3cadf3552a",
+        "6bf81839-9f28-4666-a030-a967b5b317f0",
+        "793e6340-e652-42ff-bd3f-41fbbd0d4c08",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "a12aa6cf-0212-4e58-a18f-527eb14a5826",
+        "a1b01730-08a0-4dc3-999f-e3fae6e455c9",
+        "c9e4fc7e-4369-4ee2-bc51-112206aa880e",
+        "d769e997-901a-41fc-808b-af2b473921e3",
+        "ef01ff67-4c07-43b0-ae49-c023416685a1",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "c2ed904ac14c631e08f14d591286f3c9c069919cedb98a9f08301ede37e5d71b",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M22/M23 检索范围与详情语义 > 单个数据集内的授权范围可以正常检索",
+      "file": "tests/contract/retrieval-limits.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 4,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "4ea9c4cb-63f0-4a54-ac81-60b5dc13c0de",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "d3770dc3-52b7-4766-a6ef-548544ac3ba4",
+        "de1349b7-3a32-4b44-a2ef-07ea05635d74",
+        "f5ff62db-cb1e-495d-afea-4200866c816b",
+        "f8622118-32bb-4960-89eb-eb2c8aa5e2b3",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "9fa068ec56c7a0d377585d74a86b8881aad5403bf820e6fa00effcecebf3638a",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M22/M23 检索范围与详情语义 > 资产详情带出 payload.concept_validation",
+      "file": "tests/contract/retrieval-limits.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 5,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "44d7626b-e991-4da7-91af-f8aefe1c56e8",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "5fc6648a-0fd1-47d6-beb4-04988c0ddacb",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "cadccdcd865ffd1fe9217281ffd84cb6b82ebb25ac06c7bce0693a5ae1b50da2",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M17/M20 撤回后的授权边界 > 授权集合里只有已撤回知识时，检索返回 no_match 且零上游调用",
+      "file": "tests/contract/withdrawn-access.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 6,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "17c2907c-dea1-46b2-8c00-a2b04226f7ac",
+        "2042c891-e874-4560-87a4-da99c14d66c6",
+        "504db31c-f982-46b1-837e-6a62da25769c",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "853ea30e-674c-4239-b3ae-f7b268c61b92",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "b71fb94d-590f-4b01-9160-b0c868c57026",
+        "cdb918ae-0f1c-4253-8299-fbff5c99ef61",
+        "f6d6167f-01bb-49ac-ad37-073449f843d2",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "fe796584378b20b95eb45bf130ce4e866ae2c17b4310455ef519b2db56e68240",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M17/M20 撤回后的授权边界 > 已撤回的知识不再出现在检索白名单里",
+      "file": "tests/contract/withdrawn-access.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 3,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "19a7d69f-055c-44ba-8d83-d527bdecbda4",
+        "296f8828-ce23-4842-8628-cc593ace198c",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "55b02870-2947-4286-abb5-750acc34dfde",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "9a50d2bf-4808-408f-b350-e06105150ef1",
+        "a159ddc2-1315-4145-ad1a-a689a91fc8cf",
+        "ef65d5f1-db20-4109-85f7-f16cf3fdf715",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "c037973529700ed25469aa73da5a6828d63ba8fe520226741dfec612306a590f",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M17/M20 撤回后的授权边界 > 授权集合里同时存在未撤回知识时，已撤回文档不进入上游白名单",
+      "file": "tests/contract/withdrawn-access.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 6,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "15d12af8-a959-4213-8813-81de381f1216",
+        "368e2566-83a8-43e3-8a2c-640d076a0f34",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "6fad7560-de82-45e2-94fc-d0e5f423c136",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "91d04e95-f591-4e6c-b8d3-eefdd93cf3c6",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "bc6181e0-a65c-4f2a-8f8f-047e67de51d2",
+        "c30e85f4-3a98-4a47-a17e-9783982d7303",
+        "c718f7af-2430-4a66-be5b-fcf1c85c80c2",
+        "ca08c8b5-b93c-4a8a-b15b-e800a92364fc",
+        "ce13b2e0-e395-410d-a765-6a37c258d0ee",
+        "f23a8a03-ecba-4f33-ab9a-652f01cbfed9",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "3067bc6cb0c93d15853e578bbd3ca1fee645be6e06b309a63ff5018e470f4ac7",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M10 数据集创建失败分支 > 上游业务失败（code != 0）落成失败终态，不落数据集 id，也不重发创建请求",
+      "file": "tests/contract/dataset-negative-cases.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 7,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "07a9e8a9-5b64-4181-a193-fb2ddc7a03f2",
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "14805ee8-1641-4db0-bb4f-89dc40d315ef",
+        "4001e7de-32b1-4118-92d8-0046907d1e8d",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "8eeebae3808429a3c63ceee97c5f4870b068cf65ac788c9dbe27a3fe5a7631d4",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M10 数据集创建失败分支 > 上游 HTTP 200 但 data 缺少 id 时按协议错误落成失败终态，不落数据集 id",
+      "file": "tests/contract/dataset-negative-cases.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 6,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "808e3b60-02d1-4935-a8ce-4bf7abd1fe05",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "c1aed8c1-f5b6-4d09-9743-3e7ca11c190f",
+        "f4e9332e-76e4-403a-aaf1-523e254e3d0c",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "62eb0248b4ed43c2603025663dd9d213f26ac9c7573109a87dd7adce5930d22b",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M10 数据集创建失败分支 > 上游 401 时按凭据被拒落成失败终态，不落数据集 id，也不重发创建请求",
+      "file": "tests/contract/dataset-negative-cases.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 7,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "4e31de4b-e38d-4b56-9281-4687272b667c",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "cb5bdbe7-8977-42d1-9d72-83c72f1cc510",
+        "ecd62ff5-266b-4279-b7da-0da40439148d",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "f54e1d4470869867fdce1921dc58296ab25d3eac2be4cd0e70dd0af5d06eca1e",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M10 数据集创建失败分支 > 三类失败的结论互相可区分，不会落成同一个错误结论",
+      "file": "tests/contract/dataset-negative-cases.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 13,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "10d28312-c502-4872-9a15-2f3eedb18bd4",
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "29f829f3-3faa-403a-9375-2010f8dd967b",
+        "34c5ebaa-34ef-4575-ab15-6b39902ce53e",
+        "50abff01-a0c3-4130-b2cc-8aec7c2497d3",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "6125ecb6-c225-47a2-9164-eed37629a30c",
+        "7535a14b-eb99-4a70-b810-94ed821393da",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "a55e734f-7ad7-4480-8ea4-0a9f32db8ab8",
+        "be2c7176-63b0-410d-9703-6dd47e27dc43",
+        "eee1ad6e-526c-4d72-8372-ce199666b4d9",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "ceda63ce7118c6d82317d1dbcb88383d808d23f7bdcb7ddd1c3162798ac20a20",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M10 数据集创建失败分支 > 成功路径只发一次创建请求，并把数据集 id 落库",
+      "file": "tests/contract/dataset-negative-cases.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 7,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "06d5a64c-1419-4c4d-b33e-8ecfc23cccaf",
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "a5f96a98-1f8a-4061-9ed4-63e247daf04e",
+        "f7114d9f-a830-4a8a-8a47-ab5d5847b3dc",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "e850e10f4920a00653446d0b2ed00f19bfe124059c6992797b8463bd382fd0cf",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M13 RAGFlow 解析状态契约 > 上游仍在解析时保持 in_progress，不提前置为 ready",
+      "file": "tests/contract/ragflow-parse.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "14359bce-b900-48be-bf56-08a3d2eadd3a",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "774a48ca-55ff-473c-91a2-b6f86d1a69e6",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "c789753c-1463-42ca-887a-9b51ddd3b8b4",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "16b918f1eae812e5e679be6f30327468e87f8ad60dc102c86e2d416b1834c867",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M13 RAGFlow 解析状态契约 > DONE 且进度完成、分块数大于 0 时进入 ready 并登记索引版本",
+      "file": "tests/contract/ragflow-parse.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 3,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "2080db93-8ffe-4086-9fed-fa975319453f",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "5fc6c39d-4c8c-4845-a884-66792a9fe122",
+        "7d386363-2ef3-4626-84dd-cf45e2e588c9",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "48fb7c64eeffb29ced8a4c815633dd87f37225d5dc809dd88eaa4a73026b37c1",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M13 RAGFlow 解析状态契约 > 上游 FAIL 时操作进入失败终态",
+      "file": "tests/contract/ragflow-parse.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "4b4745af-5969-4a34-b0b5-19fb41e39a89",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "da69152a-ab24-4eea-aee0-419c0ae72b23",
+        "e4d24a1b-9c96-4223-a27e-5b43e3ed4b36",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "a5760049f954a7c1d74b5c7eb1764cfd2e40f872a582435ae348763f0c786843",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M13 RAGFlow 解析状态契约 > 上游 CANCEL 时按失败处理",
+      "file": "tests/contract/ragflow-parse.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "5b3f7cd0-236a-4bb0-8ef0-0b13b577902f",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "a1abc469-01e8-4212-a208-5ca3236db44e",
+        "edcfdd93-f06b-4c1f-bf0e-372cf74d061d",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "4c85bfdc218b023c82492cd38ff49709bcec06990267707d84d67f4a7c541014",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M13 RAGFlow 解析状态契约 > 上游 DONE 但零分块时记为 empty，不得伪装成有内容",
+      "file": "tests/contract/ragflow-parse.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "1db01e80-ef9f-4e4b-bccc-f6aa51dc5044",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "d0eb891c-2ab1-4525-b1a2-48f1d2f1a2a3",
+        "f1a49032-619f-4b5b-9136-150e7cbae683",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "2d8538171445f49634e81af6bc249d8312a2c3a02460451afef5dd0ac4310328",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M16 授权检索与来源引用 > 授权范围内的检索返回证据与来源引用",
+      "file": "tests/contract/ragflow-authorization.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 12,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "0034db57-3ebd-4383-b268-89af77cf5f2d",
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "1591a6d3-e8f2-4ae5-bca5-c802dd53a51f",
+        "3d9338ed-a3b7-4c48-aae8-25cf7c3684ca",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "5ffd7812-f863-42f3-af2c-fc4ea29bddd4",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "bc17774d-9424-4f4b-848d-3e1c74a34970",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "ef0b67ac8fe82408ed8a62900f87d0dffe9296022d32b90b72cbb82cf0fd3914",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M16 授权检索与来源引用 > 未审核通过的知识不进入白名单，也不触发上游调用",
+      "file": "tests/contract/ragflow-authorization.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 4,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "03e5f247-45d8-44ad-a789-3e5c17321178",
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "a73596be-abf3-4751-894e-1f3807ef138d",
+        "ac66e4aa-680f-47b2-8abe-5b2e55dbf1a5",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "084baf725c1450a81298fe1b3e0a1d8b3373499ea218474cdd1194505b99d5db",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M16 授权检索与来源引用 > 上游返回白名单之外的文档时整体失败",
+      "file": "tests/contract/ragflow-authorization.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 3,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "2d3368a3-a64a-4687-9580-317bad68b4ae",
+        "4cfb36a1-1fcd-4c48-989d-d4ef29aee207",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "7e771e98-3cbe-44f5-a6dd-6521c6fff10f",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "a243d08f-78e4-4ea0-923c-e21450ceba95",
+        "f146e6de-cf4e-4484-b492-6dc43c80a9a7",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "7c54d2a8ed308327b044cbd2c58fdd6c37f5db309372947966a0f13e50c80e85",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M16 授权检索与来源引用 > 显式引用无权访问的知识时按 404 处理，不泄露资源是否存在",
+      "file": "tests/contract/ragflow-authorization.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager",
+        "user-2/manager"
+      ],
+      "trace_ids": [
+        "0f84bb80-4e6e-4368-af92-fb4ab1706f4d",
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "28328fce-327a-4799-9c46-75a56a076538",
+        "4c3c942b-6dda-48dd-8238-661193d0de33",
+        "4cead52e-a2a8-4956-b2f4-2bb662932c0a",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "5b10f9b4-0b46-4d4c-9396-9ff410fe7a79",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "3872516ff72e5182ca00ed1f0fdbd0ca96e8892ee838b3c7b598cc939fc457d2",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M20 授权撤销边界 > 上游调用期间撤销授权时，交付前重新判定后不再返回证据",
+      "file": "tests/contract/acl-revocation.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 4,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "137562ce-519b-4e82-bbc9-ede25c9eaa4f",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "5e3b9725-11aa-41ca-b69e-2a3e65b1130a",
+        "75c50944-5cbb-4ebd-9e04-aa83b30e720e",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "b4fd0bd9-ff5e-475f-af92-07321fd9bd9b",
+        "dd46a5f5-20b5-4a80-99f2-0790e34ee818",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "b74fcaf036e8f71a86a9051395fe7efd9858a0f87e6a8e3d61ee09e92de11600",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "DOC-02 OpenAPI 与实现一致 > 错误码枚举与契约层双向相等",
+      "file": "tests/contract/openapi-consistency.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "5c67237bf49d670345957fca679fb1157037fdfb79f5bb951256b2f34afe3b31",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "DOC-02 OpenAPI 与实现一致 > 文档里的每个操作都声明了已知权限",
+      "file": "tests/contract/openapi-consistency.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 1,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "5c67237bf49d670345957fca679fb1157037fdfb79f5bb951256b2f34afe3b31",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "DOC-02 OpenAPI 与实现一致 > 文档里的 operationId 唯一且非空",
+      "file": "tests/contract/openapi-consistency.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "5c67237bf49d670345957fca679fb1157037fdfb79f5bb951256b2f34afe3b31",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "DOC-02 OpenAPI 与实现一致 > 文档里的 $ref 全部可解析",
+      "file": "tests/contract/openapi-consistency.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 1,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "5c67237bf49d670345957fca679fb1157037fdfb79f5bb951256b2f34afe3b31",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "DOC-02 OpenAPI 与实现一致 > 文档路径集合与实际注册路由集合完全相等",
+      "file": "tests/contract/openapi-consistency.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 1,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "5c67237bf49d670345957fca679fb1157037fdfb79f5bb951256b2f34afe3b31",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "DOC-02 OpenAPI 与实现一致 > 每个文档路径在运行期都能命中路由（不会落到 route not found）",
+      "file": "tests/contract/openapi-consistency.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 1,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "031f9972-535c-4909-9579-43528643fbbd",
+        "0e83b82b-7b0b-4e6c-808c-51ca06397d61",
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "15c1c23b-40c2-42b3-8df3-2c0609a4e4c1",
+        "267855b1-f8f8-4b6f-a3d2-16ce023f2219",
+        "268e04c4-9af4-4e00-92ba-9fb14070fe62",
+        "29df6cf4-0cff-4d36-b627-07b80f248af4",
+        "4892f760-95d2-4e43-918a-80faa0a45741",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "557d185b-6d3a-492a-a376-38d1aeca77d3",
+        "63cce70d-b05c-42df-8b3f-babe51b320a1",
+        "6583001f-61a2-4018-8084-a2d28afba6fc",
+        "69a0a017-deb1-44bf-9291-6fa4e4ca8f13",
+        "6f921ed6-c464-45a3-a428-b3434ab5f835",
+        "710125a3-1f0d-4e0b-8ce4-2535f6e00938",
+        "80ad9e62-472d-4b60-8302-c718271b62fd",
+        "833d4d30-a4c4-4604-a1b3-6dbcaa9658fa",
+        "849ebf86-ee75-4aab-b126-d2ef7f05e5eb",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "89a7b62c-df34-4b24-abe1-d53eb93895c1",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "a48b23e2-fec0-41f4-800a-475a0eee28ed",
+        "bfb60db3-0d40-4d44-bb1d-f7a2ff6c9f95",
+        "d1aec717-0dee-4728-9605-92202cf1df89",
+        "d3721aa9-fa70-4c55-a30f-9556cd5e27ed",
+        "dd63606e-7e38-4a9c-9a0e-cd3486cdc11c",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "2641802eeb274e246e500fe9cf1cd8eda05d1220c82de2633f720fa323daa744",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M10 RAGFlow dataset 契约 > 创建知识库返回 202 与操作号，推进后写入 dataset 映射并置为 ready",
+      "file": "tests/contract/ragflow-dataset.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 6,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "9c216228-a95b-4728-802d-814369a08806",
+        "f523a024-6f38-4d49-a1c7-06a84481f38b",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "8d77d07e103f424913bf2037375c075db21ca2bf6638e7e534281045cc1b6bb5",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M10 RAGFlow dataset 契约 > HTTP 200 但 code 非 0 是业务失败，知识库不进入 ready",
+      "file": "tests/contract/ragflow-dataset.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "7e5ca745-f3ba-4278-abc3-dfe9538e956c",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "fc99b6f9-0b43-4eb8-aee0-343ccdd73f8a",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "9da86898aa2f5b228d5ac33d1514e9dd72e96033617c298aaa418a5fd66bc98d",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M10 RAGFlow dataset 契约 > 缺少 data.id 是协议错误，知识库不进入 ready",
+      "file": "tests/contract/ragflow-dataset.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "cbe50b9b-0b64-4caf-8d7d-1c6d5eba2581",
+        "ee96cf0e-c7d2-420f-9572-e0a962274957",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "43cc1e8645b78b6fdf8bf01e6aba2bc137cb78e797cb2f8fe51cd42bc68c01dd",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M10 RAGFlow dataset 契约 > 上游 401 归为凭据/配置错误，不映射为业务成功",
+      "file": "tests/contract/ragflow-dataset.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "2f3f1d00-63f2-42b4-b859-2600691f1772",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "e205d966-763d-4e32-9192-694b8f7beaf6",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "d65e88e16881d25f03cc4f07340e93c7c4b3926d6fe6fcc49c69c21eb82e16b5",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M10 RAGFlow dataset 契约 > 核对名称时上游零命中返回 108，按未命中处理且操作保持 unknown_outcome",
+      "file": "tests/contract/ragflow-dataset.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 6,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "192346b7-eca0-4b76-80d0-5ffb87756471",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "be103713-2a03-4c90-be86-7a7430148282",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "7f6b2a768f3205677d9c5ab00d61b68b25ea4131c48aff2ed61c1e486a6d2f52",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M10 RAGFlow dataset 契约 > 创建响应丢失时登记 unknown_outcome，且不再发第二次 POST",
+      "file": "tests/contract/ragflow-dataset.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 4,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "02a07983-14ff-41d1-a413-7ce8513e5b54",
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "47696936-2eba-4e70-864c-f76d59d6a68e",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "1b2731c35b3383b8bc8684ab5235bffb4fda00b5c8358641aa2890ebc570ae4a",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M11 RAGFlow 上传契约 > 上传以单个 file 字段的 multipart 发出，随后只触发一次解析",
+      "file": "tests/contract/ragflow-upload.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 8,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "b001b872-0531-402a-9002-283f68140c0b",
+        "f879d07a-de8c-4a34-86d9-011a47c7b0c1",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "9890424b764c32a91266d7fea603cb24ebe54ed7441f15fde7f9765fbab1e004",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M11 RAGFlow 上传契约 > 上游 code 非 0 时上传失败，知识版本不会进入 ready",
+      "file": "tests/contract/ragflow-upload.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "06efd75f-fbcb-4398-a050-620d27093d54",
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "583199d1-1bce-47b7-a1c5-14e80b259cc7",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "a40e4734-1dbc-4f00-bfc1-38c719e6d28e",
+        "d5f8f42b-df9b-4caa-a397-70e1bcbd809e",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "6847caaafe9ad6763a95b4f5324d0017a1c0cede3a6ac1dd7108eca019a524c8",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M11 RAGFlow 上传契约 > 上游回包缺少文档数组时是协议错误，不是成功",
+      "file": "tests/contract/ragflow-upload.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "07ad1e84-3b6c-4855-9216-fdf763c8664b",
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "3f2752a1-5878-4a09-a3b5-c52e2b7a37f0",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "aed7ea96-f731-4aa1-834d-804e2af4e8f4",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "c7106f4ba3e48971a1b27e814fc8a9e3153b36e3316d1bc2d05d9d52ab530484",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M11 RAGFlow 上传契约 > 上传响应丢失时登记 unknown_outcome，且不会重发第二次上传",
+      "file": "tests/contract/ragflow-upload.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "1e2f8826-6b81-4098-80d7-ecd109b94388",
+        "2ec4dbf6-6fcf-4fde-acce-747fd22a270d",
+        "33ad9157-ce66-4be0-9492-3a0e6deba324",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "6791c99097d6d739ac5ff27994eb0bdd920f84faf02be134d2184e2abd383574",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M-5 非法标识符入参 > GET /knowledge-bases/not-a-uuid 返回 400 而不是 500",
+      "file": "tests/contract/invalid-identifier.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "3d97cda5-ed23-437e-bb74-106a8a2d6103",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "b76bc0aad7f88f3787c072919cd2dc2a490a492ce6d1a3cca6b585f0b7d1fb23",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M-5 非法标识符入参 > GET /knowledge/not-a-uuid/versions/1.0.0 返回 400 而不是 500",
+      "file": "tests/contract/invalid-identifier.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "1a8b0fc3-c47e-4e0f-93d4-63608cd3c55d",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "b76bc0aad7f88f3787c072919cd2dc2a490a492ce6d1a3cca6b585f0b7d1fb23",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M-5 非法标识符入参 > GET /evidence/not-a-uuid 返回 400 而不是 500",
+      "file": "tests/contract/invalid-identifier.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "f64cbdd3-343b-45bd-a0a5-f206cb05cef6",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "b76bc0aad7f88f3787c072919cd2dc2a490a492ce6d1a3cca6b585f0b7d1fb23",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M-5 非法标识符入参 > GET /operations/not-a-uuid 返回 400 而不是 500",
+      "file": "tests/contract/invalid-identifier.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "47f3896a-0385-43df-882a-71fb9d475917",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "b76bc0aad7f88f3787c072919cd2dc2a490a492ce6d1a3cca6b585f0b7d1fb23",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M-5 非法标识符入参 > GET /sources/not-a-uuid/versions/1.0.0/download 返回 400 而不是 500",
+      "file": "tests/contract/invalid-identifier.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "ebeb5d9f-1816-46ad-9d70-b67df7ffe8db",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "b76bc0aad7f88f3787c072919cd2dc2a490a492ce6d1a3cca6b585f0b7d1fb23",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M-5 非法标识符入参 > GET /assets/not-a-uuid/versions/1.0.0 返回 400 而不是 500",
+      "file": "tests/contract/invalid-identifier.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "a83ca7c9-293e-4f4c-9772-e9ebd8d444d9",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "b76bc0aad7f88f3787c072919cd2dc2a490a492ce6d1a3cca6b585f0b7d1fb23",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M-5 非法标识符入参 > GET /knowledge-bases/not-a-uuid/documents 返回 400 而不是 500",
+      "file": "tests/contract/invalid-identifier.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "091966af-9d9b-42d9-856c-79041b6d0d91",
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "b76bc0aad7f88f3787c072919cd2dc2a490a492ce6d1a3cca6b585f0b7d1fb23",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M-5 非法标识符入参 > POST /retrieval 的非法 kb_ids 返回 422 而不是 500",
+      "file": "tests/contract/invalid-identifier.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "a8b6d6e4-9dbf-4b5d-b244-4eb8e34b1841",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "1bc889583d05311920461e2271b23cfc96012b00ebc0dc4f3505dd868abd0e58",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M-5 非法标识符入参 > POST /retrieval 的非法 knowledge_refs 返回 422 而不是 500",
+      "file": "tests/contract/invalid-identifier.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "44646880-52e1-4b7e-8030-be858fe8518b",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "e75272057027cfa917d668953db55b2ab7cbacd7d93dd76ff0b1599c89a60fd6",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M-5 非法标识符入参 > 格式合法但不存在的 uuid 仍按资源缺失处理",
+      "file": "tests/contract/invalid-identifier.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "07192fa5-e4db-458e-b18b-19cf503dae7d",
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "64c12000-5712-46e5-947a-b7fab19288ef",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "f46f909e1a2522af1ea6021c77493578c4a2160bbbf77aed36751ed7eb7ab03b",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M17 空授权零上游请求 > 没有文档授权的主体检索时不产生任何上游请求",
+      "file": "tests/contract/ragflow-empty-access.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 4,
+      "subject_role": [
+        "user-1/manager",
+        "user-empty/manager"
+      ],
+      "trace_ids": [
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "e78633f1-817a-4222-8e91-29064d8b704f",
+        "fdb2767d-7f0f-4fb1-9606-5d1a01467b11",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "cc57a5672bd3827aeff1020b166b2c2cd4cb2118aae4444ccf513f0b112de0b1",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M17 空授权零上游请求 > 条件适用但上下文缺失时返回 needs_context 且不产生上游请求",
+      "file": "tests/contract/ragflow-empty-access.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 4,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "4d006790-7355-4b2d-a348-929a08919763",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "969ff867-5752-4d74-963f-ac6cfb87383b",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "aa6320f3-f898-4885-b464-ecb8833486cb",
+        "bfdc35a3-b020-48aa-be01-b8e871275f4e",
+        "e624ad5d-11e7-49c4-8cd2-b5490a8df6eb",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "73c5628fcdaf8c7839d56868576694d495ffc82100373635fc8e5c59799bc498",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M17 空授权零上游请求 > 条件命中时才检索，且白名单只包含命中的文档",
+      "file": "tests/contract/ragflow-empty-access.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 3,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "68daa241-9624-4a77-b459-e2e13799ad6a",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "87f48993-45f4-4cc9-8ef7-32fc80953f55",
+        "91177d01-7763-4b69-8cb1-e76c763eb144",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "988b7ed0-0756-4d2c-a01d-050536643bb4",
+        "c8b20bb0-b237-4d7f-b400-83b465da541c",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "43013b4d381183324e14c58bd7575e70abbecf921a55e4c2e9c5890849e152d3",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M18 检索白名单上限 > 授权文档数超过上限时返回 422 且不产生上游请求",
+      "file": "tests/contract/ragflow-whitelist.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 4,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "005a9c0d-7743-40aa-aa23-2d7a14b965c4",
+        "020e34b6-a640-4875-82cd-6efac621eb05",
+        "0b1eae09-12a9-45b3-898e-a86b6feb07f5",
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "8df84956-141e-4d7f-a95c-0fb546906f80",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "a1a087f1-cbf8-4961-a047-592c7bf87de7",
+        "b9dbaa40-b0c3-4c95-9409-eea594b4d2f8",
+        "ed0dc190-acea-4876-b443-120539e4991c",
+        "f8d034f1-f8dd-40d2-ae50-1520eeb620b3",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "906ee224bb2adb3a85db854bcaf128ff1460b546b3f06fe5252e20e67e032e3b",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M11/M21 上传事实与来源完整性 > 上传内容的 sha256 落库，且知识版本引用同一个哈希",
+      "file": "tests/contract/upload-integrity.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 5,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "3bcc64ad-25e8-49e3-addd-4e2ee9d971f4",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "7049a603-bbca-4195-a3fa-9c28293334a3",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "b792401c7a2333aa7903a9f9d10441371aa46a1ee2c8a2e70c47947fbb7af9a6",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M11/M21 上传事实与来源完整性 > 启动解析只带一个 document_id，且属于本次知识库的数据集",
+      "file": "tests/contract/upload-integrity.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 4,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "43d08ff1-2c88-45ac-afe1-4adccc428391",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "a74a2281-da9d-494b-b2ad-bafa1c8888e4",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "3568457b282cca5837e0a96bf7af60689879ba42116321812cd81345d95961d5",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M11/M21 上传事实与来源完整性 > 来源下载返回原始字节，哈希头等于原始内容的 sha256",
+      "file": "tests/contract/upload-integrity.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 3,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "78a5c518-899d-4346-b7c6-5b57e407560e",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "cb728845-d769-4a89-a503-e6c13aba10a3",
+        "ee610ded-bf2c-4d28-8d16-8029e92a483e",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "ac472ba99470537b892fbe1d217081c49130160e7b39145a1a98a1b506cf9f04",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M20 下载授权撤销 > 撤销前可以下载原始文件",
+      "file": "tests/contract/download-revocation.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "dc72d83f-c377-4566-a0ab-2a1d5d16001f",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "3c0ec31616bb5b50b4d0317a58f60e567c28bd75cd9c7107c60f52eab4c793ad",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M20 下载授权撤销 > 撤销文档级授权后下载被拒绝",
+      "file": "tests/contract/download-revocation.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 7,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "ed75c96a-8f0b-4dca-bd16-09f651dd4153",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "3c0ec31616bb5b50b4d0317a58f60e567c28bd75cd9c7107c60f52eab4c793ad",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M20 下载授权撤销 > 撤销后检索也不再召回该知识",
+      "file": "tests/contract/download-revocation.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 4,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "85d1c032-9dee-4019-bc64-0eadfe83cb08",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "1f5fe75c98206f9d5086b9bc1f74532a2ce702646fef689999066f406869d20b",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M28 审计主体与日志卫生 > 审计事件的主体来自令牌，而不是请求体",
+      "file": "tests/contract/audit-and-log-hygiene.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 5,
+      "subject_role": [
+        "audit-user/manager",
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "7084dc66-edd4-42f8-a058-56af47e4050a",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "a3f55c5bfef33373bc07b0ce090ebb48b1ada2334b338c89ae0d4f51a00c4521",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M28 审计主体与日志卫生 > 请求体自带 actor 字段被拒绝",
+      "file": "tests/contract/audit-and-log-hygiene.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 4,
+      "subject_role": [
+        "audit-user/manager",
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "925fcc6a-a396-427d-81b9-41ac7cb9f1b8",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "39db166cf171d8955d068caab55602c81e03029025a07ec55be45b97b1df2a44",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M28 审计主体与日志卫生 > payload 自带 created_by 字段被拒绝",
+      "file": "tests/contract/audit-and-log-hygiene.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 4,
+      "subject_role": [
+        "audit-user/manager",
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "19ee86f0-382e-41d6-b3dc-75c57a3d7b7c",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "71456822a4ac2ec3e160707e2de77b7dfa1d25aec548c5fad8272ef17926661b",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M28 审计主体与日志卫生 > 未预期异常留痕，且日志不含敏感内容",
+      "file": "tests/contract/audit-and-log-hygiene.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 7,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "75abd4cc-4e36-4801-b534-b8896519055f",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "3c0ec31616bb5b50b4d0317a58f60e567c28bd75cd9c7107c60f52eab4c793ad",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M12/M05 上传拒绝与残留 > 一次请求带两个文件被拒绝",
+      "file": "tests/contract/upload-rejections.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 3,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "5c67237bf49d670345957fca679fb1157037fdfb79f5bb951256b2f34afe3b31",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M12/M05 上传拒绝与残留 > 被拒的上传不留下数据库残留",
+      "file": "tests/contract/upload-rejections.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 3,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "09e4b45a-3113-4390-8595-9c564309920d",
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "b8a52600eb7a6fbd299ea5c4300a203bc0b99af82556c57fdd9307f71ed16903",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M12/M05 上传拒绝与残留 > 被拒的上传不在文件存储里留下孤儿文件",
+      "file": "tests/contract/upload-rejections.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 4,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "0a67a96d-2f4a-4b84-b0e8-36bc0fa13028",
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "7b5f514f-7af8-41c0-b223-46d2371e14cb",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "d52d29e5048449cb4bf5e8acb2524c9a4b5193507528ef9a4346f15ab62d416c",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M12/M05 上传拒绝与残留 > 缺少文件的上传被拒绝且不产生上游调用",
+      "file": "tests/contract/upload-rejections.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 3,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "863767e4-4ed3-4cc3-819f-19b8835dd0b4",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "5b245179992042c2714d32ddfb746f1797de0a2d5acea693eced8193ea3aae94",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M14 解析超时终态 > 超过截止时间后进入终态失败并停止轮询",
+      "file": "tests/contract/parse-recovery.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 5,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "2286daa0-de60-4552-9eaf-610bef0a83ad",
+        "4e71a587-51fd-4c9b-800f-085d56836853",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "6bfafb37-1b32-4d69-987f-bb114f27abc4",
+        "83bb7ba0-0ec6-46c4-accf-85b3cb56e9b0",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "d4ea5858c7d9a06c8ee0107414c774f20e5d4681543fdd84516df8c73674bb3e",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M22 可授权文档数量上限 > 一次提交 201 个知识引用时按契约拒绝，且不产生上游请求",
+      "file": "tests/contract/retrieval-document-count.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 3,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "13f90a12-2a2c-42aa-8d60-f93979831692",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "cf04a678-c8be-4b73-807c-575d430045b6",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "ba02240f0d26bbc1de9b495024f2ab82d8663c250fb3430bf97b497128a4e501",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M22 可授权文档数量上限 > 正好 200 个知识引用时通过边界校验",
+      "file": "tests/contract/retrieval-document-count.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "2221918b-e022-4af7-9762-25febcd962f4",
+        "2478c984-5ceb-4463-b054-23cd3c683a72",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "cd955c6baed80bcdfc29e8616cff48d2618014835f8474451efdd7edef2e004c",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "DOC-01 运行手册与配置项一致性 > 扫描器本身有效：两侧都读到了非空的环境变量集合",
+      "file": "tests/contract/runbook-config-consistency.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 15,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "5c67237bf49d670345957fca679fb1157037fdfb79f5bb951256b2f34afe3b31",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "DOC-01 运行手册与配置项一致性 > 代码读取的环境变量与 .env.example 完全一致",
+      "file": "tests/contract/runbook-config-consistency.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 1,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "5c67237bf49d670345957fca679fb1157037fdfb79f5bb951256b2f34afe3b31",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "DOC-01 运行手册与配置项一致性 > 代码读取的环境变量与 docs/runbook.md 的变量表完全一致",
+      "file": "tests/contract/runbook-config-consistency.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "5c67237bf49d670345957fca679fb1157037fdfb79f5bb951256b2f34afe3b31",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "DOC-01 运行手册与配置项一致性 > 文档侧（运行手册变量表 ∪ .env.example）与代码侧双向差集为空",
+      "file": "tests/contract/runbook-config-consistency.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "5c67237bf49d670345957fca679fb1157037fdfb79f5bb951256b2f34afe3b31",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "DOC-01 运行手册与配置项一致性 > compose 专用变量留在 deploy/.env.example，且仍被 compose 示例引用",
+      "file": "tests/contract/runbook-config-consistency.test.ts",
+      "mode": "contract",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 10,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "122837be-d019-4b6f-8166-cd48fe8dfc69",
+        "525a9926-28c1-44f6-b51a-78ca9b8a6fdd",
+        "851bc0c1-2a8f-4468-b289-e19a90d9f760",
+        "97b41291-d58b-48de-96a1-009175bdc00a",
+        "fe60b7c1-2b53-4da8-b625-270768998e7b"
+      ],
+      "sample_hash": "5c67237bf49d670345957fca679fb1157037fdfb79f5bb951256b2f34afe3b31",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    }
+  ]
+}

@@ -1,0 +1,4236 @@
+{
+  "mode": "db",
+  "cases": [
+    {
+      "case": "M14 真实 worker 进程的解析恢复与栅栏 > kill 掉持有租约的 worker 进程后，接管者认领同一个上游文档，上游只被上传一次",
+      "file": "tests/db/worker-process-recovery.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 458,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "5cdee80b-ae3c-40a2-ae40-6465d82babfb",
+        "61777566-c27c-4f41-85a0-db7589e2a152",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "839559eeb8a28a928fb585455454c20fc80c035821ee363582f45ee50b7d78e5",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M14 真实 worker 进程的解析恢复与栅栏 > 接管之后，旧 epoch 的迟到写入被数据库拒绝",
+      "file": "tests/db/worker-process-recovery.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 437,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "7f0f8c68-736b-478a-80e1-a39bd174d047",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "97e8c5c0-8eb2-4682-ba4f-12fec9c3c880",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "b484fa35e2237bbb8bbcabf703b177ffd7594c065cc61b20ba59f17919777ac2",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M14 真实 worker 进程的解析恢复与栅栏 > 两个 worker 进程同时抢同一个操作，只有一个拿到租约",
+      "file": "tests/db/worker-process-recovery.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 276,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "43df26d0-2f7e-448d-9c1d-6f6bd0211b2c",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "830e097a-bcb2-4f95-98e6-72e21a92cf64",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "3fac2860fa050886c24584e910ef4a1ef1afffaf1b0105227c716a1e006e44a4",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "撤回终态：迟到的完成与失败都不能复活已撤回的版本 > 迟到的解析完成不能把已撤回的版本改回 ready",
+      "file": "tests/db/knowledge-withdraw-terminal.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 7,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "1b5ba603-f8e8-4f10-b1ed-b235d570577f",
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "2a0f7031-eb19-452d-85ef-1d33f51558c3",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "38c1c71f-c094-46e0-aabf-3f3dbd062823",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "800a68fb-37f3-445a-8110-277450f6ae8d",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "a4e77286-3f9f-48ca-b051-b80fdaaf9c68",
+        "ddfc9518-14fa-4114-b7e5-c7bca4457fcb",
+        "e31acd67-f8ea-47f3-999c-7973e1049c0f",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890",
+        "fddf6c9b-f317-4272-bfee-afb3b81eaa31"
+      ],
+      "sample_hash": "ce765264712c2350641ce327a1808dddd1410a04a5f5a28bee112261a4407c4e",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "撤回终态：迟到的完成与失败都不能复活已撤回的版本 > 迟到的失败分支不能把已撤回的版本改回 failed",
+      "file": "tests/db/knowledge-withdraw-terminal.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 4,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "29ecba53-4668-4210-8214-a5d5d4be65da",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "3ffc393c-9bcc-4786-b492-2bbcddb1b908",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9b41bc94-d0f3-4706-9717-d09b522b5253",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "a8cc545a-ade7-403c-b0e2-c16fb7e2cd23",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "eae565c2-f9f3-432e-91eb-ac9a1dbe344a",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "55ea168e7eaa18985e7c2e9388d8aef77692336a5c562c58f4b58d8929867960",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "撤回终态：迟到的完成与失败都不能复活已撤回的版本 > 撤回会取消在途的上传操作，之后不再上传",
+      "file": "tests/db/knowledge-withdraw-terminal.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 5,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "4f0a04af-232c-4ceb-8058-9994961ec0ae",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "5ad0d416-b820-4005-94fb-2b064cba96f2",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7be45f97-303e-49e8-93e3-e1c5c1cef9f1",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "c9ac9b4d-5eae-45a9-b1db-745e7e5abbd0",
+        "e0dc05f7-8e28-47cf-a1cc-6aa04fd5579e",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "6a4f99440490e67a7dea7ca32906a107a45b4fd4f5f3f26c5d16749ab36f98f4",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "撤回终态：迟到的完成与失败都不能复活已撤回的版本 > 撤回时索引尚未登记，上游文档仍然被删除",
+      "file": "tests/db/knowledge-withdraw-terminal.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 3,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "0246b55a-e213-4f86-8847-cf877be69164",
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "768b073e-42a5-4fa5-abe7-d0a675199151",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "bc1870bb-6912-4cd9-8162-b846399975e3",
+        "df56dd4e-10de-4ebf-8e13-a9c0a4f14fb5",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "580d29c3fe1f8ab2519733a34072d44e174a0280d66107942c9e3573de6d77bf",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "撤回终态：迟到的完成与失败都不能复活已撤回的版本 > 数据库层拒绝把已撤回的版本改回 ready",
+      "file": "tests/db/knowledge-withdraw-terminal.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 3,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "2022258f-fc68-42a1-b927-4432a7d22dda",
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "2e8de607-3b0d-46e0-b9a3-e31644b26df6",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "922dcc18-fc6a-4e54-ab16-df66e4b93e1f",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "e8e35395-b494-48d8-a11b-89c0c06a45cb",
+        "eceb5f58-6f43-4b16-9906-1c28a172687c",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "99b7d60b994301ac6ecf63093c572ebc3ee12799555dea665e329ef06790f41f",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "撤回终态：迟到的完成与失败都不能复活已撤回的版本 > 已领取 worker 等待上游 DONE 时撤回，迟到回包不能复活版本",
+      "file": "tests/db/knowledge-withdraw-terminal.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 4,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "10eb8a21-40ed-4311-a7c2-648b64860d2a",
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "32c9fbb9-ef1e-419b-921a-efdff02b42cc",
+        "34f2eaea-a394-418f-92ea-d22311aa0d4f",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "5dd88b8f-fd0d-4a17-800b-d914da2ccc8c",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "84679417-7393-498e-a77f-a69a16b551b9",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "a44cd224-5b1e-4b0e-988d-5d3cb50ab284",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "7fdd49518ab3d70cf38ded583f7f520673a62c98e02faa6fcae226be9bb02fa7",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "撤回终态：迟到的完成与失败都不能复活已撤回的版本 > 已领取 worker 等待上游 FAIL 时撤回，迟到回包不能复活版本",
+      "file": "tests/db/knowledge-withdraw-terminal.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 4,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "211cf8fd-7c32-4898-86a9-4763a2b09470",
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "539e96ec-ac03-4acb-ad73-92db3eb13948",
+        "55ebf411-98ea-46ff-990c-0b284def8f56",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7580211a-9120-4940-8882-f290160c28b2",
+        "7c1d8622-a61e-4987-b10b-554c2654ca9f",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "d0949b07-4c63-4b61-8b57-2b9137b06059",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "8314016838c5467c1f178773375b8ee116b4b6846a4c9cd5798669590dc317e0",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "授权事务提交后、HTTP 交付前提交的撤权必须被拒",
+      "file": "tests/db/delivery-boundary.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 3,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "08134c10-7e1b-4ca9-a9b9-1cb6bdd1d90c",
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "283e5d0a-378d-4fdb-b790-e0550f81d499",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "390c84d9-5170-444f-be86-03ec1b9738d6",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "8290d3ce-4599-485b-9b6a-9585c32346bd",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "9d123422-c545-45d9-be48-87feae85861c",
+        "b1225737-d886-486f-ba01-02b83cf1b80a",
+        "b902fe7a-84e2-467f-936e-e9b6ee65b658",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "5d0ddd2ef846b03fa53207614755aaafeddd8251f32e13972c9f2792f5975d4c",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "授权事务提交后、HTTP 交付前提交的撤回必须被拒",
+      "file": "tests/db/delivery-boundary.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 3,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "0d284e68-0dcd-4a36-979a-d0fb131a7438",
+        "23d9adf0-0bc2-4af3-9b24-7da799fda6e6",
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "374d018f-6685-4acc-8783-11f759ebeaef",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "578b626c-dafa-4a44-a469-42281c9400d9",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "5f465677-b491-4aa3-80c2-ccbf50eb78d1",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "82bf28c6-2ea4-45ce-a1e8-bb4793d51c13",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "a0943b00-b4a0-4175-bd3c-6733c4e2171d",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "81bc048af5f39834b56f8185110591e0c0bb088b4101e2d31a38823158df7791",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "下载交付在授权锁内完成：并发撤权必须等交付事务提交后才提交",
+      "file": "tests/db/delivery-boundary.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 5,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "b4b0cf51-0dc6-41a5-95b3-b0ad35e4a5a0",
+        "b6e06c93-64e1-4e69-904a-3da97b72407b",
+        "bb80e142-3ce9-4347-a68b-4e368f334ec5",
+        "d1402ca7-03b1-4ccd-b44a-6739509ad907",
+        "dc01df74-67db-4910-8a4a-ccb9152edaa4",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "f26447e8-44fb-48b4-b227-589f01463a2e",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "773eeee810e0126e713dd36a0dda61f73f00db29e5b189003384917461a67b98",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "检索交付在授权锁内完成：并发撤权必须等交付事务提交后才提交",
+      "file": "tests/db/delivery-boundary.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 5,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "15981441-aef7-456c-b3fb-f12e0c469ed9",
+        "273239f4-6583-489d-b60d-02173506d3e7",
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5296bc07-871f-4b00-bdfa-e578493b5657",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "62029595-3201-4ec4-9150-f5e889cd4498",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "805f6b30-afd8-49f9-8c39-16dd45c4c40f",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "ce6e6fbc-2219-495d-9a73-5aecd16cf8c5",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "be0539d1fdd08c6c11a23c5a0b74808880615923ebcc07dc4fdf9f00d49d2961",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "证据交付在授权锁内完成：并发撤权必须等交付事务提交后才提交",
+      "file": "tests/db/delivery-boundary.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 6,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "360f2ad8-8bc9-4eb6-9621-9c8b10061d20",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "4678f9c5-b775-4be8-a3ed-f6e9d46df70c",
+        "55ba13a0-f2cc-4761-9a1d-5d86f7902fca",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7125520a-2604-4d54-9efb-659d3e2e1f0d",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "95d4b6a9-ae8a-47b9-a584-12349b6cfdfd",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "e42b4545-a176-4218-a99f-577c7618313f",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "f265f577-d97f-40c8-bea1-d39875c0cfb8",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "d27503bab4b561123bd9b1ccc4f216fac9b4fd77af4387da758365d7de47a9c4",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "未知的数据集写：核对用的 GET 连不上不能授权另一次 POST",
+      "file": "tests/db/review-recovery.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 1,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "51b5fe0f-e8ea-4c84-8deb-9380599f55af",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "fdb88849f88de809034effd4482d40f7d30b77b1df5b6b978ba25df9af799019",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "上传已确认后，解析请求未送达时只重试解析，不重复上传",
+      "file": "tests/db/review-recovery.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6597cca0-e29e-420f-ae37-ab9278b76654",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "8628d861-d229-4375-b1a5-f5a2b48f5383",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "534ed40583c66ebf19c36a2021975dd7bccbcc5b9438db2de641d995d1542974",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "重建触发已确认后，轮询用的 GET 失败不能重新触发重建",
+      "file": "tests/db/review-recovery.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "1a353abb-7063-46e7-b2a8-a9ad8d12be5c",
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "8b8c01a3-71b7-4410-97c7-09343da9135b",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "b3eb0694-74ff-440a-9a53-0c7decc4af8b",
+        "e2059c3c-bbcc-4624-9c14-6846b5d81074",
+        "e7a8cffa-5a8b-45d8-8354-713f4e857f5b",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "09922f28be9fe83c8787d18fb22d0d026b2a060b56f056ff3bbc80a9292df9bf",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "上传恢复不能认领另一份用户文件名相同、来源不同的文档",
+      "file": "tests/db/review-recovery.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "3be10eef-291f-4e37-aa3c-769882f5e067",
+        "4798145f-f945-4740-9f72-fc79f5c69086",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6c2a3772-3e18-4fc7-91b3-19133dec6c84",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "ec80fbf4-ed1c-4e5b-a5c5-99c5533a15e6",
+        "f2125a76-9327-42c7-88d2-c2b127b240e1",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "2dabb4a40a732020ffd800580d015e27a2c85f106d6fcf76c996c967dab503cb",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "下载在文件读取期间撤权，撤权已提交且尚未发出正文时必须拒绝",
+      "file": "tests/db/review-recovery.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "99d53209-3586-4566-a0eb-a56052115571",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "be98fc27-653a-4dc4-98ce-bc5990b76f21",
+        "c3b8c414-df3f-4364-a9b8-35adc64855a0",
+        "d212433d-64cf-4b1c-9971-17cb269129cf",
+        "dd77519e-6036-46b7-89f4-12c756d12871",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "f8304a57-722e-45f0-a614-49b8ac1d2154",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "55cc0e5df2f5e8a9da86cf9f77b35760c7bf84b71654ef6e8cf2e7575c394e83",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "下载在文件读取期间撤回知识版本，撤回已提交时必须拒绝",
+      "file": "tests/db/review-recovery.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "0d1c4001-fdb8-4864-9446-04125434a67a",
+        "126fa920-10a0-4c94-9a8d-2d068bb8603c",
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "324bbf16-6f27-4d8a-be39-290f3867bb68",
+        "357e6fc3-12c5-4d74-a42b-64cd84507c72",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "4c4989eb-a4ed-4c6d-aa6a-39469c76448f",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "b272e3a7-2e38-49ed-9bad-307b3d29a29a",
+        "c7071d48-b635-4955-9085-f3df180b3136",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "d96beed7832af32023ae66276eb754ad7ce6301076ef71f76227f9a0f1487781",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "崩溃窗口恢复：不重复写入上游 > 数据集创建崩溃窗口：上游已有同名数据集时认领，不重复创建",
+      "file": "tests/db/crash-window-recovery.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 5,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "0f9296f6-2860-4d40-a1fc-cbc012d7e319",
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "e597e781-e388-455a-8c20-8e490282ed19",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "2e60aa595a2569803ec1088a5bc8c1e2b4d6122f6560f2bd394f9b7dd6876272",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "崩溃窗口恢复：不重复写入上游 > 数据集创建崩溃窗口：重复核对未命中仍不重发，迟到对象可被认领",
+      "file": "tests/db/crash-window-recovery.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 21,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "1a98290f-d9a6-4c87-a794-bd3c5de354ce",
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "f613ba5fe6dd72ece5b442e6105d5a246cba06848b1feb4a944a306a556d49c2",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "崩溃窗口恢复：不重复写入上游 > 文档上传崩溃窗口：已持久化远端身份时认领上游文档，不重复上传",
+      "file": "tests/db/crash-window-recovery.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "0a27ab14-f02d-45bb-8ddb-9e001cca1ff1",
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "45ec99cb-43dc-4463-80f5-da78bd7f62e1",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "100b1df45d0c399edf7a79ec9f0c42e8014396554364fc692fa22514eee4ce7a",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "崩溃窗口恢复：不重复写入上游 > 文档上传崩溃窗口：没有持久化远端身份的历史操作不认领同名候选",
+      "file": "tests/db/crash-window-recovery.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 3,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5657823a-7c81-4ca9-bb8b-38ec51217f93",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "db80139a-ed8c-4986-8bf9-7c5d403db5a1",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "f591d148433df40803e8add09e2a7ee49b7d9e3cbbc934284989c65a36423bb9",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "崩溃窗口恢复：不重复写入上游 > 上传查询持续未命中也不重新上传",
+      "file": "tests/db/crash-window-recovery.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 5,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "3218dd05-a908-4df0-a69a-61d1c8c859be",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "c802fc32-e5bd-4ad4-9e89-61481cfee273",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "d0835a6414bfae451805c65a059e1338a76b01052ddce6e8b5188e29c2f913e9",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "崩溃窗口恢复：不重复写入上游 > 重建崩溃窗口：旧 DONE 不证明本次重建未送达，也不冒充完成",
+      "file": "tests/db/crash-window-recovery.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 6,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "737184cd-a80a-4d99-bba6-60df45b38cd9",
+        "785aeb1c-6a7e-4440-ab06-b9dd008009d6",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "b03dd62c-74c1-44b6-bcc1-88052830d378",
+        "c826887c-2d2f-4229-a62a-49a9ffb70211",
+        "d0c5e351-5a87-423a-a923-d92fa4392c10",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "ce64cf59a8ceeba9287217904a92fbe0f8165cd77e97c6d3db5b02d1daa890ee",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "崩溃窗口恢复：不重复写入上游 > 解析启动崩溃窗口：UNSTART 不证明未送达，不重复触发",
+      "file": "tests/db/crash-window-recovery.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 6,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "924a1382-28a6-4ed9-a603-c7d5134fd7a8",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "de83c55e-c86d-49dc-99a4-efafdf191855",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "eefea301d9af11d3f9a98ea44ebd24d6682b4a4eb9e6f23f205142754e9275af",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "崩溃窗口恢复：不重复写入上游 > 解析启动崩溃窗口：上游已经在解析时不重复触发",
+      "file": "tests/db/crash-window-recovery.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 3,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "4fa2cde1-cab7-49fb-8916-01ae626c26c9",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890",
+        "fe36fbff-ae1a-4929-8ba1-d20b790e893d"
+      ],
+      "sample_hash": "6c1a1294b7df6796d044b783c1b77d1571c1cc101cd19107a57796eb1ec504b9",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M-4 Agent config 准入策略 > 合法配置 maxtokens 被接受",
+      "file": "tests/db/config-policy.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 1,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "41e70490-fd5b-49a7-9778-56777c9ff45c",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "773376768c9e60ebc29cfce8caeb4b074f47c964d593fc64c2cef2c8a56c39c1",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M-4 Agent config 准入策略 > 合法配置 redirect 被接受",
+      "file": "tests/db/config-policy.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 1,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "c2f4b82d-4f9c-418b-ac5a-200ce019623e",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "b9e388e8920caea19b876fa2c3abe25d2a710d7ed513df6d8edd89fd53dba5f3",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M-4 Agent config 准入策略 > 合法配置 commandtimeout 被接受",
+      "file": "tests/db/config-policy.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 1,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "d8969dbd-46ec-40fa-9cf7-4bc331ccdcc6",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "cfea0b82ebb5de85cbc5c2b68e7b1cefb45b8ea9afb8d4b927058b575a8c9853",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M-4 Agent config 准入策略 > 合法配置 executionpolicy 被接受",
+      "file": "tests/db/config-policy.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 1,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "0bebf8fb-dad1-438b-91a2-c8e8278bd605",
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "c91a75a7e2bc29b979ab05af807a46fb67b534772c1d8f63611badd20f48bf4f",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M-4 Agent config 准入策略 > 合法配置 monkey 被接受",
+      "file": "tests/db/config-policy.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 1,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "8f22587a-1dad-4bbc-8538-2377d3503158",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "e803023c8703425f4a0fdb0ab654b578fd1c42588ba172554d63e1bbcc264874",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M-4 Agent config 准入策略 > 合法配置 sortkey 被接受",
+      "file": "tests/db/config-policy.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 1,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5369a691-56a1-486c-9cee-2c8c1cc2bea2",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "ccc730a36f919579f1b0f813b895ddc3c1252ff70bf3c26849889cd252b4806b",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M-4 Agent config 准入策略 > 承载密钥的键 privatekey 被拒",
+      "file": "tests/db/config-policy.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890",
+        "fc0afe86-61e0-4790-a6a4-09b1836f50dc"
+      ],
+      "sample_hash": "81724ff1fea40c6fb7a0ac01404960a6a3a8b71e1f090b7900b1f8fba6fdf2eb",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M-4 Agent config 准入策略 > 承载密钥的键 sessionkey 被拒",
+      "file": "tests/db/config-policy.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "384430ff-ba68-43a1-a12d-90576d476679",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "7617802808e3eeea66300825c8fbe2ecb4927117f0f36b6bfa5b7c39d037900f",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M-4 Agent config 准入策略 > 承载密钥的键 authorization 被拒",
+      "file": "tests/db/config-policy.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6a90c484-1700-47cf-b0a6-d5064c47ba0c",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "ca41596edb0b596a36cb6e0a25ef33845ef2bc811e3ce5fdda6d4f66982cd3a0",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M-4 Agent config 准入策略 > 承载密钥的键 clientsecret 被拒",
+      "file": "tests/db/config-policy.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "659208ce-a03c-4bff-b09f-82aec3951d15",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "2f5eb9a21a772bde14534515e445b9bbf33881a610ec35b4369f416352cde96e",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M-4 Agent config 准入策略 > 承载密钥的键 signingkey 被拒",
+      "file": "tests/db/config-policy.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "412da77a-769f-432c-bcbc-1ed6a31500ba",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "0107a44e7a2ef70f7eba128b7d387376b12de408f1a06e5d7e7a5227291a0d60",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M-4 Agent config 准入策略 > 承载密钥的键 apikey 被拒",
+      "file": "tests/db/config-policy.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "328ba1d7-52ff-4c20-9d2e-a87d8022a74c",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "693e677123e860717013013aba00e9d088b183c7317f22bb740c11e3188d4521",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M-4 Agent config 准入策略 > 承载密钥的键 nestedpassword 被拒",
+      "file": "tests/db/config-policy.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "5e00bfbb-050d-45b7-bde3-d8494a232cbe",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "c47ebc6da7a02fe07dee0cc7dc127ba479b38492044bb801e27a0db200a8c611",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M-4 Agent config 准入策略 > 承载密钥的键不会落库",
+      "file": "tests/db/config-policy.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "2bc3cd36-fac2-4461-9178-842b02a9062a",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "db59d494a5852e5132307ae65f0a4632a841dc7aa9b5234a6580f2b95170b9aa",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M-4 Agent config 准入策略 > 地址形似值 leading-space-url 被拒",
+      "file": "tests/db/config-policy.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "10b8d469-34db-4e26-88eb-0a511d0132ec",
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "174d1b333807896d814a5c33b9853e9a5d47bbceb7a0290454019f49466c534f",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M-4 Agent config 准入策略 > 地址形似值 protocol-relative 被拒",
+      "file": "tests/db/config-policy.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "f62f36ef-16f1-4427-81d7-6d67da89b03d",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "f31227dfe35404f93a67ea48ef5771b966b7126e82e23d2e944fcedc79962d4c",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M-4 Agent config 准入策略 > 地址形似值 bare-host 被拒",
+      "file": "tests/db/config-policy.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "a6f6c4e9-c4c3-47d1-93ce-ca54f8bf38cc",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "c959291ab92c72db48192d447a5f73b55db5eae46a85aed211918edb9671bca1",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M-4 Agent config 准入策略 > 地址形似值 data-url 被拒",
+      "file": "tests/db/config-policy.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "dce8a8cd-096f-49fa-8043-70600aa8a6bc",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "36d093d3ea9ed5d21df8ebdc5efd5e9bc4b1e2d671fa21b4dfc4698c8569271f",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M-4 Agent config 准入策略 > 地址形似值 mailto 被拒",
+      "file": "tests/db/config-policy.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "3359cd92-1669-4b3b-a112-d3e0e1b9f2fb",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "6dc6f669db79c121af6f99819d8d6c2b670ed31d61b45a14f295ec95838f25c4",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M-4 Agent config 准入策略 > 地址形似值 https-url 被拒",
+      "file": "tests/db/config-policy.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "8f491010-f48c-478e-8542-f660cde38595",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "91bbb682274886e5ab0666583ab6f8ed8b56495bd4f78c5ea8a759d47441754f",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M-4 Agent config 准入策略 > 密钥形似值 pem 被拒",
+      "file": "tests/db/config-policy.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 1,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "9e62d8f8-b54a-47ad-b1e2-c0a5c1602afb",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "aeee79bbbc07f1921cbe6939c3d900beb102b3c6420671d74badb19677bdbcf6",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M-4 Agent config 准入策略 > 密钥形似值 sk-prefix 被拒",
+      "file": "tests/db/config-policy.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 1,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "630dd882-39f1-4304-9b8a-cd9e0a84df1f",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "fffa28a2c765fea786d9accc4941334f1b126b79e6ad88da566cf8cfdfbac07f",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M-4 Agent config 准入策略 > 密钥形似值 ghp-prefix 被拒",
+      "file": "tests/db/config-policy.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 1,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "300a0d8e-d81e-4fcb-ac2e-9d0b0aa4423e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "9f483f4eb7f6fe040260127fb015c149edc3fd058b6a504f1aec48cd2a626688",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M-4 Agent config 准入策略 > 密钥形似值 bearer 被拒",
+      "file": "tests/db/config-policy.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 1,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "dc53ea51-559f-41d5-9d5e-33f498111c59",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "22bcb89c244e5e1e536a3b266a6a6ca316b441611f6698af8ca049f735a62d95",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M-4 Agent config 准入策略 > model_profile_ref 不得承载地址",
+      "file": "tests/db/config-policy.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "de155f72-6b32-40cc-a69c-3d4ce8185855",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "709f6dc417c01d1467b9ed9d9bbaad6ca7760ce2223a2576d7ebc871a4b43d09",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M-4 Agent config 准入策略 > 详情接口不回显密钥",
+      "file": "tests/db/config-policy.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 4,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "3c9f794d-b956-4f0e-a430-fe552311ed5b",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "270ac73ba3dc4b93efef5e26fc38cecb6ede6a40d88174a5cd91e32a854fdcdb",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M04 并发注册与幂等 > 20 个并发的同 slug 同版本只有一个成功，其余 409",
+      "file": "tests/db/registry-concurrency.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 26,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "00c7df79-c5be-4ab0-9a71-7eb8f1b128ec",
+        "0121a504-e09e-4076-823c-b20cef4b95a3",
+        "0d404535-efd2-4ab9-badb-489a176b4b73",
+        "17475816-8e25-402b-afe2-9040b1c6b896",
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "3e896f75-79f0-4ea9-b2e7-97b8e69eb827",
+        "42b1447c-f1a3-4290-9b64-7e0d57d5d79d",
+        "50f8a101-b97c-4dd9-a32e-b1b6a601d29a",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "68b3a461-d489-4a24-a167-1d3d17a57ad8",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "7e64be35-c71f-43ac-bf91-d95a3b3d2bb0",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "a47f0c3b-0e21-4557-9ece-9c55a483dade",
+        "a7f38d93-8368-4d01-995a-7a38973f13dc",
+        "b47b256f-582f-453c-a46b-8b89f656d892",
+        "b64693e4-9a91-44bc-a050-6cc4fe34d45c",
+        "b7cc4fde-da90-4387-b04d-a3e3d6f3a62b",
+        "c049e5e3-29a7-4fe0-8884-520f1804ee8f",
+        "c4ccb4f0-08a7-4622-bd40-f6ab7a475935",
+        "d4c570c5-3ebe-4070-b488-08e8ba4e994d",
+        "da4c6b2a-4604-4999-9363-023f37fdae27",
+        "df036385-913f-4a03-8a42-8f99c91172ae",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "f7596f78-dd39-4aaf-b7cf-b1794c532f7b",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "6b746e15aa20ae94557e378a66214c2f5809d03cf72e08002258c200214673bd",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M04 并发注册与幂等 > 同键同内容重放原资源，同键异内容 409 且旧正文不变",
+      "file": "tests/db/registry-concurrency.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 7,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "30376d05-fc50-48a4-9b86-3defe29d9365",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "898a4b49-cf57-47ad-a559-4e7c8255e3d2",
+        "8a3d2017-8d04-438d-8406-8bf0a7fe584c",
+        "9c482d41-52d1-4935-a6c1-7816e4002f3f",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "630383e7479f72e0a9c93a0c9fe8afff496c8bf1a634c1f5b28033b8006ef84e",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M04 并发注册与幂等 > 并发失败不会偷偷创建 1.0.1",
+      "file": "tests/db/registry-concurrency.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "0dc8b34b-cd33-4e71-bb4a-3b726d65c3a2",
+        "22d8e1d8-1cb5-4f30-b188-108cef99d6b2",
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "3e7fe9ef-5101-47d3-8b6b-5a1ab333a798",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "890ea108-5acd-4438-a2b7-d284004ee14a",
+        "94fca00a-15f9-40f5-9b42-1e299112fabe",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "b5db9798-f78f-4a00-ad19-81058c023aa8",
+        "b6a4474a-cb80-430b-b845-67ecaf9dc075",
+        "bb58b1b6-ff0c-43d0-bdef-674beb32f31d",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "24418cb387ecbf0888802ed5f510363052e26a09a7865c3893af75b7583e823d",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M04 并发注册与幂等 > 同 slug 的第二个版本必须显式创建，注册动作本身不产生新版本",
+      "file": "tests/db/registry-concurrency.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 4,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "2d3efe44-d919-4a98-a34c-ab4aacad850a",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "53e829f0-a100-478b-8bd5-278a749eb8b2",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "b5fcfd8c5446e9df59381c970305f87b2e2fb4fde7b8994051a29c728b35fe18",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M07 Agent 无效引用 > 缺少版本字段被拒，定位到具体字段",
+      "file": "tests/db/agent-invalid-reference.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 3,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "50a837ef-edea-4102-ab53-fea8a0f69830",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "9095af30d264b725c12f5d0b1e5613303c69f5d68b18ab4acfaeba44b4ec0350",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M07 Agent 无效引用 > latest / 1.0 / v1.0.0 都不是合法版本号",
+      "file": "tests/db/agent-invalid-reference.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 12,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "2ae656f8-d21e-4ea5-9e17-aef8c1051c1b",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "78f94be6-45de-44ba-9b2f-63aa5c621603",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "8b329629-6a94-4bf0-a885-809e9e5cf86a",
+        "971002fb-bde3-450c-b153-abd4dff92c4e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "f80f162f25719ceec064d337ab712a1e0389b92c2611365a5f843ff9838fdf41",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M07 Agent 无效引用 > 不存在的版本返回 REF_NOT_AVAILABLE",
+      "file": "tests/db/agent-invalid-reference.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "4080557e-72d5-4310-a64b-a11b68cd647b",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "3a4d46621098282562b4fbf0fe4c65c4e8cdf822145573555b3600c4c717d039",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M07 Agent 无效引用 > Agent 不能当作 Skill 绑定",
+      "file": "tests/db/agent-invalid-reference.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6b2206d1-2b62-4a04-8424-00a870da84a3",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "b68073999092f6a3caca08bba28742cc844c217f2ad008409545b0c7fa2ce8db",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M07 Agent 无效引用 > 已撤回的版本不能被绑定",
+      "file": "tests/db/agent-invalid-reference.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "e2bd5471-134f-4f3c-baa8-72271a19e90f",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "d11fd211648b57009b3e213edceb6fddf171e277c5ecf3b57f2cd4922b94cf6c",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M07 Agent 无效引用 > 重复引用被拒",
+      "file": "tests/db/agent-invalid-reference.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 3,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "3ec2c8c1-bb06-4c57-b637-c1ec262fbef9",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "1185832339e488050992d1cc7b248b9b5b24c2f7e8860618e999f025d749bcb8",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M07 Agent 无效引用 > 另一个项目的版本不可见，返回与不存在一致的错误",
+      "file": "tests/db/agent-invalid-reference.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 3,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "56d18b6f-5472-46fa-a302-1c795631ac8e",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6730c370-8efb-4067-beff-10cc743b5c2d",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "8a6481bf-7b6e-4fcf-a2b5-ef3328aba998",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "7df73d1c65b39f3f3ab47b8e905484e01e95912bc873fc1beea3d5c34aac8a89",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M07 Agent 无效引用 > 失败的注册不留下资产行或绑定半行",
+      "file": "tests/db/agent-invalid-reference.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 3,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "8c1fa791e253534f6a50161a0d434daa5ce507c90a7d2f16cf3612dd484d2702",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M-6 文档级授权 API > 未授予文档读取权的主体检索不到该文档",
+      "file": "tests/db/document-grant-api.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 3,
+      "subject_role": [
+        "reader-1/reader",
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "c6230f74-8d9d-414f-864a-36bd7c733edf",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "e9108417faaf5346f669a76839edbbc75c98bee1ec8dfaeeef82e43c59783a5c",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M-6 文档级授权 API > 缺少 knowledge:manage 的主体不能管理授权",
+      "file": "tests/db/document-grant-api.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "reader-1/reader",
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "affe4936-ad31-4bbc-8202-05e54eccaeaf",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "33cd86dbf1128d1c9746ca6789597732396438dcb93169d0cd753501efbb579e",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M-6 文档级授权 API > 授予读取权后目标主体可检索到该文档",
+      "file": "tests/db/document-grant-api.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 7,
+      "subject_role": [
+        "reader-1/reader",
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "72ef5273-71fc-4da5-a4c6-c5ea5862b0a9",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "9edc4a15-fecd-4440-b5f9-b760691153a1",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "66d8a82c8c6803be47d6bd22348b64be68782313c0ea7316e867b68047d629b7",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M-6 文档级授权 API > 授权集合可被列出",
+      "file": "tests/db/document-grant-api.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "98cad455-4150-4497-a7ad-70e19f9a8c15",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "fccae2e17bed9653ab7eac68db103f70a3c23d0c42fe977d715ffd02fa59391e",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M-6 文档级授权 API > 撤销后目标主体立即检索不到该文档",
+      "file": "tests/db/document-grant-api.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 6,
+      "subject_role": [
+        "reader-1/reader",
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "00113bfc-2348-408c-9e9e-8fea296d70f3",
+        "200fc5f1-4dc2-417d-811a-35b0c5de97ef",
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "85a22e3a9c041a57a33e6cb4825bbff332996d043c2cb5ce4db3f8d44ca13749",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M-6 文档级授权 API > 撤销后目标主体不可下载来源文件",
+      "file": "tests/db/document-grant-api.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "reader-1/reader",
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "59d03cb3-1d24-40d1-8039-6ccbb350ad57",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "9d480918-4e5c-42ca-bdbb-e0204669a7a2",
+        "bcdf2f43-0acc-41e4-b2d5-9187e69f22b8",
+        "c95c73e1-4d63-47d7-98c8-163c1c8f17da",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fba4f317-41c3-467e-b8b7-af0a0bf9525a",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "a3b56430569becc0eae2e188123d7aae22c6024d039e9c6862a31405f2bbaff4",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M-6 文档级授权 API > 对不存在的知识版本授权返回 404",
+      "file": "tests/db/document-grant-api.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 1,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fb2fe0a5-7928-4721-a001-9d4258cc52f6",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "33cd86dbf1128d1c9746ca6789597732396438dcb93169d0cd753501efbb579e",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M-6 文档级授权 API > 下载权限必须蕴含读取权限",
+      "file": "tests/db/document-grant-api.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "b7877e80-0d28-4cf0-a15f-9f04eff1ce58",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "eab9ccddaf1e370e8977d96cf120f1ea8e79d45842d1f6d2b3ddec3b2cd68e58",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "数据库层：已批准的审核结论不可改判 > 数据库层拒绝把已批准的版本改判为 rejected",
+      "file": "tests/db/review-verdict-final.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "1940b406-2535-4293-9e10-0988d149d45e",
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "44b5813b-a9c0-4877-8d5d-7ebda008a570",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "79209a44-b8cb-446e-a817-b82ba3d6a667",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "ba86c603-2cc3-499e-92b1-99f91fe4c795",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "014086cbdc19eb475e00675c5d8c5fc556acae952fff7a5bf0804a8a66b9b840",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "数据库层：已批准的审核结论不可改判 > 触发器抛的是 AIP01：API 层据此落成稳定错误码而不是 500",
+      "file": "tests/db/review-verdict-final.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 4,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "1f10dc2b-848f-445f-bcc8-9ece8ba9986a",
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "3f9212b3-500c-4ce4-8d83-9d593e70fca6",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "82765d94-de9b-41bf-9a45-42c93adf6a9e",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "b248c89d-a8e4-4b2f-a2e4-c27b3fe6480f",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "d967048669421bb16c2bbc58a2abcfff6d7ec23fd1dbafcaabca5fddc8be733c",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "数据库层：已批准的审核结论不可改判 > 数据库层允许同结论重放：approved → approved 不改变结论",
+      "file": "tests/db/review-verdict-final.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 1,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "012e431d-eac2-4156-8e69-e43673578064",
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "33c34244-5cee-4991-b150-acd1dd58b711",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7d4a93c3-7ea3-42d5-ae09-12dbe0cfc881",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "f1b2dab4-3849-4f3d-ac6a-d7e15b487c3c",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "629f6985778ec7dc726662b4610f2e97100c5f647c3158eee24636df52896597",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "数据库层：已批准的审核结论不可改判 > 数据库层允许把已驳回的版本重新审核为 approved",
+      "file": "tests/db/review-verdict-final.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "092bdae7-5745-4b3c-ad1a-46e7b51c5254",
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "62ea608d-286d-45f3-89b3-3f96732ff357",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "df6a6f73-7a98-41c0-a5c5-654a4dbd2905",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "f2da1e3aad05622f444aa2511e7abc001244c33144042978c81fa26c13d988ab",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "第一次上传之前，远端身份已经持久化在检查点里",
+      "file": "tests/db/upload-identity.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 3,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "531789ae-5fae-478c-85ab-dea7bf342ee5",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "7e1360c3-5c56-47fe-b573-7c04d910f978",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "9e37c07b58131b5db1f067fcd0576194ae5f250f36c937a02ea24f0fba4bbb4c",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "没有持久远端身份的历史上传意图，即使存在同名候选也必须保持 unknown",
+      "file": "tests/db/upload-identity.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "2df01184-ff69-4b3d-b680-34c68f48ef27",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "506c1c3d-74e8-4d36-835d-91e13e61a7c4",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "d8ba47a0f191671f8d518ff472c99b951deb68c33474ea140ea322fc271ca80b",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "上传回包异常（empty）必须失败且不触发解析",
+      "file": "tests/db/upload-identity.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "03c2f992-24d4-4034-b891-a00dd5a4c3d2",
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890",
+        "fe925a62-4c62-4422-abe7-1170edeed58b"
+      ],
+      "sample_hash": "d7b1a5c7224ca0d5bcc57d5746710f27cb4b1a3854d39556b6da040cfbb606ad",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "上传回包异常（multiple）必须失败且不触发解析",
+      "file": "tests/db/upload-identity.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "1558f99e-916f-4a6a-ac2f-0fef2e402b3a",
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "a73721d9-54a4-4f9d-8dae-576f4b847b64",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "7e00434a786345e74032adaa0d79946de9e4450e1a7a13d9ead3aeaae380cb17",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "上传回包异常（wrong-dataset）必须失败且不触发解析",
+      "file": "tests/db/upload-identity.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "5fa88204-35b9-4560-95bf-619b93f2638a",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "6f884d97-a3a9-4cd1-ac50-80988ed8df57",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "a48059b20d5d587934d1434476e9325592fdfb80c21161383254e22af25802e3",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M01 迁移与约束 > 全部迁移成功写入台账，重跑只跳过且不重复",
+      "file": "tests/db/migrations.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 6,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "8c1fa791e253534f6a50161a0d434daa5ce507c90a7d2f16cf3612dd484d2702",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M01 迁移与约束 > 台账 checksum 与文件内容一致，改动文件会被拒绝",
+      "file": "tests/db/migrations.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "8c1fa791e253534f6a50161a0d434daa5ce507c90a7d2f16cf3612dd484d2702",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M01 迁移与约束 > 第 3 个迁移失败时不留成功记录，修复后可重跑且不重复建表",
+      "file": "tests/db/migrations.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 6,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "8c1fa791e253534f6a50161a0d434daa5ce507c90a7d2f16cf3612dd484d2702",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M01 迁移与约束 > 复合外键与唯一约束真实存在于 pg_constraint",
+      "file": "tests/db/migrations.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 3,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "8c1fa791e253534f6a50161a0d434daa5ce507c90a7d2f16cf3612dd484d2702",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M01 迁移与约束 > 已写入的版本载荷与哈希不可被改写",
+      "file": "tests/db/migrations.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "8c1fa791e253534f6a50161a0d434daa5ce507c90a7d2f16cf3612dd484d2702",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M01 迁移与约束 > 台账 checksum 为文件内容的 sha256",
+      "file": "tests/db/migrations.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 11,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "8c1fa791e253534f6a50161a0d434daa5ce507c90a7d2f16cf3612dd484d2702",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M03 Skill 注册与查询 > 注册返回 201、稳定哈希与 registered 状态，正文与元数据一致",
+      "file": "tests/db/registry.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 9,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "a407bf20-c4f3-4190-9678-184e225cba78",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "ef4b7e19-60b7-4a9e-bac5-8ec3f9490d22",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "34354f6f5879f58f73162f3f24bd047411bb638641b142677c51de5c96ba1ab0",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M03 Skill 注册与查询 > API 重启后仍能读到同一版本与同一哈希",
+      "file": "tests/db/registry.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 5,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "12d58dc5-5f31-49f2-b3b1-656ce927a52e",
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "4bfd8ea5-baab-48be-b27e-e94931fbdda8",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "96fd058dadf8a9f60b19a2b33d811b57a236f1af1ebf1f468fb7da88bd39edf9",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M03 Skill 注册与查询 > 分页按 limit 截断并给出 next_cursor",
+      "file": "tests/db/registry.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 12,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "02c69f5b-5573-4420-aace-beba970851b9",
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "27bbc37b-b8b3-49c0-a32a-b92552d1b978",
+        "295e210d-fa33-433f-b15e-4f13dc79855e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "458ef0f9-3386-4069-80c9-52ee469dfdd3",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "a54e9999-d150-4d45-a3ca-53052dedcf56",
+        "a557c715-3ec2-4313-b2f3-386facd6b774",
+        "e035b06f-23b8-4969-9bee-7fdbd81551d4",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "824e39c4f4121efc810f59526a651eee85dec29879fd0a9257e408a56a13fa0c",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M03 Skill 注册与查询 > 注册不产生发布或执行副作用",
+      "file": "tests/db/registry.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 5,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "8be3cd2c-be3e-4739-92a7-b69b1219d259",
+        "967ae619-c433-4189-a0a8-641a0c31eba8",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "5d812f4f01f23822fc3a4cb59a5e85d12d56d01ef588340c680a7dc254f7b02e",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M09 注册与撤回竞态 > 并发注册与撤回的结果保持一致，不会同时出现「有效引用已撤回版本」",
+      "file": "tests/db/status-race.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 5,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6ba414c5-ef9d-4de9-9cb3-4dfe214a8f42",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "86e3731a-c7c0-4625-b5ef-3885ab01db24",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "9f72a077-2145-4c3e-bf23-deefb59b8330",
+        "bc194954-d91b-4fae-9ee7-11c967534b18",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "ecf3ebdbf9499142bf46482031daecb7b21efdd6caebbf695755bdb8f6c4fef6",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M09 注册与撤回竞态 > 撤回后新的绑定被拒",
+      "file": "tests/db/status-race.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "1839cc86-c974-4059-b404-ace43b708d50",
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "d2f25690-77d2-4aca-aa0a-dad3a2934cc0",
+        "d58026be-538e-43d9-b840-ce7717f7bcb6",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "075565a00bd29fdc3ebad182201a150c63ba45029afc8694dc9c312411804c91",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M09 注册与撤回竞态 > 用旧的 state_revision 改状态返回 409",
+      "file": "tests/db/status-race.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 4,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "5bc52661-f529-4f3a-931c-e806ffb3e29b",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "91c6ae05-b247-45bc-a283-062566f9f069",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "c2b6783b-a4ba-4779-aeb6-983f0d074a78",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "078c484753084c6e6074254c3229cca4f3d87af80cf9df29af2fb37fe7effe1d",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M09 注册与撤回竞态 > revoked 是终态，不能恢复为 registered",
+      "file": "tests/db/status-race.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 3,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "73ad1be7-fe0a-4fba-b8e7-688ebcc45cb9",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "a9f2aa3f-4865-4cf9-b69c-bd8fed21a084",
+        "b1afe657-3da9-4be0-88ca-59447d6005c6",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "134ff21768dd2eb7b40ae3f22164e9b7c8e7c1116fcc581c5d0dcf77b43e3b1a",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M08 Agent 权限与配置 > 只有 asset:write 的主体不能注册带绑定的 Agent",
+      "file": "tests/db/agent-permission.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 3,
+      "subject_role": [
+        "user-1/manager",
+        "user-1/writer"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6e40c803-fec1-478f-8cc5-d8956a105ed9",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "ab38b64c4345592af20524e8b8d5082eed5de2138f3cb42963e938b1951cde3d",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M08 Agent 权限与配置 > 有 asset:bind 但没有 asset:read 同样不能绑定",
+      "file": "tests/db/agent-permission.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager",
+        "user-1/writer"
+      ],
+      "trace_ids": [
+        "0a15a479-c897-4c6e-b21c-a3702290ef28",
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "f151145af36d1c06a3505187ed99cb8082195d054278adaae1683ff0c110e969",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M08 Agent 权限与配置 > 请求不可下放的权限被拒",
+      "file": "tests/db/agent-permission.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 3,
+      "subject_role": [
+        "user-1/manager",
+        "user-1/writer"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "f6c4f4fd-8977-47f9-a7a7-c08b5b9db17b",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "326ad23f6cccfe46a46e85d49b8af7ea61ad8e79ec41005f3c30a1a1cbbeea0f",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M08 Agent 权限与配置 > 请求自己并未持有的可下放权限被拒",
+      "file": "tests/db/agent-permission.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 3,
+      "subject_role": [
+        "user-1/manager",
+        "user-1/writer"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "5c600390-5f3b-4d46-9c62-47eff1a845d6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "641d0bc8bd89dc5521e4d82a9e7b981c7e4a021e530978f04c85ca6c7e81c346",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M08 Agent 权限与配置 > 配置里的密钥与 URL 被拒",
+      "file": "tests/db/agent-permission.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 11,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "0f8669f3-1672-44e3-b1bd-a89105f5c2f8",
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "bffc87e1-f8cf-4c35-ac8a-73403362b92b",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "eb6d1ce7-11a1-4b93-bfee-b93146945c38",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "cb07108840411d249eee9bd85e6a2bcd6411df833041c62c18be84e996f7bf62",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M08 Agent 权限与配置 > execution_enabled 必须为 false",
+      "file": "tests/db/agent-permission.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 3,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7c7fe2ae-da84-47f9-bb2d-5c1df0ec37ea",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "f4c5769174a59fe535f41a6b2c991028f54ea855fb04690cc20a27a2ea8afb91",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M08 Agent 权限与配置 > 注册 Agent 不产生任何执行任务",
+      "file": "tests/db/agent-permission.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "c3b205e0-06c3-4e38-9ba7-e430f0bb33f2",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "a29c4009bfd1febebf15d0f756d9213ef7f6bbfc2b844ad32d715dd108be3c93",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M08 Agent 权限与配置 > 不存在 Agent 运行端点",
+      "file": "tests/db/agent-permission.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9273d9a5-cc41-4a57-a913-49096091c4d7",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "c6c5e088b5fb2383b18c9e8f29148bc70c71ee36b236e440a9d5ba754d1bb7e9",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "B-1 幂等身份绑定目标资产 > 同一个幂等键用在两个资产上时，各自成立",
+      "file": "tests/db/idempotency-scope.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 9,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "0aacd9f9-6145-4781-973b-f67b24b6e0db",
+        "19932fdb-c84e-4329-8927-25970fb4f0b9",
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "62965a06-c309-41b6-9bd0-e8c4c867243d",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7b6effa6-6a02-4a8f-9a28-f0ac392f6397",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "b5a647c7-3a1a-4ec0-bf0a-3071b5c8f66a",
+        "c50afc1e-6171-4e4b-864f-1fed0893e15c",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "45b54057f47f7382c433478eb5fc17c67d26d271758611cb9428dea74093e1ab",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "B-1 幂等身份绑定目标资产 > 同一个资产上的同键重放仍然返回第一次的结果",
+      "file": "tests/db/idempotency-scope.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 5,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "01c0521a-b307-4622-a7ef-c06133a880b6",
+        "1d6e1f0d-042e-4504-b83c-3d94d65102f2",
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "70f6bbac-bf2b-4aa2-acac-3f4feb505512",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "b7b57195d5657afffdfb46519c5b62abb0b70433cd6c50173b7d4b452322d4bb",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "B-1 幂等身份绑定目标资产 > 同一个资产上的同键不同请求体仍然是幂等冲突",
+      "file": "tests/db/idempotency-scope.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 4,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9b57b069-7c55-4f10-80c1-3a187cd2a359",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "a3730374-01ec-48b0-b86c-430cc72ab6dc",
+        "c565f2d5-ca24-4130-ad15-34d8396b7d48",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "da08168bf7ea9c4086b79b4a5feb21ed5cbb56b8439e05c6fb337aae4113b8f9",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M-1/M-2 操作栅栏与租约 > 同一操作同一时刻只有一个 worker 能拿到租约",
+      "file": "tests/db/operation-fencing.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "8c1fa791e253534f6a50161a0d434daa5ce507c90a7d2f16cf3612dd484d2702",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M-1/M-2 操作栅栏与租约 > 领取后 epoch 递增，旧 epoch 的迟到写入被拒绝",
+      "file": "tests/db/operation-fencing.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 5,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "8c1fa791e253534f6a50161a0d434daa5ce507c90a7d2f16cf3612dd484d2702",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M-1/M-2 操作栅栏与租约 > 旧 epoch 不能释放新 worker 的租约",
+      "file": "tests/db/operation-fencing.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 3,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "8c1fa791e253534f6a50161a0d434daa5ce507c90a7d2f16cf3612dd484d2702",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M-1/M-2 操作栅栏与租约 > 终态失败时知识库状态同步回落为 failed",
+      "file": "tests/db/operation-fencing.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 3,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "ddae10d7-d44d-4618-b16b-27360fd7164c",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "bb3e27141e50f5a9cba2d48b6ff481a96b3eb01c4359b0f3fee6a589287e6fdc",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M-1/M-2 操作栅栏与租约 > 写请求响应丢失后进入 unknown_outcome，资源状态不留在 creating，且不重发",
+      "file": "tests/db/operation-fencing.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 4,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "8193139a-385d-48f8-8184-fab3cd02a4ad",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "85a05477cfc6cf663d9ccafa75d16633ca70f385bdb9dba91f7c7a6afcc9f065",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M-1/M-2 操作栅栏与租约 > 重启后未推进的操作仍可被接管并推进到终态",
+      "file": "tests/db/operation-fencing.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 3,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "128a3ef2-e70c-4945-a37d-16202b506c0f",
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "7f795febc376c8161969c40bcc50010dcbb78b40540b1b7e865606e7d2386726",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M-1/M-2 操作栅栏与租约 > 文档解析中重启后接着查同一个上游文档，不会重新上传",
+      "file": "tests/db/operation-fencing.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 3,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "76fc9875-b4d1-4de7-8277-7d0854b08c0a",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "c0a1c80e-680f-4f56-a64b-2291f9dadfae",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "b63b0ee8081c73911cc11f495905a27de397ce5ccbfee581e2d8692fd7af1a47",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M09 注册与撤回的确定性提交顺序 > 注册提交在前、撤回提交在后：撤回成功，注册留下的绑定按语义失效",
+      "file": "tests/db/status-linearization.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 14,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "793883ca-0124-492e-804d-5aed2353a4a3",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "934713ce-3117-4a5a-accc-440afe983e6b",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "b4bb6e45-46c8-4dfc-bbfa-e705530167a7",
+        "c663b632-e554-4eb5-8de3-67351cfe12b0",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "f51470bc-91eb-4343-8b25-9e8cd28a604d",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "6069d45e6b491b3be0ddcdac601300d205c707945c97dbb22d3c04621c9df1ee",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M09 注册与撤回的确定性提交顺序 > 撤回提交在前、注册提交在后：后提交被拒，且不留半截状态",
+      "file": "tests/db/status-linearization.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 13,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6af9cfd4-8853-42c3-aa66-0c173aad97f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "8083fe43-14aa-45a7-8d24-a22782f2875b",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "8adb557b-711d-4bdb-9c95-10d49eaa385f",
+        "8afcdf19-a13c-4cc6-84a6-0f119825a391",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "9d6dd792a9dceb1f7ff5fd08b05d1f7114e5c4936dba6640d0d45e5520291c86",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M06 Agent 绑定版本 > Agent 精确绑定 Skill@1.0.0，出现 1.0.1 后绑定不变",
+      "file": "tests/db/agent-binding.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 9,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "223b8801-bc9b-45ee-a03a-927793c4e05e",
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "77a1f0a8-c60f-49ce-8518-524483f4786f",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "892117b8-457f-4cbf-9d75-14eea57f3be5",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "e08f6c9c-ec3a-4577-81df-f630d81eacee",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "70fc1bab6d6b0ce6fcc83d21108bef0d35dcfb4f03fdabef309d1da378aebfcd",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M06 Agent 绑定版本 > 依赖详情显示准确版本与哈希，且不追随最新版本",
+      "file": "tests/db/agent-binding.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 7,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5647a8cd-b2d8-41ab-8b9e-32b001523953",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7108bc06-5546-47a6-91a6-cd0c97d39c8f",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "b7337ef6-4be2-45ce-9dd8-83bdc840a70b",
+        "bfae4671-7b57-4b76-9a26-c68c00f1b809",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "1c98f5daaf1ba1f26ca2bad6182edf6dab2750fe82c7cae8a1bc460ba626e0e3",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M06 Agent 绑定版本 > 绑定两端在库里都有外键约束",
+      "file": "tests/db/agent-binding.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 3,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "8c1fa791e253534f6a50161a0d434daa5ce507c90a7d2f16cf3612dd484d2702",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M06 Agent 绑定版本 > 绑定行只记录被绑定的那个版本",
+      "file": "tests/db/agent-binding.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "8c1fa791e253534f6a50161a0d434daa5ce507c90a7d2f16cf3612dd484d2702",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M-3 版本事实 DB 层不可变 > title 的直接 UPDATE 被拒绝",
+      "file": "tests/db/revision-immutability.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "8c1fa791e253534f6a50161a0d434daa5ce507c90a7d2f16cf3612dd484d2702",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M-3 版本事实 DB 层不可变 > description 的直接 UPDATE 被拒绝",
+      "file": "tests/db/revision-immutability.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "8c1fa791e253534f6a50161a0d434daa5ce507c90a7d2f16cf3612dd484d2702",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M-3 版本事实 DB 层不可变 > payload 的直接 UPDATE 被拒绝",
+      "file": "tests/db/revision-immutability.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "8c1fa791e253534f6a50161a0d434daa5ce507c90a7d2f16cf3612dd484d2702",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M-3 版本事实 DB 层不可变 > content_hash 的直接 UPDATE 被拒绝",
+      "file": "tests/db/revision-immutability.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "8c1fa791e253534f6a50161a0d434daa5ce507c90a7d2f16cf3612dd484d2702",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M-3 版本事实 DB 层不可变 > DELETE 被拒绝",
+      "file": "tests/db/revision-immutability.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 1,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "8c1fa791e253534f6a50161a0d434daa5ce507c90a7d2f16cf3612dd484d2702",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M-3 版本事实 DB 层不可变 > content_hash 与版本内容始终一致",
+      "file": "tests/db/revision-immutability.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 3,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "3df44d1a-fa54-4f75-a467-e2496887932f",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "3cefb934e4cddc66d07334bf6cc08234d893f8bb56bbfeb32c1dd2c7116e5694",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M-7 本体调用在事务之外 > 注册含概念引用的技能时，本体调用期间没有挂起的数据库事务",
+      "file": "tests/db/ontology-outside-transaction.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 3,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "35da5399-a7d0-4fcb-8404-e2dc14916757",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "4ab7a948865396c896858e1d716f3ecb15d3ac1dbea4d696b970b6aa810575d7",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M-7 本体调用在事务之外 > 创建新版本时，本体调用期间同样没有挂起的数据库事务",
+      "file": "tests/db/ontology-outside-transaction.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 3,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "7feca65b-31ba-4a62-8c11-dbc599ed59a1",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "96338ccd-b3ab-48dc-92d1-1e3a22622cff",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "13894216d3c9ce243c7f2ed053b59ad645b752bdcdbad38b58958deb278bb2be",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "迁移 010 升级路径 > 从 009 升到最新：既有数据保留，撤回与已批准的审核结论都变成终态",
+      "file": "tests/db/migration-upgrade.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 11,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "8c1fa791e253534f6a50161a0d434daa5ce507c90a7d2f16cf3612dd484d2702",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "迁移 010 升级路径 > 010 的台账 checksum 与文件内容一致",
+      "file": "tests/db/migration-upgrade.test.ts",
+      "mode": "db",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "8c1fa791e253534f6a50161a0d434daa5ce507c90a7d2f16cf3612dd484d2702",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M01 应用角色与迁移角色分离 > API 确实以应用角色连接",
+      "file": "tests/db/app-role-separation.test.ts",
+      "mode": "db",
+      "status": "NOT RUN",
+      "duration_ms": null,
+      "assertion_count": null,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "8c1fa791e253534f6a50161a0d434daa5ce507c90a7d2f16cf3612dd484d2702",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M01 应用角色与迁移角色分离 > 应用角色可以读写业务表",
+      "file": "tests/db/app-role-separation.test.ts",
+      "mode": "db",
+      "status": "NOT RUN",
+      "duration_ms": null,
+      "assertion_count": null,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "8c1fa791e253534f6a50161a0d434daa5ce507c90a7d2f16cf3612dd484d2702",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M01 应用角色与迁移角色分离 > 应用角色没有 DDL 权限：建表、改表、删表都被拒",
+      "file": "tests/db/app-role-separation.test.ts",
+      "mode": "db",
+      "status": "NOT RUN",
+      "duration_ms": null,
+      "assertion_count": null,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "8c1fa791e253534f6a50161a0d434daa5ce507c90a7d2f16cf3612dd484d2702",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M01 应用角色与迁移角色分离 > 应用角色不能建 schema，也不能跑迁移",
+      "file": "tests/db/app-role-separation.test.ts",
+      "mode": "db",
+      "status": "NOT RUN",
+      "duration_ms": null,
+      "assertion_count": null,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "8c1fa791e253534f6a50161a0d434daa5ce507c90a7d2f16cf3612dd484d2702",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M01 应用角色与迁移角色分离 > 迁移角色仍然可以改结构：迁移与应用是两个账号",
+      "file": "tests/db/app-role-separation.test.ts",
+      "mode": "db",
+      "status": "NOT RUN",
+      "duration_ms": null,
+      "assertion_count": null,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "8c1fa791e253534f6a50161a0d434daa5ce507c90a7d2f16cf3612dd484d2702",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M02 项目隔离 > 两个项目可以注册同一个 slug，互不冲突",
+      "file": "tests/db/isolation.test.ts",
+      "mode": "db",
+      "status": "NOT RUN",
+      "duration_ms": null,
+      "assertion_count": null,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "8c1fa791e253534f6a50161a0d434daa5ce507c90a7d2f16cf3612dd484d2702",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M02 项目隔离 > A 的令牌访问 B 的项目路径被拒",
+      "file": "tests/db/isolation.test.ts",
+      "mode": "db",
+      "status": "NOT RUN",
+      "duration_ms": null,
+      "assertion_count": null,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "8c1fa791e253534f6a50161a0d434daa5ce507c90a7d2f16cf3612dd484d2702",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M02 项目隔离 > A 的令牌在 A 项目里查 B 的资源 ID 得到 404，不泄露存在性",
+      "file": "tests/db/isolation.test.ts",
+      "mode": "db",
+      "status": "NOT RUN",
+      "duration_ms": null,
+      "assertion_count": null,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "8c1fa791e253534f6a50161a0d434daa5ce507c90a7d2f16cf3612dd484d2702",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M02 项目隔离 > A 的账号连不上 B 的库",
+      "file": "tests/db/isolation.test.ts",
+      "mode": "db",
+      "status": "NOT RUN",
+      "duration_ms": null,
+      "assertion_count": null,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "8c1fa791e253534f6a50161a0d434daa5ce507c90a7d2f16cf3612dd484d2702",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M02 项目隔离 > 各自的账号能连自己的库",
+      "file": "tests/db/isolation.test.ts",
+      "mode": "db",
+      "status": "NOT RUN",
+      "duration_ms": null,
+      "assertion_count": null,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "8c1fa791e253534f6a50161a0d434daa5ce507c90a7d2f16cf3612dd484d2702",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M02 项目隔离 > 两个项目的 API 确实各自跑在自己的应用角色与库上",
+      "file": "tests/db/isolation.test.ts",
+      "mode": "db",
+      "status": "NOT RUN",
+      "duration_ms": null,
+      "assertion_count": null,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "8c1fa791e253534f6a50161a0d434daa5ce507c90a7d2f16cf3612dd484d2702",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M02 项目隔离 > 文件存储路径与操作登记不跨项目串用",
+      "file": "tests/db/isolation.test.ts",
+      "mode": "db",
+      "status": "NOT RUN",
+      "duration_ms": null,
+      "assertion_count": null,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "8c1fa791e253534f6a50161a0d434daa5ce507c90a7d2f16cf3612dd484d2702",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M02 项目隔离 > 文件存储路径按项目隔离，同一文件标识在两个项目落在不同路径",
+      "file": "tests/db/isolation.test.ts",
+      "mode": "db",
+      "status": "NOT RUN",
+      "duration_ms": null,
+      "assertion_count": null,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "27b53156-7e6e-4958-93c5-45718101e15e",
+        "365f7746-3434-4d74-ac58-148ea426bec0",
+        "3a6a29c2-5daf-4fda-98a7-6107e1583bf0",
+        "5a240553-8ec3-4f4e-96c1-5fd3516d12f6",
+        "6f77a45f-3fb8-46ad-9bf9-518ba839abfe",
+        "7e06cb06-45b8-4039-8f82-730379465c8a",
+        "849bf36d-874e-49dc-979b-4c953d0a54eb",
+        "84d96edb-b359-41cb-9f3d-0f9933d8ec5e",
+        "9cf38b28-6800-41c2-9830-331f9d5b819e",
+        "e830000c-9686-45be-8f8f-949289721a8f",
+        "fbdf3c0a-9aad-47a7-9fe2-203cf1422890"
+      ],
+      "sample_hash": "8c1fa791e253534f6a50161a0d434daa5ce507c90a7d2f16cf3612dd484d2702",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    }
+  ]
+}

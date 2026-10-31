@@ -1,0 +1,10 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "baseUrl": "../..",
+    "paths": {
+      "@aip/api": ["services/api/src/index.ts"],
+      "@aip/contracts": ["packages/contracts/src/index.ts"]
+    }
+  }
+}

@@ -1,0 +1,1071 @@
+{
+  "mode": "unit",
+  "cases": [
+    {
+      "case": "M23 概念契约校验门 > 本体校验通过的含概念契约可以注册",
+      "file": "tests/unit/concept-gate.test.ts",
+      "mode": "unit",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 3,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "611fc540-98a0-46c1-8e55-adaa56fe6e7a"
+      ],
+      "sample_hash": "db44960e7446d83803f146dce961d2f335e41f59221009b1fd9ae9c9aaef5527",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M23 概念契约校验门 > 本体不可用时拒绝注册，不降级为通过",
+      "file": "tests/unit/concept-gate.test.ts",
+      "mode": "unit",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 3,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "85d1cd2d-692d-4d1e-856d-048bd2af182d"
+      ],
+      "sample_hash": "bfed6c3a55228f10ce9d7cf37ad6366e6dcd2e10139620ba5864dcc1f7240afe",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M23 概念契约校验门 > 本体概念不存在时拒绝注册并指出该引用",
+      "file": "tests/unit/concept-gate.test.ts",
+      "mode": "unit",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 3,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "e43a6c39-afef-4133-a486-96d571cf20fd"
+      ],
+      "sample_hash": "e0b1131eee24a0ed36260178e1703c6fd4084a0335e4189fb4850deefe27d03b",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M23 概念契约校验门 > 本体服务不可达时返回 ONTO_UNAVAILABLE，而不是伪装成校验通过",
+      "file": "tests/unit/concept-gate.test.ts",
+      "mode": "unit",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 3,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "f1e4fc73-5eea-4b75-ba01-32d53d9e34e3"
+      ],
+      "sample_hash": "fc4563b384348f693b629f2ae25551d7fce8b77f1bd951c8099af9e4a0fad798",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M23 概念契约校验门 > 没有概念引用的字符串契约不需要本体校验即可注册",
+      "file": "tests/unit/concept-gate.test.ts",
+      "mode": "unit",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 4,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "47bd6c8e-2185-48a4-8146-11850e4b7620",
+        "6b782ec6-e95c-46c5-9061-f6e0ed4099aa"
+      ],
+      "sample_hash": "82ff6fd2b284ca913557fe610d9f2761880c664fc757aec49af9255144c813f7",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M23 概念契约校验门 > 数值契约缺少概念引用时直接拒绝",
+      "file": "tests/unit/concept-gate.test.ts",
+      "mode": "unit",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 3,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "fd966a74-b9ee-437c-87db-8eb5d76f78e9"
+      ],
+      "sample_hash": "33b10b52197a2ea1b0fdaccd4220ee36d93ed1c3713cfed8ef8d109c5fbcfb5e",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M23 概念契约校验门 > 含概念引用却声明不校验时被拒绝",
+      "file": "tests/unit/concept-gate.test.ts",
+      "mode": "unit",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 3,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "e9da6848-6cdc-47e8-9854-dec35809dddc"
+      ],
+      "sample_hash": "ea479d7684c462dca32c7e3977663e7da556e2f2fdf5367473af447d850281fd",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M23 概念契约校验门 > 只校验接口在本体不可达时不得报「校验通过」",
+      "file": "tests/unit/concept-gate.test.ts",
+      "mode": "unit",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 4,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "93ce2f32-2858-4a74-b4c3-0642fcb6cfe7"
+      ],
+      "sample_hash": "6cee54efe80976a3c9ef3429d2ead8261002de611e84382e6d00e89e638a114f",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M19 上游不回包时的总预算兜底 > 上游接受连接却不回包时，请求在总预算内结束而不是无限挂起",
+      "file": "tests/unit/ragflow-timeout.test.ts",
+      "mode": "unit",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 3,
+      "subject_role": [],
+      "trace_ids": [],
+      "sample_hash": null,
+      "sample_hash_basis": null,
+      "failure_reason": null
+    },
+    {
+      "case": "M05 版本与内容体积 > 非法版本号 latest 被拒并指向 version",
+      "file": "tests/unit/versions.test.ts",
+      "mode": "unit",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 3,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "a4a0da02-6fc3-481c-b7bb-30d135096efd"
+      ],
+      "sample_hash": "1f71de0bb27dbded98a1163ab652431ced47b65078b7b342412977f16b422dde",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M05 版本与内容体积 > 非法版本号 ^1.0 被拒并指向 version",
+      "file": "tests/unit/versions.test.ts",
+      "mode": "unit",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 3,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "80ad066a-d218-4716-9b28-0df41fd372d2"
+      ],
+      "sample_hash": "1d88f473af0d853c22c97314429f8cad3492c482f8223d1e318e15e51ea6377e",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M05 版本与内容体积 > 非法版本号 1 被拒并指向 version",
+      "file": "tests/unit/versions.test.ts",
+      "mode": "unit",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 3,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "a9c53029-0a2e-4af1-b97c-a127b653cad9"
+      ],
+      "sample_hash": "5a1b1be6a4a4025e69222285afe23c66f1c601d5f86fdf182c7ab094ac9128ee",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M05 版本与内容体积 > 非法版本号 v1.0.0 被拒并指向 version",
+      "file": "tests/unit/versions.test.ts",
+      "mode": "unit",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 3,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "60f11416-3ab5-48ed-aa4d-b352a0eb63c8"
+      ],
+      "sample_hash": "a5c9fbe347ec52cac8fd765c539d645b13ca95ad8a5fbc3e25aada0c1f3284c2",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M05 版本与内容体积 > 非法版本号 1.0 被拒并指向 version",
+      "file": "tests/unit/versions.test.ts",
+      "mode": "unit",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 3,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "54b1da38-e6ef-4c0a-a9a9-2abbdfbee970"
+      ],
+      "sample_hash": "3576b99af382dd67379cf11a07fd734297197f9e72d5a23b8e285f1e72a86346",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M05 版本与内容体积 > 非法版本号 1.0.0.0 被拒并指向 version",
+      "file": "tests/unit/versions.test.ts",
+      "mode": "unit",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 3,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "07524bd1-9c82-4ca5-82ba-92fc5b5afd06"
+      ],
+      "sample_hash": "56a086df91671a8f1e80a913a03f587d6034efdd1fed0533bf38774faed19d5d",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M05 版本与内容体积 > 非法版本号 01.0.0 被拒并指向 version",
+      "file": "tests/unit/versions.test.ts",
+      "mode": "unit",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 3,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "fefe37d8-bd1a-48e2-97e8-b60aaa8d8722"
+      ],
+      "sample_hash": "cf1a0c8d7585f970cf64e286d1faf63f3bc0adf287137287847148f1b18e7307",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M05 版本与内容体积 > 非法版本号  被拒并指向 version",
+      "file": "tests/unit/versions.test.ts",
+      "mode": "unit",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 3,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "b56359ee-8ce5-4dfb-8aa4-3701107a25fa"
+      ],
+      "sample_hash": "3c60332aed6311e765aacdeabac054f2541d26b499c05914a56cce4e7a907fd9",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M05 版本与内容体积 > 缺正文被拒并指向 content",
+      "file": "tests/unit/versions.test.ts",
+      "mode": "unit",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 3,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "aad6006c-b0b9-4828-a531-1161b287fed2"
+      ],
+      "sample_hash": "a4fe37816ad0173add09305f74acb7537929d63344fd8672c64a82494cd6f23e",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M05 版本与内容体积 > 正文超过 256KiB 返回 413",
+      "file": "tests/unit/versions.test.ts",
+      "mode": "unit",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 3,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "a35c9da2-c5a8-4ebe-990d-336d6c9e7ede"
+      ],
+      "sample_hash": "ef7e65b9712309f3afb47fa1e0d43dcfe83d750e50387c7d25cce1f0b680f26e",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M05 版本与内容体积 > 整体载荷超过 512KiB 返回 413",
+      "file": "tests/unit/versions.test.ts",
+      "mode": "unit",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "db019996-5010-4a8a-9dab-d9747a3ed6fd"
+      ],
+      "sample_hash": "611ba3e22ad68c3f54cc5bdc41b4eadc946afe2473b7aad750ae66b59f4651b6",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M05 版本与内容体积 > 非法请求不写入任何数据",
+      "file": "tests/unit/versions.test.ts",
+      "mode": "unit",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 1,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "925a0f06-9517-452d-806d-f955a18c482f"
+      ],
+      "sample_hash": "d377f78d6e89f5ad769d3c4e2b06ea05ecf54ff9c3e651e1a33371264fa4bf6f",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M05 版本与内容体积 > 正文里的外部 URL 不会被抓取",
+      "file": "tests/unit/versions.test.ts",
+      "mode": "unit",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "e136701d-31eb-4458-9622-57d07b2c8d1d"
+      ],
+      "sample_hash": "93ab70fde137a52b2226f75762f777bd3dd8ca05882eb6e8770b3ea83f4e23a0",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M05 版本与内容体积 > 合法的 1.0.0 可以注册并按精确版本查回",
+      "file": "tests/unit/versions.test.ts",
+      "mode": "unit",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 3,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "6c0769f5-8562-4373-971e-b68333c147ea",
+        "a99e8c59-9915-4e9f-934b-ffee92ecb92a"
+      ],
+      "sample_hash": "9de4af48674a10328c3fee5f58a66fe76411b934d468e31d199596e6fea12d38",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M28 密钥不落库不落日志 > 完整知识库流程后，持久化行里没有上游密钥",
+      "file": "tests/unit/security-no-secret.test.ts",
+      "mode": "unit",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "25c7fb96-bc84-4820-9acd-1bfef69fc927",
+        "4e105661-0e29-4bb5-bea4-aa5fdb7e3bbf",
+        "92ba4fa3-0ea5-4ccf-aa9d-1c0078dbc4e3",
+        "db5fb582-741b-421c-a56a-24a21093fe7d"
+      ],
+      "sample_hash": "5053558aca21ae11d92481999e963480ef4ad7354ed47d011c7613dcebc45d4f",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M28 密钥不落库不落日志 > 带 api_key 的 Agent 配置被拒绝，密钥不留在任何行里",
+      "file": "tests/unit/security-no-secret.test.ts",
+      "mode": "unit",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 4,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "b75cae0c-21e3-48de-ba54-46891dc84895"
+      ],
+      "sample_hash": "2d45bb072658ed94b04a5f241d67b49392a9ad6b2edf391505d8fd54b1d4ede8",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M28 密钥不落库不落日志 > 嵌套的 password 与 URL 端点同样被拒绝",
+      "file": "tests/unit/security-no-secret.test.ts",
+      "mode": "unit",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 4,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "85020981-bb53-42b6-8284-daaf0e56ca96"
+      ],
+      "sample_hash": "d29bca913816a37b1dcbd7e79149a5b1855d7fe40225dfd1c68b4da29f41f351",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M28 密钥不落库不落日志 > 上游错误原文不回显到响应体",
+      "file": "tests/unit/security-no-secret.test.ts",
+      "mode": "unit",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 4,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "69378f63-ce0d-4251-8eae-c1fdf13c6938",
+        "b0a12ceb-c801-45b0-aaa3-15a3ed9a1aeb"
+      ],
+      "sample_hash": "ca79acaaecb14856ae33853ec1bda905cfb76498c4f0fcd2321710a98a538ff5",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M25 只校验端点 /assets/validate > 合法请求返回 passed=true 且不写入任何注册记录",
+      "file": "tests/unit/asset-validate.test.ts",
+      "mode": "unit",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 4,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "f21ced03-9a4c-4544-9e10-6ab4c3cbcbd0"
+      ],
+      "sample_hash": "6ad24c4c6cbb2b562e50ffcafc87a6de2a2e74c9ea71ad09a2d21a325e1f7094",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M25 只校验端点 /assets/validate > 非法版本号进问题列表而不是变成错误响应",
+      "file": "tests/unit/asset-validate.test.ts",
+      "mode": "unit",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 4,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "a9bf1474-8ee2-4141-b8aa-c611ce2887e3"
+      ],
+      "sample_hash": "0f804484fda9437d4bdf39f0ee92916009ef90d0c0835c5e9819b7611c96d66f",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M25 只校验端点 /assets/validate > 非法 slug 进问题列表",
+      "file": "tests/unit/asset-validate.test.ts",
+      "mode": "unit",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 3,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "25c3708f-1116-4935-9724-b51fc3f85113"
+      ],
+      "sample_hash": "59675105c9d8c1745b8fbb8d0ee41dab5addb98bcaee6c5fb0dd460acdde8117",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M25 只校验端点 /assets/validate > 载荷级错误也进问题列表",
+      "file": "tests/unit/asset-validate.test.ts",
+      "mode": "unit",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 3,
+      "subject_role": [
+        "user-1/manager"
+      ],
+      "trace_ids": [
+        "e7e3ed23-ac11-4452-a8cc-770c2b841481"
+      ],
+      "sample_hash": "492e67b7851d614729faf8d6be1ca9376ff98c0e7918e17adb927aad86c28497",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M25 只校验端点 /assets/validate > 缺少鉴权时返回 401",
+      "file": "tests/unit/asset-validate.test.ts",
+      "mode": "unit",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [
+        "anonymous/no-permission"
+      ],
+      "trace_ids": [
+        "c72cad2f-b7df-436b-a0ec-0af03be54c93"
+      ],
+      "sample_hash": "5675b275828dacb967121ad196dfc1b1d82b3245d7429aedfd7a7e3b51734964",
+      "sample_hash_basis": "requests",
+      "failure_reason": null
+    },
+    {
+      "case": "M12 上传限制（校验层） > 超过 20MiB 的文件被拒绝",
+      "file": "tests/unit/upload-limits.test.ts",
+      "mode": "unit",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [],
+      "trace_ids": [],
+      "sample_hash": null,
+      "sample_hash_basis": null,
+      "failure_reason": null
+    },
+    {
+      "case": "M12 上传限制（校验层） > 扩展名不在允许清单内被拒绝",
+      "file": "tests/unit/upload-limits.test.ts",
+      "mode": "unit",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [],
+      "trace_ids": [],
+      "sample_hash": null,
+      "sample_hash_basis": null,
+      "failure_reason": null
+    },
+    {
+      "case": "M12 上传限制（校验层） > MIME 与扩展名不匹配被拒绝",
+      "file": "tests/unit/upload-limits.test.ts",
+      "mode": "unit",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 1,
+      "subject_role": [],
+      "trace_ids": [],
+      "sample_hash": null,
+      "sample_hash_basis": null,
+      "failure_reason": null
+    },
+    {
+      "case": "M12 上传限制（校验层） > 缺少 PDF 文件头被拒绝",
+      "file": "tests/unit/upload-limits.test.ts",
+      "mode": "unit",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 1,
+      "subject_role": [],
+      "trace_ids": [],
+      "sample_hash": null,
+      "sample_hash_basis": null,
+      "failure_reason": null
+    },
+    {
+      "case": "M12 上传限制（校验层） > 加密 PDF 被拒绝",
+      "file": "tests/unit/upload-limits.test.ts",
+      "mode": "unit",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 1,
+      "subject_role": [],
+      "trace_ids": [],
+      "sample_hash": null,
+      "sample_hash_basis": null,
+      "failure_reason": null
+    },
+    {
+      "case": "M12 上传限制（校验层） > 非 UTF-8 文本被拒绝",
+      "file": "tests/unit/upload-limits.test.ts",
+      "mode": "unit",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 1,
+      "subject_role": [],
+      "trace_ids": [],
+      "sample_hash": null,
+      "sample_hash_basis": null,
+      "failure_reason": null
+    },
+    {
+      "case": "M12 上传限制（校验层） > 含二进制控制字符的文本被拒绝",
+      "file": "tests/unit/upload-limits.test.ts",
+      "mode": "unit",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 1,
+      "subject_role": [],
+      "trace_ids": [],
+      "sample_hash": null,
+      "sample_hash_basis": null,
+      "failure_reason": null
+    },
+    {
+      "case": "M12 上传限制（校验层） > 文件名含路径或 .. 被拒绝",
+      "file": "tests/unit/upload-limits.test.ts",
+      "mode": "unit",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 4,
+      "subject_role": [],
+      "trace_ids": [],
+      "sample_hash": null,
+      "sample_hash_basis": null,
+      "failure_reason": null
+    },
+    {
+      "case": "M12 上传限制（校验层） > 空文件被拒绝",
+      "file": "tests/unit/upload-limits.test.ts",
+      "mode": "unit",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 1,
+      "subject_role": [],
+      "trace_ids": [],
+      "sample_hash": null,
+      "sample_hash_basis": null,
+      "failure_reason": null
+    },
+    {
+      "case": "M12 上传限制（校验层） > 合法文件通过校验并给出稳定哈希",
+      "file": "tests/unit/upload-limits.test.ts",
+      "mode": "unit",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 4,
+      "subject_role": [],
+      "trace_ids": [],
+      "sample_hash": null,
+      "sample_hash_basis": null,
+      "failure_reason": null
+    },
+    {
+      "case": "M12 上传限制（校验层） > txt 与 pdf 也在允许清单内",
+      "file": "tests/unit/upload-limits.test.ts",
+      "mode": "unit",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [],
+      "trace_ids": [],
+      "sample_hash": null,
+      "sample_hash_basis": null,
+      "failure_reason": null
+    },
+    {
+      "case": "M12/M05 上传边界与内容入口（校验层） > 恰好等于上限的文件被接受",
+      "file": "tests/unit/upload-boundaries.test.ts",
+      "mode": "unit",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [],
+      "trace_ids": [],
+      "sample_hash": null,
+      "sample_hash_basis": null,
+      "failure_reason": null
+    },
+    {
+      "case": "M12/M05 上传边界与内容入口（校验层） > 超过上限一个字节的文件被拒绝",
+      "file": "tests/unit/upload-boundaries.test.ts",
+      "mode": "unit",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [],
+      "trace_ids": [],
+      "sample_hash": null,
+      "sample_hash_basis": null,
+      "failure_reason": null
+    },
+    {
+      "case": "M12/M05 上传边界与内容入口（校验层） > 压缩包类文件被拒绝",
+      "file": "tests/unit/upload-boundaries.test.ts",
+      "mode": "unit",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 6,
+      "subject_role": [],
+      "trace_ids": [],
+      "sample_hash": null,
+      "sample_hash_basis": null,
+      "failure_reason": null
+    },
+    {
+      "case": "M12/M05 上传边界与内容入口（校验层） > 正文内容入口只接受 inline_markdown",
+      "file": "tests/unit/upload-boundaries.test.ts",
+      "mode": "unit",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 3,
+      "subject_role": [],
+      "trace_ids": [],
+      "sample_hash": null,
+      "sample_hash_basis": null,
+      "failure_reason": null
+    },
+    {
+      "case": "M12/M05 上传边界与内容入口（校验层） > 正文入口被拒时不会读取任何本机文件",
+      "file": "tests/unit/upload-boundaries.test.ts",
+      "mode": "unit",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [],
+      "trace_ids": [],
+      "sample_hash": null,
+      "sample_hash_basis": null,
+      "failure_reason": null
+    },
+    {
+      "case": "生产默认配置 > 解析截止时间默认 20 分钟",
+      "file": "tests/unit/config-defaults.test.ts",
+      "mode": "unit",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 1,
+      "subject_role": [],
+      "trace_ids": [],
+      "sample_hash": null,
+      "sample_hash_basis": null,
+      "failure_reason": null
+    },
+    {
+      "case": "生产默认配置 > 解析截止时间可由环境变量覆盖",
+      "file": "tests/unit/config-defaults.test.ts",
+      "mode": "unit",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 1,
+      "subject_role": [],
+      "trace_ids": [],
+      "sample_hash": null,
+      "sample_hash_basis": null,
+      "failure_reason": null
+    },
+    {
+      "case": "生产默认配置 > 只读总预算默认 30 秒，最多 3 次尝试",
+      "file": "tests/unit/config-defaults.test.ts",
+      "mode": "unit",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [],
+      "trace_ids": [],
+      "sample_hash": null,
+      "sample_hash_basis": null,
+      "failure_reason": null
+    },
+    {
+      "case": "生产默认配置 > 操作租约必须长于单轮推进的最坏耗时",
+      "file": "tests/unit/config-defaults.test.ts",
+      "mode": "unit",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [],
+      "trace_ids": [],
+      "sample_hash": null,
+      "sample_hash_basis": null,
+      "failure_reason": null
+    },
+    {
+      "case": "生产默认配置 > 租约短于最坏耗时时直接拒绝启动",
+      "file": "tests/unit/config-defaults.test.ts",
+      "mode": "unit",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 1,
+      "subject_role": [],
+      "trace_ids": [],
+      "sample_hash": null,
+      "sample_hash_basis": null,
+      "failure_reason": null
+    },
+    {
+      "case": "生产默认配置 > 上传上限默认 20 MiB，可授权文档默认 200",
+      "file": "tests/unit/config-defaults.test.ts",
+      "mode": "unit",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [],
+      "trace_ids": [],
+      "sample_hash": null,
+      "sample_hash_basis": null,
+      "failure_reason": null
+    },
+    {
+      "case": "M28 密钥扫描（构建产物与源码） > 三个包都确定了扫描目标",
+      "file": "tests/unit/secret-scan.test.ts",
+      "mode": "unit",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 4,
+      "subject_role": [],
+      "trace_ids": [],
+      "sample_hash": null,
+      "sample_hash_basis": null,
+      "failure_reason": null
+    },
+    {
+      "case": "M28 密钥扫描（构建产物与源码） > 扫描目标非空且确实读到了文件",
+      "file": "tests/unit/secret-scan.test.ts",
+      "mode": "unit",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 3,
+      "subject_role": [],
+      "trace_ids": [],
+      "sample_hash": null,
+      "sample_hash_basis": null,
+      "failure_reason": null
+    },
+    {
+      "case": "M28 密钥扫描（构建产物与源码） > 构建产物与源码中不出现任何密钥形态",
+      "file": "tests/unit/secret-scan.test.ts",
+      "mode": "unit",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 1,
+      "subject_role": [],
+      "trace_ids": [],
+      "sample_hash": null,
+      "sample_hash_basis": null,
+      "failure_reason": null
+    },
+    {
+      "case": "M28 密钥扫描（构建产物与源码） > 扫描口径本身有效：注入的假密钥能被同一套规则检出",
+      "file": "tests/unit/secret-scan.test.ts",
+      "mode": "unit",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 6,
+      "subject_role": [],
+      "trace_ids": [],
+      "sample_hash": null,
+      "sample_hash_basis": null,
+      "failure_reason": null
+    },
+    {
+      "case": "审核结论状态机 > pending 的两种结论都照常落库",
+      "file": "tests/unit/review-policy.test.ts",
+      "mode": "unit",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [],
+      "trace_ids": [],
+      "sample_hash": null,
+      "sample_hash_basis": null,
+      "failure_reason": null
+    },
+    {
+      "case": "审核结论状态机 > rejected 的两种结论都照常落库（可以重新审核）",
+      "file": "tests/unit/review-policy.test.ts",
+      "mode": "unit",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [],
+      "trace_ids": [],
+      "sample_hash": null,
+      "sample_hash_basis": null,
+      "failure_reason": null
+    },
+    {
+      "case": "审核结论状态机 > 已批准的版本不能被改判为拒绝",
+      "file": "tests/unit/review-policy.test.ts",
+      "mode": "unit",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 1,
+      "subject_role": [],
+      "trace_ids": [],
+      "sample_hash": null,
+      "sample_hash_basis": null,
+      "failure_reason": null
+    },
+    {
+      "case": "审核结论状态机 > 已批准的版本同结论重放按幂等处理",
+      "file": "tests/unit/review-policy.test.ts",
+      "mode": "unit",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 1,
+      "subject_role": [],
+      "trace_ids": [],
+      "sample_hash": null,
+      "sample_hash_basis": null,
+      "failure_reason": null
+    },
+    {
+      "case": "数据库错误映射 > 22P02 落成 400 BAD_REQUEST",
+      "file": "tests/unit/database-errors.test.ts",
+      "mode": "unit",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 3,
+      "subject_role": [],
+      "trace_ids": [],
+      "sample_hash": null,
+      "sample_hash_basis": null,
+      "failure_reason": null
+    },
+    {
+      "case": "数据库错误映射 > 57014 落成 503 DB_UNAVAILABLE",
+      "file": "tests/unit/database-errors.test.ts",
+      "mode": "unit",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [],
+      "trace_ids": [],
+      "sample_hash": null,
+      "sample_hash_basis": null,
+      "failure_reason": null
+    },
+    {
+      "case": "数据库错误映射 > 55P03 落成 503 DB_UNAVAILABLE",
+      "file": "tests/unit/database-errors.test.ts",
+      "mode": "unit",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [],
+      "trace_ids": [],
+      "sample_hash": null,
+      "sample_hash_basis": null,
+      "failure_reason": null
+    },
+    {
+      "case": "数据库错误映射 > 其它错误不映射",
+      "file": "tests/unit/database-errors.test.ts",
+      "mode": "unit",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 3,
+      "subject_role": [],
+      "trace_ids": [],
+      "sample_hash": null,
+      "sample_hash_basis": null,
+      "failure_reason": null
+    },
+    {
+      "case": "M-2 操作租约边界 > 默认租约大于上传超时 + 只读预算 + 余量",
+      "file": "tests/unit/operation-lease.test.ts",
+      "mode": "unit",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 1,
+      "subject_role": [],
+      "trace_ids": [],
+      "sample_hash": null,
+      "sample_hash_basis": null,
+      "failure_reason": null
+    },
+    {
+      "case": "M-2 操作租约边界 > 显式配置过短的租约在启动时直接失败",
+      "file": "tests/unit/operation-lease.test.ts",
+      "mode": "unit",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 1,
+      "subject_role": [],
+      "trace_ids": [],
+      "sample_hash": null,
+      "sample_hash_basis": null,
+      "failure_reason": null
+    },
+    {
+      "case": "M-2 操作租约边界 > 显式配置足够的租约被接受",
+      "file": "tests/unit/operation-lease.test.ts",
+      "mode": "unit",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 1,
+      "subject_role": [],
+      "trace_ids": [],
+      "sample_hash": null,
+      "sample_hash_basis": null,
+      "failure_reason": null
+    },
+    {
+      "case": "测试基础设施 > 能解析 @aip/contracts 源码",
+      "file": "tests/unit/smoke.test.ts",
+      "mode": "unit",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 2,
+      "subject_role": [],
+      "trace_ids": [],
+      "sample_hash": null,
+      "sample_hash_basis": null,
+      "failure_reason": null
+    },
+    {
+      "case": "测试基础设施 > 能解析 @aip/api 源码",
+      "file": "tests/unit/smoke.test.ts",
+      "mode": "unit",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 1,
+      "subject_role": [],
+      "trace_ids": [],
+      "sample_hash": null,
+      "sample_hash_basis": null,
+      "failure_reason": null
+    },
+    {
+      "case": "M28 上游重定向不泄漏凭据 > 不跟随重定向，重定向目标收不到任何请求",
+      "file": "tests/unit/redirect-key-leak.test.ts",
+      "mode": "unit",
+      "status": "PASS",
+      "duration_ms": null,
+      "assertion_count": 5,
+      "subject_role": [],
+      "trace_ids": [],
+      "sample_hash": null,
+      "sample_hash_basis": null,
+      "failure_reason": null
+    }
+  ]
+}

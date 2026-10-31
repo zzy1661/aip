@@ -1,0 +1,87 @@
+{
+  "mode": "db",
+  "generated_at": "2026-10-29T15:55:42.829Z",
+  "commit": "1acf25a581ac3d2d7ef3f01edc279b8e82e697db",
+  "dirty": false,
+  "changed_tracked": [],
+  "untracked": [],
+  "dependency_lock_hash": "34ff10bfa755ababc35a5c2df808f912dceaf3ef5b196ee08e44a6b4f38d9b6a",
+  "migration": [
+    {
+      "file": "001_registry.sql",
+      "sha256": "92049e9968af9cd220815b5937bb7ac6ba67a39d66ee7f5283eeed70ff9b0b99"
+    },
+    {
+      "file": "002_knowledge.sql",
+      "sha256": "e1eb1d650e605f5f5c025d925e21e4ea61da96806012c662fac64a4d94b91047"
+    },
+    {
+      "file": "003_authorization.sql",
+      "sha256": "d23699cd3fd1bbd285e60325db36c3bc52c653f495860de1f7495041be1c6ba2"
+    },
+    {
+      "file": "004_operations.sql",
+      "sha256": "0868a41ea11b5c1d5a13c2388f42d4f124fd7a8e52a2b6f7fca2b2521c26a9b0"
+    },
+    {
+      "file": "005_evidence.sql",
+      "sha256": "b0e88e4284c1c5fbaa064e310bb919a9046e3312e6bad371a6e69e499b8083a1"
+    },
+    {
+      "file": "006_review_validity.sql",
+      "sha256": "7e0ed5eab3223ae36f9bca2d87d33529c8c5190c665c984da3836ab9af5dec98"
+    },
+    {
+      "file": "007_revision_immutability.sql",
+      "sha256": "ebe2d0c81f93bd858f26496cf40e4535c48e32a4bcc42fbdb1a2d4bd79180573"
+    },
+    {
+      "file": "008_index_rebuild.sql",
+      "sha256": "954d7c38ed8d2f61111a78b38e822d001a2355dea44db5907f2cc0d8fd18d1e1"
+    },
+    {
+      "file": "009_audit_detail.sql",
+      "sha256": "b980b4d881a7f6aa84528296db43040fa6ba7af5ac38f757e6ccddcabdd3fbfc"
+    },
+    {
+      "file": "010_withdrawn_terminal.sql",
+      "sha256": "ca7f571ead73dd04b249a8dc3f7cc78734eccfc938ca00cdee6d6d29961962f5"
+    },
+    {
+      "file": "011_review_approved_final.sql",
+      "sha256": "6ccdcbdd17377811f4edf5be12062a265c684cf5be592b96f2782ab33efa2b4e"
+    }
+  ],
+  "migration_set_hash": "5109b5428a429c9e4f0dcf380bf77f3eab7f02ae4615c846bf8a0c9154fea4ce",
+  "ragflow": {
+    "tag": "mock",
+    "source_sha": "mock",
+    "image_digest": "mock"
+  },
+  "embedding_revision": "test-embedding-revision",
+  "parser_digest": "test-parser-sha",
+  "deploy_env": {
+    "platform": "darwin",
+    "arch": "arm64",
+    "release": "23.1.0",
+    "cpu_model": "Apple M3 Pro",
+    "cpu_count": 11,
+    "node": "v22.21.1",
+    "ci": null
+  },
+  "counts": {
+    "modules": 24,
+    "cases": 145,
+    "pass": 132,
+    "fail": 0,
+    "not_run": 13
+  },
+  "unhandled_errors": 0,
+  "run_end_reason": "passed",
+  "hash_definitions": {
+    "dependency_lock_hash": "sha256(pnpm-lock.yaml)",
+    "migration_set_hash": "sha256(迁移文件名与内容哈希的拼接)",
+    "sample_hash": "sha256(该用例内所有请求样例哈希的拼接)；无请求的用例记为 null",
+    "subject_role": "主体标识与权限派生角色，形如 <subject>/<role>"
+  }
+}
